@@ -61,37 +61,126 @@ curl http://localhost:3000/v1/health
 
 - `GET /v1/health` - ヘルスチェック ✅
 - `POST /v1/edit` - 画像編集 ✅
-- `GET /v1/balance` - 残高確認 (予定)
-- `POST /v1/purchase` - 課金処理 (予定)
-- `POST /v1/report` - 通報機能 (予定)
+- `GET /v1/balance` - 残高確認 ✅
+- `POST /v1/purchase` - 課金処理 ✅
+- `POST /v1/report` - 通報機能 ✅
 
 ### POST /v1/edit
 
-画像編集を実行します。
+画像編集を実行します。成功時のみ1クレジット消費。
 
 **リクエスト**: multipart/form-data
 - `image` (ファイル): JPG/PNG/WebP/BMP/TIFF (≤10MB)
 - `prompt` (文字列): 編集指示
+- **Headers**: `x-device-id` (必須)
 
 **レスポンス**: image/png (バイナリ)
+- **Headers**: `X-Credits-Remaining` - 残りクレジット数
 
 **エラーコード**:
 - `400` - リクエストエラー、NGワード検出
+- `402` - クレジット不足
 - `502` - 外部API接続エラー  
 - `500` - サーバーエラー
 
-**curl例**:
+### GET /v1/balance
+
+残高確認。新規ユーザーは自動的に10クレジット付与。
+
+**パラメータ**: 
+- `deviceId` (クエリ): デバイス識別子
+
+**レスポンス**:
+```json
+{
+  "credits": 10,
+  "deviceId": "device-123",
+  "lastAccessAt": "2025-08-21T06:00:00.000Z"
+}
+```
+
+### POST /v1/purchase
+
+課金処理。重複トランザクションを自動検出。
+
+**リクエスト**:
+```json
+{
+  "deviceId": "device-123",
+  "productId": "com.example.jizai.coins20",
+  "transactionId": "txn-unique-id"
+}
+```
+
+**製品一覧**:
+- `com.example.jizai.coins20`: 20クレジット (¥320)
+- `com.example.jizai.coins100`: 100クレジット (¥1,200)
+- `com.example.jizai.coins300`: 300クレジット (¥2,800)
+
+**レスポンス**:
+```json
+{
+  "success": true,
+  "credits": 30,
+  "added": 20,
+  "deviceId": "device-123",
+  "productId": "com.example.jizai.coins20",
+  "transactionId": "txn-unique-id"
+}
+```
+
+### POST /v1/report
+
+通報機能。UGC 1.2対策。
+
+**リクエスト**:
+```json
+{
+  "deviceId": "device-123",
+  "jobId": "edit-job-123",
+  "reasonId": "copyright",
+  "note": "詳細説明（任意）"
+}
+```
+
+**理由ID**:
+- `copyright`: 著作権侵害
+- `privacy`: プライバシー侵害
+- `sexual`: 性的コンテンツ
+- `violence`: 暴力的コンテンツ
+- `other`: その他
+
+**レスポンス**:
+```json
+{
+  "success": true,
+  "reportId": "report_1692615600000_abc123def",
+  "message": "Report submitted successfully"
+}
+```
+
+## curl テスト例
+
 ```bash
-# 画像編集
+# 残高確認
+curl -s "http://localhost:3000/v1/balance?deviceId=test-123"
+
+# 課金テスト
+curl -s -X POST http://localhost:3000/v1/purchase \
+  -H 'Content-Type: application/json' \
+  -d '{"deviceId":"test-123","productId":"com.example.jizai.coins20","transactionId":"txn-demo"}'
+
+# 画像編集（クレジット消費）
 curl -s -X POST http://localhost:3000/v1/edit \
+  -H 'x-device-id: test-123' \
   -F "image=@/path/to/your.jpg" \
-  -F "prompt=Change 'OPEN' to 'CLOSED' and keep the original font and spacing" \
+  -F "prompt=Change 'OPEN' to 'CLOSED'" \
   -o result.png
 
-# NGワードテスト（400エラーになるはず）
-curl -X POST http://localhost:3000/v1/edit \
-  -F "image=@/path/to/your.jpg" \
-  -F "prompt=hate speech example"
+# 通報テスト
+curl -s -X POST http://localhost:3000/v1/report \
+  -H 'Content-Type: application/json' \
+  -d '{"deviceId":"test-123","reasonId":"other","note":"テスト通報"}'
 ```
 
 ## 環境変数

@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import multer from 'multer';
 import axios from 'axios';
 import { readFile } from 'fs/promises';
+import store from './store.mjs';
 
 // 環境変数を読み込み
 dotenv.config();
@@ -55,8 +56,17 @@ app.post('/v1/edit', upload.single('image'), async (req, res) => {
     try {
         const { prompt } = req.body;
         const imageFile = req.file;
+        const deviceId = req.headers['x-device-id'];
 
         // バリデーション
+        if (!deviceId || typeof deviceId !== 'string' || deviceId.trim().length === 0) {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: 'x-device-id header is required',
+                code: 'MISSING_DEVICE_ID'
+            });
+        }
+
         if (!imageFile) {
             return res.status(400).json({ 
                 error: 'Bad Request', 
@@ -70,6 +80,17 @@ app.post('/v1/edit', upload.single('image'), async (req, res) => {
                 error: 'Bad Request', 
                 message: 'Prompt is required',
                 code: 'MISSING_PROMPT'
+            });
+        }
+
+        // 残高チェック
+        const user = await store.getUser(deviceId);
+        if (user.credits <= 0) {
+            return res.status(402).json({
+                error: 'Payment Required',
+                message: 'Insufficient credits',
+                code: 'INSUFFICIENT_CREDITS',
+                credits: user.credits
             });
         }
 
@@ -140,9 +161,20 @@ app.post('/v1/edit', upload.single('image'), async (req, res) => {
             timeout: 30000 // 30秒タイムアウト
         });
 
+        // 成功時のみクレジット消費
+        const creditConsumed = await store.consumeCredit(deviceId);
+        if (!creditConsumed) {
+            return res.status(402).json({
+                error: 'Payment Required',
+                message: 'Credits exhausted during processing',
+                code: 'CREDITS_EXHAUSTED'
+            });
+        }
+
         // PNG バイナリとして返却
         res.setHeader('Content-Type', 'image/png');
         res.setHeader('Content-Length', imageDownload.data.length);
+        res.setHeader('X-Credits-Remaining', (await store.getUser(deviceId)).credits);
         res.send(Buffer.from(imageDownload.data));
 
         console.log(`✅ Edit completed successfully, ${imageDownload.data.length} bytes`);
@@ -180,6 +212,159 @@ app.post('/v1/edit', upload.single('image'), async (req, res) => {
             error: 'Internal Server Error',
             message: 'Image generation failed',
             code: 'GENERATION_FAILED'
+        });
+    }
+});
+
+// 残高確認エンドポイント
+app.get('/v1/balance', async (req, res) => {
+    try {
+        const { deviceId } = req.query;
+
+        if (!deviceId || typeof deviceId !== 'string' || deviceId.trim().length === 0) {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: 'deviceId query parameter is required',
+                code: 'MISSING_DEVICE_ID'
+            });
+        }
+
+        const user = await store.getUser(deviceId);
+        
+        res.json({
+            credits: user.credits,
+            deviceId: deviceId,
+            lastAccessAt: user.lastAccessAt
+        });
+
+        console.log(`💰 Balance check: ${deviceId} has ${user.credits} credits`);
+
+    } catch (error) {
+        console.error('❌ Balance check error:', error.message);
+        res.status(500).json({
+            error: 'Internal Server Error',
+            message: 'Failed to retrieve balance',
+            code: 'BALANCE_FAILED'
+        });
+    }
+});
+
+// 課金処理エンドポイント
+app.post('/v1/purchase', async (req, res) => {
+    try {
+        const { deviceId, productId, transactionId } = req.body;
+
+        // バリデーション
+        if (!deviceId || typeof deviceId !== 'string' || deviceId.trim().length === 0) {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: 'deviceId is required',
+                code: 'MISSING_DEVICE_ID'
+            });
+        }
+
+        if (!productId || typeof productId !== 'string') {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: 'productId is required',
+                code: 'MISSING_PRODUCT_ID'
+            });
+        }
+
+        if (!transactionId || typeof transactionId !== 'string') {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: 'transactionId is required',
+                code: 'MISSING_TRANSACTION_ID'
+            });
+        }
+
+        const result = await store.addPurchase(deviceId, productId, transactionId);
+
+        if (result.duplicate) {
+            return res.status(409).json({
+                error: 'Conflict',
+                message: 'Transaction already processed',
+                code: 'DUPLICATE_TRANSACTION',
+                credits: result.credits
+            });
+        }
+
+        res.json({
+            success: true,
+            credits: result.credits,
+            added: result.added,
+            deviceId: deviceId,
+            productId: productId,
+            transactionId: transactionId
+        });
+
+    } catch (error) {
+        console.error('❌ Purchase error:', error.message);
+        
+        if (error.message.includes('Unknown product')) {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: error.message,
+                code: 'INVALID_PRODUCT'
+            });
+        }
+
+        res.status(500).json({
+            error: 'Internal Server Error',
+            message: 'Purchase processing failed',
+            code: 'PURCHASE_FAILED'
+        });
+    }
+});
+
+// 通報エンドポイント
+app.post('/v1/report', async (req, res) => {
+    try {
+        const { deviceId, jobId, reasonId, note } = req.body;
+
+        // バリデーション
+        if (!deviceId || typeof deviceId !== 'string' || deviceId.trim().length === 0) {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: 'deviceId is required',
+                code: 'MISSING_DEVICE_ID'
+            });
+        }
+
+        if (!reasonId || typeof reasonId !== 'string') {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: 'reasonId is required',
+                code: 'MISSING_REASON_ID'
+            });
+        }
+
+        // 有効な理由IDチェック
+        const validReasons = ['copyright', 'privacy', 'sexual', 'violence', 'other'];
+        if (!validReasons.includes(reasonId)) {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: 'Invalid reasonId',
+                code: 'INVALID_REASON_ID',
+                validReasons: validReasons
+            });
+        }
+
+        const report = await store.addReport(deviceId, jobId, reasonId, note);
+
+        res.json({
+            success: true,
+            reportId: report.id,
+            message: 'Report submitted successfully'
+        });
+
+    } catch (error) {
+        console.error('❌ Report error:', error.message);
+        res.status(500).json({
+            error: 'Internal Server Error',
+            message: 'Report submission failed',
+            code: 'REPORT_FAILED'
         });
     }
 });
