@@ -12,10 +12,13 @@ JizaiはAI搭載の画像編集iOSアプリです。Node.jsバックエンドと
 - 📱 **画像選択**: カメラ撮影・フォトライブラリから選択
 - 🤖 **AI画像編集**: 英語プロンプトによる画像編集
 - 💰 **クレジット管理**: デバイス別残高管理（初回10クレジット付与）
-- 🛒 **課金システム**: 3つの課金パック（20/100/300クレジット）
+- 🛒 **StoreKit 2課金**: 実際のApp内課金システム統合
+- 💳 **3つの課金パック**: 20/100/300クレジット（割引率表示）
+- 🔐 **トランザクション検証**: StoreKit 2自動検証+カスタム検証
 - 📱 **デバイス認証**: デバイスIDベース認証
 - 🚨 **通報機能**: UGC 1.2準拠の通報システム
 - 💾 **画像保存**: 編集結果の保存・共有機能
+- 📄 **レシート検証**: 自動レシート検証機能
 
 ### 📋 主要コンポーネント
 
@@ -43,13 +46,30 @@ JizaiはAI搭載の画像編集iOSアプリです。Node.jsバックエンドと
 - 画像編集ワークフロー
 - 購入・通報UI
 
+#### **StoreManager.swift**
+- StoreKit 2 統合管理
+- 製品読み込み・購入処理
+- トランザクション監視・検証
+- バックエンド連携
+
+#### **StoreKitPurchaseView.swift**
+- 実際のApp内課金UI
+- 製品一覧・価格表示
+- 購入フロー・割引率計算
+- 購入履歴復元機能
+
+#### **ReceiptValidator.swift**
+- レシート検証システム
+- トランザクション追加検証
+- レシート更新機能
+
 ## 技術仕様
 
 ### 要件
 - **iOS**: 16.0+
 - **Xcode**: 15.0+
 - **Swift**: 5.0+
-- **フレームワーク**: SwiftUI, PhotosUI
+- **フレームワーク**: SwiftUI, StoreKit 2, PhotosUI
 
 ### アーキテクチャ
 ```
@@ -58,7 +78,11 @@ JizaiApp.swift           // アプリエントリーポイント
 ├── APIClient.swift      // API通信レイヤー
 ├── Models.swift         // データモデル
 ├── DeviceManager.swift  // デバイス管理
-└── ImageEditService.swift // 画像処理サービス
+├── ImageEditService.swift // 画像処理サービス
+├── StoreManager.swift   // StoreKit 2管理
+├── StoreKitPurchaseView.swift // App内課金UI
+├── ReceiptValidator.swift // レシート検証
+└── Configuration.storekit // StoreKitテスト設定
 ```
 
 ### API統合
@@ -125,13 +149,27 @@ npm run dev
 - **詳細入力**: 任意で詳細説明を追加可能
 - **UGC 1.2準拠**: App Store審査対応
 
-## 課金パック
+## StoreKit 2 課金システム
 
-| パック | クレジット数 | 価格 | Product ID |
-|--------|-------------|------|------------|
-| Small | 20クレジット | ¥320 | `com.example.jizai.coins20` |
-| Medium | 100クレジット | ¥1,200 | `com.example.jizai.coins100` |
-| Large | 300クレジット | ¥2,800 | `com.example.jizai.coins300` |
+### 📦 課金パック
+
+| パック | クレジット数 | 価格 | 割引率 | Product ID |
+|--------|-------------|------|--------|------------|
+| Small | 20クレジット | ¥320 | - | `com.example.jizai.coins20` |
+| Medium | 100クレジット | ¥1,200 | 20%お得 | `com.example.jizai.coins100` |
+| Large | 300クレジット | ¥2,800 | 30%お得 | `com.example.jizai.coins300` |
+
+### 🔧 StoreKit 2 機能
+- **自動トランザクション検証**: Apple署名検証+カスタム検証
+- **購入履歴復元**: `AppStore.sync()` による購入復元
+- **重複購入防止**: バックエンド連携による重複検出
+- **リアルタイム監視**: `Transaction.updates` による自動処理
+- **レシート検証**: 追加セキュリティレイヤー
+
+### 📱 テスト環境
+- **StoreKit Configuration**: `Configuration.storekit` 
+- **Xcode StoreKit Testing**: 完全ローカルテスト対応
+- **Sandbox Testing**: App Store Connect Sandbox対応
 
 ## エラーハンドリング
 
@@ -148,10 +186,11 @@ npm run dev
 
 ## 次のステップ
 
-### Step 8: StoreKit 2統合
-- 実際のApp内課金実装
-- レシート検証システム
-- 課金状態の永続化
+### ✅ Step 8完了: StoreKit 2統合
+- 実際のApp内課金実装 ✅
+- レシート検証システム ✅  
+- トランザクション監視 ✅
+- 購入履歴復元機能 ✅
 
 ### 追加実装項目
 - **オフライン対応**: 編集履歴のローカル保存

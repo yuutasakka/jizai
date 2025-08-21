@@ -51,7 +51,7 @@ struct ContentView: View {
             Text(appState.errorMessage)
         }
         .sheet(isPresented: $showPurchaseSheet) {
-            PurchaseView(appState: appState)
+            StoreKitPurchaseView(appState: appState)
         }
         .sheet(isPresented: $showReportSheet) {
             ReportView(appState: appState)

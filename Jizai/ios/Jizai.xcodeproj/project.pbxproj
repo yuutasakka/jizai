@@ -15,6 +15,9 @@
 		1D6E8F3A2C75A1F200000001 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D6E8F392C75A1F200000001 /* Models.swift */; };
 		1D6E8F3C2C75A1FF00000001 /* ImageEditService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D6E8F3B2C75A1FF00000001 /* ImageEditService.swift */; };
 		1D6E8F3E2C75A20C00000001 /* DeviceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D6E8F3D2C75A20C00000001 /* DeviceManager.swift */; };
+		1D6E8F402C75A21500000001 /* StoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D6E8F3F2C75A21500000001 /* StoreManager.swift */; };
+		1D6E8F422C75A22200000001 /* StoreKitPurchaseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D6E8F412C75A22200000001 /* StoreKitPurchaseView.swift */; };
+		1D6E8F442C75A23000000001 /* ReceiptValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D6E8F432C75A23000000001 /* ReceiptValidator.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,6 +30,10 @@
 		1D6E8F392C75A1F200000001 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		1D6E8F3B2C75A1FF00000001 /* ImageEditService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageEditService.swift; sourceTree = "<group>"; };
 		1D6E8F3D2C75A20C00000001 /* DeviceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceManager.swift; sourceTree = "<group>"; };
+		1D6E8F3F2C75A21500000001 /* StoreManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreManager.swift; sourceTree = "<group>"; };
+		1D6E8F412C75A22200000001 /* StoreKitPurchaseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitPurchaseView.swift; sourceTree = "<group>"; };
+		1D6E8F432C75A23000000001 /* ReceiptValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptValidator.swift; sourceTree = "<group>"; };
+		1D6E8F452C75A24000000001 /* Configuration.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Configuration.storekit; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -65,6 +72,10 @@
 				1D6E8F392C75A1F200000001 /* Models.swift */,
 				1D6E8F3B2C75A1FF00000001 /* ImageEditService.swift */,
 				1D6E8F3D2C75A20C00000001 /* DeviceManager.swift */,
+				1D6E8F3F2C75A21500000001 /* StoreManager.swift */,
+				1D6E8F412C75A22200000001 /* StoreKitPurchaseView.swift */,
+				1D6E8F432C75A23000000001 /* ReceiptValidator.swift */,
+				1D6E8F452C75A24000000001 /* Configuration.storekit */,
 				1D6E8F2D2C75A1B700000001 /* Assets.xcassets */,
 				1D6E8F2F2C75A1B700000001 /* Preview Content */,
 			);
@@ -156,6 +167,9 @@
 				1D6E8F3A2C75A1F200000001 /* Models.swift in Sources */,
 				1D6E8F3C2C75A1FF00000001 /* ImageEditService.swift in Sources */,
 				1D6E8F3E2C75A20C00000001 /* DeviceManager.swift in Sources */,
+				1D6E8F402C75A21500000001 /* StoreManager.swift in Sources */,
+				1D6E8F422C75A22200000001 /* StoreKitPurchaseView.swift in Sources */,
+				1D6E8F442C75A23000000001 /* ReceiptValidator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

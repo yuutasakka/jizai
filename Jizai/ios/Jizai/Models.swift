@@ -134,6 +134,7 @@ class AppState: ObservableObject {
     init() {
         Task {
             await refreshBalance()
+            await StoreManager.shared.initialize()
         }
     }
     
@@ -185,26 +186,7 @@ class AppState: ObservableObject {
         }
     }
     
-    @MainActor
-    func processPurchase(product: JizaiProduct, transactionId: String) async {
-        isLoading = true
-        defer { isLoading = false }
-        
-        let request = PurchaseRequest(
-            deviceId: deviceManager.deviceId,
-            productId: product.rawValue,
-            transactionId: transactionId
-        )
-        
-        do {
-            let response = try await apiClient.processPurchase(request: request)
-            if response.success {
-                await refreshBalance()
-            }
-        } catch {
-            showError(message: error.localizedDescription)
-        }
-    }
+    // Purchase handling is now managed by StoreManager
     
     @MainActor
     func submitReport(reason: ReportReason, note: String? = nil, jobId: String? = nil) async {
