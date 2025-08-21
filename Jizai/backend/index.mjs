@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import multer from 'multer';
 import axios from 'axios';
+import rateLimit from 'express-rate-limit';
 import { readFile } from 'fs/promises';
 import store from './store.mjs';
 
@@ -39,12 +40,87 @@ const upload = multer({
 });
 
 // ミドルウェア設定
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// CORS設定（iOSアプリからのアクセス許可）
+const allowedOrigins = process.env.ORIGIN_ALLOWLIST?.split(',').map(origin => origin.trim()) || [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'capacitor://localhost',  // Capacitor
+    'ionic://localhost',      // Ionic
+    'http://localhost',       // iOS Simulator
+    'https://localhost'       // iOS実機HTTPS
+];
+
 app.use(cors({
-    origin: process.env.ORIGIN_ALLOWLIST?.split(',') || ['http://localhost:3000'],
-    credentials: true
+    origin: (origin, callback) => {
+        // iOS アプリからのリクエスト（originなし）を許可
+        if (!origin) return callback(null, true);
+        
+        // 許可されたオリジンチェック
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        
+        // 開発環境では全てのlocalhostを許可
+        if (process.env.NODE_ENV === 'development' && origin.includes('localhost')) {
+            return callback(null, true);
+        }
+        
+        callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-device-id']
 }));
+
+// Rate Limiting設定
+const generalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15分
+    max: parseInt(process.env.RATE_LIMIT_RPS) || 100, // 一般的なエンドポイント
+    message: {
+        error: 'Too Many Requests',
+        message: 'Rate limit exceeded. Please try again later.',
+        code: 'RATE_LIMIT_EXCEEDED'
+    },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
+// 画像編集用の厳しいRate Limiting
+const editLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1分
+    max: parseInt(process.env.EDIT_RATE_LIMIT) || 5, // 画像編集は1分に5回まで
+    message: {
+        error: 'Too Many Requests',
+        message: 'Image editing rate limit exceeded. Please wait before trying again.',
+        code: 'EDIT_RATE_LIMIT_EXCEEDED'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => {
+        // デバイスIDベースの制限
+        return req.headers['x-device-id'] || req.ip;
+    }
+});
+
+// 課金用のRate Limiting
+const purchaseLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1分
+    max: parseInt(process.env.PURCHASE_RATE_LIMIT) || 10, // 課金は1分に10回まで
+    message: {
+        error: 'Too Many Requests',
+        message: 'Purchase rate limit exceeded. Please wait before trying again.',
+        code: 'PURCHASE_RATE_LIMIT_EXCEEDED'
+    },
+    keyGenerator: (req) => {
+        return req.headers['x-device-id'] || req.ip;
+    }
+});
+
+// 一般的なミドルウェア適用
+app.use(generalLimiter);
 
 // ヘルスチェックエンドポイント
 app.get('/v1/health', (req, res) => {
@@ -52,7 +128,7 @@ app.get('/v1/health', (req, res) => {
 });
 
 // 画像編集エンドポイント
-app.post('/v1/edit', upload.single('image'), async (req, res) => {
+app.post('/v1/edit', editLimiter, upload.single('image'), async (req, res) => {
     try {
         const { prompt } = req.body;
         const imageFile = req.file;
@@ -143,23 +219,67 @@ app.post('/v1/edit', upload.single('image'), async (req, res) => {
             }
         );
 
-        // レスポンス確認
-        if (!qwenResponse.data || !qwenResponse.data.output || !qwenResponse.data.output.results) {
-            throw new Error('Invalid API response format');
+        // レスポンス詳細検証
+        if (!qwenResponse.data) {
+            throw new Error('Empty response from Qwen API');
+        }
+
+        // APIエラーレスポンスチェック
+        if (qwenResponse.data.code && qwenResponse.data.code !== '200') {
+            const errorMsg = qwenResponse.data.message || 'Unknown API error';
+            throw new Error(`Qwen API Error: ${errorMsg} (Code: ${qwenResponse.data.code})`);
+        }
+
+        // 出力構造検証
+        if (!qwenResponse.data.output) {
+            throw new Error('No output in API response');
+        }
+
+        if (!qwenResponse.data.output.results || !Array.isArray(qwenResponse.data.output.results)) {
+            throw new Error('Invalid results format in API response');
+        }
+
+        if (qwenResponse.data.output.results.length === 0) {
+            throw new Error('No results returned from API');
         }
 
         const imageUrl = qwenResponse.data.output.results[0]?.url;
-        if (!imageUrl) {
-            throw new Error('No image URL in response');
+        if (!imageUrl || typeof imageUrl !== 'string') {
+            throw new Error('No valid image URL in response');
+        }
+
+        // URL形式の基本検証
+        try {
+            new URL(imageUrl);
+        } catch {
+            throw new Error('Invalid image URL format');
         }
 
         console.log(`📸 Generated image URL: ${imageUrl}`);
 
         // 画像をダウンロード
-        const imageDownload = await axios.get(imageUrl, {
-            responseType: 'arraybuffer',
-            timeout: 30000 // 30秒タイムアウト
-        });
+        let imageDownload;
+        try {
+            imageDownload = await axios.get(imageUrl, {
+                responseType: 'arraybuffer',
+                timeout: 30000, // 30秒タイムアウト
+                maxContentLength: 50 * 1024 * 1024, // 50MB制限
+                validateStatus: (status) => status === 200
+            });
+        } catch (downloadError) {
+            console.error('❌ Image download failed:', downloadError.message);
+            throw new Error('Failed to download generated image');
+        }
+
+        // ダウンロードした画像の検証
+        if (!imageDownload.data || imageDownload.data.length === 0) {
+            throw new Error('Downloaded image is empty');
+        }
+
+        // 最小サイズ検証（1KB以上）
+        if (imageDownload.data.length < 1024) {
+            throw new Error('Downloaded image is too small (likely corrupted)');
+        }
 
         // 成功時のみクレジット消費
         const creditConsumed = await store.consumeCredit(deviceId);
@@ -250,7 +370,7 @@ app.get('/v1/balance', async (req, res) => {
 });
 
 // 課金処理エンドポイント
-app.post('/v1/purchase', async (req, res) => {
+app.post('/v1/purchase', purchaseLimiter, async (req, res) => {
     try {
         const { deviceId, productId, transactionId } = req.body;
 

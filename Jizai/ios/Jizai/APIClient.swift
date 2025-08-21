@@ -4,10 +4,30 @@ import UIKit
 class APIClient: ObservableObject {
     static let shared = APIClient()
     
-    private let baseURL = "http://localhost:3000"
+    private let baseURL: String
     private let session = URLSession.shared
     
-    private init() {}
+    private init() {
+        // 環境に応じたベースURL設定
+        #if DEBUG
+        // デバッグ時: 設定済みのAPIベースURLまたはlocalhost
+        if let configuredURL = Bundle.main.object(forInfoDictionaryKey: "API_BASE_URL") as? String, !configuredURL.isEmpty {
+            self.baseURL = configuredURL
+        } else {
+            self.baseURL = "http://localhost:3000"
+        }
+        #else
+        // 本番時: 必須のAPIベースURL
+        self.baseURL = Bundle.main.object(forInfoDictionaryKey: "API_BASE_URL") as? String ?? "https://api.jizai.app"
+        #endif
+        
+        print("🌐 APIClient initialized with baseURL: \(baseURL)")
+    }
+    
+    // MARK: - Configuration
+    var currentBaseURL: String {
+        return baseURL
+    }
     
     enum APIError: Error, LocalizedError {
         case invalidURL
@@ -19,6 +39,9 @@ class APIClient: ObservableObject {
         case duplicateTransaction
         case safetyBlocked
         case apiUnavailable
+        case rateLimitExceeded
+        case imageTooLarge
+        case invalidImageFormat
         
         var errorDescription: String? {
             switch self {
@@ -40,6 +63,12 @@ class APIClient: ObservableObject {
                 return "不適切なコンテンツが含まれています"
             case .apiUnavailable:
                 return "APIサービスが一時的に利用できません"
+            case .rateLimitExceeded:
+                return "アクセス制限に達しました。しばらく待ってから再試行してください"
+            case .imageTooLarge:
+                return "画像サイズが大きすぎます（最大10MB）"
+            case .invalidImageFormat:
+                return "サポートされていない画像形式です"
             }
         }
     }
