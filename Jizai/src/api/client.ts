@@ -28,6 +28,87 @@ export interface ReportResponse {
   message: string;
 }
 
+// Vault Subscription System interfaces
+export interface SubscriptionTier {
+  id: string;
+  name: string;
+  description: string;
+  storageQuota: number;
+  maxVaults: number;
+  maxFamilyMembers: number;
+  features: string[];
+  pricing: {
+    monthly: number;
+    annual: number;
+  };
+}
+
+export interface SubscriptionStatus {
+  subscription: {
+    status: 'free' | 'active' | 'trial' | 'cancelled' | 'expired';
+    tier: string | null;
+    expiresAt: string | null;
+    isTrialPeriod: boolean;
+    trialEndsAt: string | null;
+    autoRenewStatus: boolean;
+  };
+  storage: {
+    quota: number;
+    used: number;
+    available: number;
+    percentage: number;
+  };
+  features: Record<string, any>;
+}
+
+export interface PrintSize {
+  key: string;
+  name: string;
+  nameEn: string;
+  dimensions: { width: number; height: number };
+  description: string;
+  category: string;
+}
+
+export interface PrintExportOptions {
+  imageUrl: string;
+  printSize: string;
+  dpi: 300 | 350;
+  format: 'jpeg' | 'png';
+  quality?: number;
+}
+
+export interface PrintExportResponse {
+  success: boolean;
+  exportId?: string;
+  downloadUrl?: string;
+  filename?: string;
+  fileSize?: number;
+  printSize?: PrintSize;
+  dpi?: number;
+  format?: string;
+  expiresAt?: string;
+  error?: string;
+}
+
+export interface PrintExportHistory {
+  id: string;
+  memory: {
+    id: string;
+    title: string;
+    memory_type: string;
+    created_at: string;
+  };
+  export_path: string;
+  print_size: string;
+  dpi: number;
+  format: string;
+  file_size: number;
+  status: string;
+  created_at: string;
+  expires_at: string;
+}
+
 export interface ApiError {
   error: string;
   message: string;
@@ -146,6 +227,148 @@ class JizaiApiClient {
     localStorage.removeItem('jizai-device-id');
     this.deviceId = this.generateDeviceId();
     localStorage.setItem('jizai-device-id', this.deviceId);
+  }
+
+  // ========================================
+  // VAULT SUBSCRIPTION SYSTEM APIs
+  // ========================================
+
+  // サブスクリプション状況取得
+  async getSubscriptionStatus(): Promise<SubscriptionStatus> {
+    const response = await fetch(`${API_BASE_URL}/v1/subscription/status?deviceId=${this.deviceId}`);
+    return this.handleResponse(response);
+  }
+
+  // サブスクリプションティア一覧取得
+  async getSubscriptionTiers(): Promise<{ tiers: SubscriptionTier[] }> {
+    const response = await fetch(`${API_BASE_URL}/v1/subscription/tiers`);
+    return this.handleResponse(response);
+  }
+
+  // App Storeレシート検証
+  async validateReceipt(receiptData: string, originalTransactionId?: string): Promise<{
+    success: boolean;
+    subscription: any;
+    message?: string;
+  }> {
+    const response = await fetch(`${API_BASE_URL}/v1/subscription/validate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        deviceId: this.deviceId,
+        receiptData,
+        originalTransactionId,
+      }),
+    });
+    return this.handleResponse(response);
+  }
+
+  // 試用期間開始
+  async startTrial(productId: string): Promise<{
+    success: boolean;
+    trial: any;
+    message?: string;
+  }> {
+    const response = await fetch(`${API_BASE_URL}/v1/subscription/start-trial`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        deviceId: this.deviceId,
+        productId,
+      }),
+    });
+    return this.handleResponse(response);
+  }
+
+  // ストレージ使用量詳細取得
+  async getStorageDetails(): Promise<{
+    quota: number;
+    used: number;
+    available: number;
+    percentage: number;
+    breakdown: {
+      byVault: Record<string, any>;
+      byType: Record<string, number>;
+    };
+  }> {
+    const response = await fetch(`${API_BASE_URL}/v1/subscription/storage?deviceId=${this.deviceId}`);
+    return this.handleResponse(response);
+  }
+
+  // ストレージ使用量チェック
+  async checkStorageQuota(fileSize: number, vaultId?: string): Promise<{
+    canUpload: boolean;
+    quotaInfo: {
+      quota: number;
+      used: number;
+      available: number;
+      wouldExceed: boolean;
+      requiredSpace: number;
+    };
+  }> {
+    const response = await fetch(`${API_BASE_URL}/v1/subscription/storage/check`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        deviceId: this.deviceId,
+        fileSize,
+        vaultId,
+      }),
+    });
+    return this.handleResponse(response);
+  }
+
+  // ========================================
+  // PRINT EXPORT APIs
+  // ========================================
+
+  // 印刷出力生成
+  async generatePrintExport(
+    memoryId: string, 
+    options: PrintExportOptions
+  ): Promise<PrintExportResponse> {
+    const response = await fetch(`${API_BASE_URL}/v1/print-export/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        deviceId: this.deviceId,
+        memoryId,
+        exportOptions: options,
+      }),
+    });
+    return this.handleResponse(response);
+  }
+
+  // 印刷出力履歴取得
+  async getPrintExportHistory(): Promise<PrintExportHistory[]> {
+    const response = await fetch(
+      `${API_BASE_URL}/v1/print-export/history?deviceId=${this.deviceId}`
+    );
+    const data = await this.handleResponse<{ exports: PrintExportHistory[] }>(response);
+    return data.exports;
+  }
+
+  // 利用可能な印刷オプション取得
+  async getPrintOptions(): Promise<{
+    sizes: string[];
+    sizeDetails: Record<string, PrintSize>;
+    dpiOptions: string[];
+    formats: string[];
+    maxExportsPerMonth: number;
+    currentMonthUsage: number;
+  }> {
+    const response = await fetch(
+      `${API_BASE_URL}/v1/print-export/options?deviceId=${this.deviceId}`
+    );
+    return this.handleResponse(response);
   }
 }
 
