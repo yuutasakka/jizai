@@ -54,10 +54,15 @@ export default function PrintHistoryScreen({ onClose }: PrintHistoryScreenProps)
   }, []);
 
   // ダウンロード処理
-  const handleDownload = (exportItem: PrintExportHistory) => {
-    // 実際の実装では、バックエンドから署名付きURLを取得
-    const downloadUrl = `/api/print-export/download/${exportItem.id}`;
-    window.open(downloadUrl, '_blank');
+  const handleDownload = async (exportItem: PrintExportHistory) => {
+    try {
+      // バックエンドから署名付きURLを取得してダウンロード
+      const url = await apiClient.getPrintExportDownloadUrl(exportItem.id);
+      window.open(url, '_blank', 'noopener');
+    } catch (e) {
+      console.error('Download failed:', e);
+      setError(e instanceof Error ? e.message : 'ダウンロードURLの取得に失敗しました');
+    }
   };
 
   // 期限切れチェック

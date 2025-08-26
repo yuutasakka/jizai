@@ -6,6 +6,32 @@ import { AppStoreWebhookHandler } from '../services/appstore-webhook.mjs';
 const router = express.Router();
 const webhookHandler = new AppStoreWebhookHandler();
 
+// Basic admin auth middleware for internal endpoints
+const requireAdmin = (req, res, next) => {
+    const token = req.headers['x-admin-token'];
+    const expected = process.env.ADMIN_TOKEN;
+
+    if (!expected) {
+        // Explicitly deny in production if not configured
+        if (process.env.NODE_ENV === 'production') {
+            return res.status(503).json({
+                error: 'Service Unavailable',
+                message: 'Admin token not configured',
+                code: 'ADMIN_NOT_CONFIGURED'
+            });
+        }
+    }
+
+    if (expected && token === expected) {
+        return next();
+    }
+    return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Admin token required',
+        code: 'ADMIN_AUTH_REQUIRED'
+    });
+};
+
 // ========================================
 // APP STORE SERVER NOTIFICATIONS V2
 // ========================================
@@ -24,7 +50,32 @@ const webhookHandler = new AppStoreWebhookHandler();
  * - REFUND: User received refund
  * - REVOKE: Subscription revoked by Apple
  */
-router.post('/appstore', express.raw({ type: 'application/json' }), async (req, res) => {
+// Basic request validation middleware
+const validateWebhookRequest = (req, res, next) => {
+    // Check User-Agent (Apple sends specific user agent)
+    const userAgent = req.headers['user-agent'];
+    if (process.env.NODE_ENV === 'production' && !userAgent?.includes('App Store')) {
+        return res.status(403).json({
+            error: 'Forbidden',
+            message: 'Invalid user agent',
+            code: 'INVALID_USER_AGENT'
+        });
+    }
+
+    // Check Content-Type
+    const contentType = req.headers['content-type'];
+    if (!contentType?.includes('application/json')) {
+        return res.status(400).json({
+            error: 'Bad Request',
+            message: 'Invalid content type',
+            code: 'INVALID_CONTENT_TYPE'
+        });
+    }
+
+    next();
+};
+
+router.post('/appstore', validateWebhookRequest, express.raw({ type: 'application/json' }), async (req, res) => {
     try {
         const body = req.body.toString();
         
@@ -237,7 +288,7 @@ router.post('/appstore/test', async (req, res) => {
  * Manually trigger retry of failed notifications
  * Internal/admin endpoint
  */
-router.post('/retry-failed', async (req, res) => {
+router.post('/retry-failed', requireAdmin, async (req, res) => {
     try {
         // This should be protected by admin authentication in production
         await webhookHandler.retryFailedNotifications();
@@ -257,41 +308,7 @@ router.post('/retry-failed', async (req, res) => {
     }
 });
 
-// ========================================
-// WEBHOOK SECURITY & VALIDATION
-// ========================================
-
-/**
- * Middleware to validate webhook requests
- */
-const validateWebhookRequest = (req, res, next) => {
-    // Check User-Agent (Apple sends specific user agent)
-    const userAgent = req.headers['user-agent'];
-    if (process.env.NODE_ENV === 'production' && !userAgent?.includes('App Store')) {
-        return res.status(403).json({
-            error: 'Forbidden',
-            message: 'Invalid user agent',
-            code: 'INVALID_USER_AGENT'
-        });
-    }
-
-    // Check Content-Type
-    const contentType = req.headers['content-type'];
-    if (!contentType?.includes('application/json')) {
-        return res.status(400).json({
-            error: 'Bad Request',
-            message: 'Invalid content type',
-            code: 'INVALID_CONTENT_TYPE'
-        });
-    }
-
-    // Rate limiting for webhooks (prevent spam)
-    // In production, implement IP-based rate limiting
-
-    next();
-};
-
-// Apply validation middleware to webhook endpoints
+// Apply validation middleware to webhook endpoints (kept for future routes under /appstore)
 router.use('/appstore', validateWebhookRequest);
 
 export default router;

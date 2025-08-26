@@ -127,6 +127,15 @@ app.get('/v1/health', (req, res) => {
     res.json({ ok: true });
 });
 
+// ルートパス: ローカル確認用の案内
+app.get('/', (req, res) => {
+    res.status(200).json({
+        ok: true,
+        message: 'Jizai API server (legacy). Try GET /v1/health',
+        docs: '/v1/health'
+    });
+});
+
 // 画像編集エンドポイント
 app.post('/v1/edit', editLimiter, upload.single('image'), async (req, res) => {
     try {
@@ -248,11 +257,21 @@ app.post('/v1/edit', editLimiter, upload.single('image'), async (req, res) => {
             throw new Error('No valid image URL in response');
         }
 
-        // URL形式の基本検証
+        // URL形式とホストの検証（SSRF対策）
+        let parsedUrl;
         try {
-            new URL(imageUrl);
+            parsedUrl = new URL(imageUrl);
         } catch {
             throw new Error('Invalid image URL format');
+        }
+
+        if (parsedUrl.protocol !== 'https:') {
+            throw new Error('Untrusted image URL protocol');
+        }
+
+        // DashScope の生成画像は aliyuncs.com 配下を想定。必要に応じて調整。
+        if (!parsedUrl.hostname.endsWith('aliyuncs.com')) {
+            throw new Error('Untrusted image host');
         }
 
         console.log(`📸 Generated image URL: ${imageUrl}`);
@@ -264,6 +283,7 @@ app.post('/v1/edit', editLimiter, upload.single('image'), async (req, res) => {
                 responseType: 'arraybuffer',
                 timeout: 30000, // 30秒タイムアウト
                 maxContentLength: 50 * 1024 * 1024, // 50MB制限
+                maxRedirects: 0, // リダイレクト無効化（SSRF対策）
                 validateStatus: (status) => status === 200
             });
         } catch (downloadError) {

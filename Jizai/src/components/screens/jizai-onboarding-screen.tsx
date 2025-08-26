@@ -14,7 +14,7 @@ export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenPr
     {
       id: 'hero',
       title: '写真、思いのままに。',
-      subtitle: '1枚=¥60。やり直し2回無料。',
+      subtitle: '通常100円/枚。今だけセール中。',
       content: null,
       ctaText: 'チュートリアルを見る',
       icon: <JZPhotoIcon size={80} className="text-[color:var(--color-jz-accent)] mx-auto mb-[var(--space-32)]" />
@@ -69,7 +69,7 @@ export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenPr
           
           <div className="p-[var(--space-16)] bg-[color:var(--color-jz-card)] rounded-[var(--radius-jz-card)] border border-[color:var(--color-jz-border)] mt-[var(--space-24)]">
             <p className="jz-text-caption text-[color:var(--color-jz-text-tertiary)] text-center">
-              この操作で 1クレジット（¥60）消費
+              写真は自動で保存されます（あとからダウンロードOK）
             </p>
           </div>
         </div>

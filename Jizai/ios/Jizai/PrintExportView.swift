@@ -594,7 +594,7 @@ struct PrintExportView: View {
             // シミュレーション: 成功ケース
             if let imageData = image.jpegData(compressionQuality: 0.95) {
                 let tempURL = FileManager.default.temporaryDirectory
-                    .appendingPathComponent("print_export_\(Date().timeIntervalSince1970)")
+                    .appendingPathComponent("print_export_\(UUID().uuidString)")
                     .appendingPathExtension(selectedFormat.rawValue)
                 
                 do {

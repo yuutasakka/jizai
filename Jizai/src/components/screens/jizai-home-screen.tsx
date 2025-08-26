@@ -29,7 +29,7 @@ interface JizaiHomeScreenProps {
 export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }: JizaiHomeScreenProps) => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [customPrompt, setCustomPrompt] = useState('');
-  const [credits] = useState(20);
+  // 表示用のボタンはプラン画面への導線に変更
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -232,7 +232,7 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
               onClick={() => onNavigate('purchase')}
               className="bg-[color:var(--color-jz-accent)]/20 border-[color:var(--color-jz-accent)]/30 text-[color:var(--color-jz-accent)]"
             >
-              あと{credits}回
+              マイプラン
             </JZButton>
           </div>
         </div>
@@ -474,7 +474,7 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
             {/* Cost Notice */}
             <div className="text-center">
               <p className="jz-text-caption text-[color:var(--color-jz-text-tertiary)]">
-                この操作で 1クレジット（¥60）消費
+                生成は1回ごとに料金がかかります（通常100円/枚。今だけセールあり）
               </p>
             </div>
             

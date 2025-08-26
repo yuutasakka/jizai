@@ -9,9 +9,9 @@
 
 - 📍 **エンドポイント**: 5つの主要エンドポイント
   - `GET /v1/health` - ヘルスチェック
-  - `POST /v1/edit` - 画像編集（クレジット消費）
-  - `GET /v1/balance` - 残高確認
-  - `POST /v1/purchase` - 課金処理
+  - `POST /v1/edit` - 画像編集（従量課金・保存）
+  - `GET /v1/balance` - サブスク/ストレージ状況
+  - `POST /v1/purchase` - 廃止（アプリ内課金に移行）
   - `POST /v1/report` - 通報機能
   
 - 📝 **詳細情報**: 
@@ -54,36 +54,32 @@ npx swagger-ui-serve openapi.yaml
 
 ```
 1. Health Check → サーバー稼働確認
-2. Get Balance → 初回10クレジット確認  
-3. Purchase Credits → 課金テスト
-4. Edit Image → 画像編集（1クレジット消費）
-5. Get Balance → 残高減少確認
-6. Submit Report → 通報機能テスト
+2. Get Balance → サブスク/保存容量の確認
+3. Edit Image → 画像編集（従量課金・保存確認）
+4. Submit Report → 通報機能テスト
 ```
 
 ## 📊 エンドポイント概要
 
-| エンドポイント | メソッド | 機能 | クレジット消費 |
-|---------------|---------|------|----------------|
-| `/v1/health` | GET | ヘルスチェック | なし |
-| `/v1/balance` | GET | 残高確認 | なし |
-| `/v1/purchase` | POST | 課金処理 | なし（加算） |
-| `/v1/edit` | POST | 画像編集 | 1クレジット |
-| `/v1/report` | POST | 通報機能 | なし |
+| エンドポイント | メソッド | 機能 | 備考 |
+|---------------|---------|------|------|
+| `/v1/health` | GET | ヘルスチェック | - |
+| `/v1/balance` | GET | サブスク/保存容量 | Supabase参照 |
+| `/v1/edit` | POST | 画像編集 | 生成後にStorageへ保存 |
+| `/v1/report` | POST | 通報機能 | - |
+| `/v1/purchase` | POST | 旧エンドポイント | Webでは使用しません |
 
 ## 🔐 認証
 
-**デバイスベース認証**を使用：
+**デバイスIDベースの識別**：
 - ヘッダー: `x-device-id: [デバイス識別子]`
-- 新規デバイスは自動的に10クレジット付与
-- セッション管理はデバイスIDベース
+- サブスク状態・保存容量などはSupabaseで管理
 
-## 💰 課金システム
+## 💰 価格と課金
 
-**3つの課金パック**：
-- `com.example.jizai.coins20`: 20クレジット（¥320）
-- `com.example.jizai.coins100`: 100クレジット（¥1,200）
-- `com.example.jizai.coins300`: 300クレジット（¥2,800）
+- 通常価格は「1枚あたり 100円」です。
+- 期間限定セール中は、プラン画面にセール価格・通常価格・割引（◯%OFF）・1枚あたりの価格が表示されます。
+- Web版では購入はできません。購入・プラン変更は、アプリ内課金または iPhone の「設定 → Apple ID → サブスクリプション」で管理してください。
 
 ## 🛡️ エラーハンドリング
 
@@ -98,7 +94,6 @@ npx swagger-ui-serve openapi.yaml
 
 **主要エラーコード**：
 - `400`: `MISSING_DEVICE_ID`, `SAFETY_BLOCKED`
-- `402`: `INSUFFICIENT_CREDITS`
 - `409`: `DUPLICATE_TRANSACTION` 
 - `500`: `INTERNAL_ERROR`
 - `502`: `API_UNAVAILABLE`

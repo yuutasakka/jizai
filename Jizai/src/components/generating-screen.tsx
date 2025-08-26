@@ -38,7 +38,7 @@ export const GeneratingScreen = ({ onNavigate }: { onNavigate: (screen: string) 
   };
 
   const handleCancel = () => {
-    if (confirm('生成をキャンセルしますか？使用したクレジットは返還されません。')) {
+    if (confirm('生成を止めますか？')) {
       onNavigate('home');
     }
   };

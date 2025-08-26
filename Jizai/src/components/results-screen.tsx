@@ -32,7 +32,7 @@ export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
   };
 
   const handleRegenerate = () => {
-    if (confirm('同じ設定で再生成しますか？クレジットが消費されます。')) {
+    if (confirm('同じ設定で再生成しますか？')) {
       onNavigate('generating');
     }
   };

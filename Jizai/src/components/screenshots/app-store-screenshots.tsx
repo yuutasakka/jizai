@@ -347,11 +347,11 @@ const PurchaseContent = ({ isLarge }: { isLarge: boolean }) => (
         うまくいったときだけ
       </h2>
       <p className="jz-text-body text-[color:var(--color-jz-text-secondary)]">
-        失敗したら回数は減りません
+        通常100円/枚。いまだけセール中
       </p>
     </div>
 
-    {/* Recommended Plan - 50クレジット */}
+    {/* Recommended Plan - 50枚（期間限定セール） */}
     <div className="relative">
       <div className="absolute -top-[8px] right-[var(--space-16)] z-10">
         <div className="bg-[color:var(--color-jz-secondary)] text-[color:var(--color-jz-surface)] px-[var(--space-12)] py-[var(--space-8)] rounded-[10px] jz-text-caption font-semibold">
@@ -366,14 +366,14 @@ const PurchaseContent = ({ isLarge }: { isLarge: boolean }) => (
               {/* タイトル */}
               <div className="mb-[var(--space-8)]">
                 <span className="jz-font-display text-[22px] font-semibold text-[color:var(--color-jz-text-primary)]">
-                  50クレジット
+                  50枚（期間限定セール）
                 </span>
               </div>
               
               {/* 価格 */}
               <div className="flex items-baseline gap-[var(--space-8)] mb-[var(--space-4)]">
                 <span className="jz-font-display text-[22px] font-semibold text-[color:var(--color-jz-text-primary)]">¥2,750</span>
-                <span className="jz-text-caption text-[color:var(--color-jz-text-tertiary)] line-through">¥3,000</span>
+                <span className="jz-text-caption text-[color:var(--color-jz-text-tertiary)] line-through">¥5,000</span>
               </div>
               
               {/* 小ラベル */}
@@ -383,18 +383,18 @@ const PurchaseContent = ({ isLarge }: { isLarge: boolean }) => (
               
               {/* お得感 */}
               <div className="mb-[var(--space-12)]">
-                <span className="jz-text-caption text-[color:var(--color-jz-success)] font-medium">¥250お得</span>
+                <span className="jz-text-caption text-[color:var(--color-jz-success)] font-medium">35%OFF</span>
               </div>
               
               {/* ベネフィット */}
               <div className="space-y-[var(--space-8)]">
                 <div className="flex items-center gap-[var(--space-8)]">
                   <JZCheckIcon size={14} className="text-[color:var(--color-jz-success)] flex-shrink-0" />
-                  <span className="text-[15px] text-[color:var(--color-jz-text-secondary)]">生成時に消費</span>
+                  <span className="text-[15px] text-[color:var(--color-jz-text-secondary)]">日本語で指示OK</span>
                 </div>
                 <div className="flex items-center gap-[var(--space-8)]">
                   <JZCheckIcon size={14} className="text-[color:var(--color-jz-success)] flex-shrink-0" />
-                  <span className="text-[15px] text-[color:var(--color-jz-text-secondary)]">やり直し2回無料</span>
+                  <span className="text-[15px] text-[color:var(--color-jz-text-secondary)]">保存は自動。あとからダウンロード</span>
                 </div>
                 <div className="flex items-center gap-[var(--space-8)]">
                   <JZCheckIcon size={14} className="text-[color:var(--color-jz-success)] flex-shrink-0" />

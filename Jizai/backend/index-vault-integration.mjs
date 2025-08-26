@@ -16,7 +16,7 @@ import printExportRoutes from './routes/print-export.mjs';
 import webhookRoutes from './routes/webhooks.mjs';
 
 // Import legacy store for backward compatibility
-import store from './store.mjs';
+// Legacy local store removed: all persistence uses Supabase
 
 // 環境変数を読み込み
 dotenv.config();
@@ -36,7 +36,7 @@ try {
     console.log('✅ Vault subscription system initialized');
 } catch (error) {
     console.error('❌ Vault subscription system initialization failed:', error.message);
-    console.log('⚠️  Falling back to legacy file-based storage');
+    // Do not fall back to local storage; require Supabase
 }
 
 // NGワード読み込み
@@ -186,6 +186,15 @@ app.use(generalLimiter);
 // HEALTH CHECK & STATUS
 // ========================================
 
+// Friendly root message for local checks
+app.get('/', (req, res) => {
+    res.status(200).json({
+        ok: true,
+        message: 'Jizai API server. Try GET /v1/health',
+        docs: '/v1/health'
+    });
+});
+
 app.get('/v1/health', async (req, res) => {
     const health = {
         ok: true,
@@ -240,16 +249,6 @@ if (databaseInitialized) {
     app.use('/v1/webhooks', webhookRoutes);
     
     console.log('✅ Vault subscription routes registered');
-} else {
-    // Fallback endpoints when vault system is unavailable
-    app.use('/v1/subscription/*', (req, res) => {
-        res.status(503).json({
-            error: 'Service Unavailable',
-            message: 'Vault subscription system is temporarily unavailable',
-            code: 'VAULT_SYSTEM_UNAVAILABLE',
-            fallback: true
-        });
-    });
 }
 
 // ========================================
@@ -257,11 +256,18 @@ if (databaseInitialized) {
 // ========================================
 
 // 画像編集エンドポイント（既存機能を保持）
+import { supabaseService, supabaseStorage } from './config/supabase.mjs';
+import { SubscriptionService } from './services/subscription-service.mjs';
+import { randomUUID } from 'crypto';
+
+const subscriptionService = new SubscriptionService();
+
 app.post('/v1/edit', editLimiter, upload.single('image'), async (req, res) => {
     try {
         const { prompt } = req.body;
         const imageFile = req.file;
         const deviceId = req.headers['x-device-id'];
+        const { vaultId: providedVaultId } = req.body || {};
 
         // バリデーション
         if (!deviceId || typeof deviceId !== 'string' || deviceId.trim().length === 0) {
@@ -288,17 +294,13 @@ app.post('/v1/edit', editLimiter, upload.single('image'), async (req, res) => {
             });
         }
 
-        // Legacy credit system check (fallback when vault system unavailable)
+        // Ensure user exists in Supabase (no local storage)
         if (!databaseInitialized) {
-            const user = await store.getUser(deviceId);
-            if (user.credits <= 0) {
-                return res.status(402).json({
-                    error: 'Payment Required',
-                    message: 'Insufficient credits',
-                    code: 'INSUFFICIENT_CREDITS',
-                    credits: user.credits
-                });
-            }
+            return res.status(503).json({
+                error: 'Service Unavailable',
+                message: 'Database not initialized',
+                code: 'DB_UNAVAILABLE'
+            });
         }
 
         // プロンプトのモデレーション
@@ -379,11 +381,21 @@ app.post('/v1/edit', editLimiter, upload.single('image'), async (req, res) => {
             throw new Error('No valid image URL in response');
         }
 
-        // URL形式の基本検証
+        // URL形式とホストの検証（SSRF対策）
+        let parsedUrl;
         try {
-            new URL(imageUrl);
+            parsedUrl = new URL(imageUrl);
         } catch {
             throw new Error('Invalid image URL format');
+        }
+
+        if (parsedUrl.protocol !== 'https:') {
+            throw new Error('Untrusted image URL protocol');
+        }
+
+        // DashScope の生成画像は aliyuncs.com 配下を想定。必要に応じて調整。
+        if (!parsedUrl.hostname.endsWith('aliyuncs.com')) {
+            throw new Error('Untrusted image host');
         }
 
         console.log(`📸 Generated image URL: ${imageUrl}`);
@@ -395,6 +407,7 @@ app.post('/v1/edit', editLimiter, upload.single('image'), async (req, res) => {
                 responseType: 'arraybuffer',
                 timeout: 30000, // 30秒タイムアウト
                 maxContentLength: 50 * 1024 * 1024, // 50MB制限
+                maxRedirects: 0, // リダイレクト無効化（SSRF対策）
                 validateStatus: (status) => status === 200
             });
         } catch (downloadError) {
@@ -412,27 +425,94 @@ app.post('/v1/edit', editLimiter, upload.single('image'), async (req, res) => {
             throw new Error('Downloaded image is too small (likely corrupted)');
         }
 
-        // 成功時のクレジット消費（レガシーシステムのみ）
-        if (!databaseInitialized) {
-            const creditConsumed = await store.consumeCredit(deviceId);
-            if (!creditConsumed) {
-                return res.status(402).json({
-                    error: 'Payment Required',
-                    message: 'Credits exhausted during processing',
-                    code: 'CREDITS_EXHAUSTED'
-                });
+        // Persist original and edited images to Supabase Storage and record as memories
+        const user = await subscriptionService.getOrCreateUser(deviceId);
+
+        // Ensure a default vault exists for this user
+        let targetVaultId = providedVaultId;
+        if (!targetVaultId) {
+            const { data: existingVault } = await supabaseService
+                .from('vaults')
+                .select('id')
+                .eq('owner_id', user.id)
+                .is('deleted_at', null)
+                .order('created_at', { ascending: true })
+                .limit(1)
+                .single();
+            if (existingVault?.id) {
+                targetVaultId = existingVault.id;
+            } else {
+                const { data: newVault, error: vaultErr } = await supabaseService
+                    .from('vaults')
+                    .insert({
+                        owner_id: user.id,
+                        name: 'My Vault',
+                        description: 'Default vault',
+                        created_at: new Date()
+                    })
+                    .select('id')
+                    .single();
+                if (vaultErr) throw vaultErr;
+                targetVaultId = newVault.id;
             }
         }
 
-        // PNG バイナリとして返却
+        // Upload original image
+        const originalExt = mimeTypeToExt(imageFile.mimetype);
+        const originalFilename = `original_${randomUUID()}.${originalExt}`;
+        const originalPath = `memories/${user.id}/${originalFilename}`;
+        await supabaseStorage
+            .from('vault-storage')
+            .upload(originalPath, imageFile.buffer, {
+                cacheControl: '3600',
+                contentType: imageFile.mimetype
+            });
+
+        // Upload edited image (PNG)
+        const editedFilename = `edited_${randomUUID()}.png`;
+        const editedPath = `memories/${user.id}/${editedFilename}`;
+        await supabaseStorage
+            .from('vault-storage')
+            .upload(editedPath, Buffer.from(imageDownload.data), {
+                cacheControl: '3600',
+                contentType: 'image/png'
+            });
+
+        // Insert memory records
+        const memoryRecords = [
+            {
+                vault_id: targetVaultId,
+                filename: originalFilename,
+                original_filename: imageFile.originalname || originalFilename,
+                file_size_bytes: imageFile.size,
+                mime_type: imageFile.mimetype,
+                file_url: originalPath,
+                title: 'Original Image',
+                uploaded_by: deviceId,
+                uploaded_at: new Date().toISOString(),
+                processing_status: 'completed'
+            },
+            {
+                vault_id: targetVaultId,
+                filename: editedFilename,
+                original_filename: editedFilename,
+                file_size_bytes: imageDownload.data.length,
+                mime_type: 'image/png',
+                file_url: editedPath,
+                title: `Edited: ${prompt?.slice(0, 60) || ''}`,
+                uploaded_by: deviceId,
+                uploaded_at: new Date().toISOString(),
+                processing_status: 'completed'
+            }
+        ];
+
+        await supabaseService.from('memories').insert(memoryRecords);
+
+        // Return generated image as PNG to the client
         res.setHeader('Content-Type', 'image/png');
         res.setHeader('Content-Length', imageDownload.data.length);
-        
-        // レガシーシステムでのクレジット残高表示
-        if (!databaseInitialized) {
-            res.setHeader('X-Credits-Remaining', (await store.getUser(deviceId)).credits);
-        }
-        
+        // 互換性のためにダミーの残回数ヘッダーを付与（実際の課金はサブスクで管理）
+        res.setHeader('X-Credits-Remaining', '999');
         res.send(Buffer.from(imageDownload.data));
 
         console.log(`✅ Edit completed successfully, ${imageDownload.data.length} bytes`);
@@ -487,36 +567,22 @@ app.get('/v1/balance', async (req, res) => {
             });
         }
 
-        let response = {};
-
-        // Legacy credit system (always available)
-        try {
-            const user = await store.getUser(deviceId);
-            response.legacy = {
-                credits: user.credits,
-                deviceId: deviceId,
-                lastAccessAt: user.lastAccessAt
-            };
-        } catch (legacyError) {
-            console.error('Legacy balance check error:', legacyError);
-            response.legacy = { error: 'Legacy system unavailable' };
-        }
-
-        // Vault subscription system (if available)
-        if (databaseInitialized) {
-            // This would integrate with SubscriptionService
-            response.vault = {
-                available: true,
-                message: 'Use /v1/subscription/status for vault subscription info'
-            };
-        } else {
-            response.vault = {
-                available: false,
-                message: 'Vault subscription system unavailable'
-            };
-        }
-
-        res.json(response);
+        // Supabase-only: return subscription/storage summary
+        const subscription = await subscriptionService.getActiveSubscription(deviceId);
+        // Fetch or create user to read storage fields
+        const user = await subscriptionService.getOrCreateUser(deviceId);
+        res.json({
+            deviceId,
+            subscription: subscription ? {
+                status: subscription.status,
+                tier: subscription.tier,
+                expiresAt: subscription.expires_date
+            } : { status: 'free', tier: 'free' },
+            storage: {
+                quota: user.storage_quota || 0,
+                used: user.storage_used || 0
+            }
+        });
 
     } catch (error) {
         console.error('❌ Balance check error:', error.message);
@@ -527,6 +593,19 @@ app.get('/v1/balance', async (req, res) => {
         });
     }
 });
+
+function mimeTypeToExt(mime) {
+    const map = {
+        'image/jpeg': 'jpg',
+        'image/png': 'png',
+        'image/webp': 'webp',
+        'image/bmp': 'bmp',
+        'image/tiff': 'tiff',
+        'image/gif': 'gif',
+        'image/heic': 'heic'
+    };
+    return map[mime] || 'bin';
+}
 
 // 課金処理エンドポイント（Legacy preserved）
 app.post('/v1/purchase', purchaseLimiter, async (req, res) => {

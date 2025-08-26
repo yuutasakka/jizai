@@ -8,12 +8,15 @@ import { PhotoIcon, PlusIcon, SparklesIcon, BoltCircleIcon } from '../design-sys
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { cn } from '../ui/utils';
 import { apiClient } from '../../api/client';
+import { Progress } from '../ui/progress';
+import { pickBarClass, toPercent } from '../../config/storage';
 
 export const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => void }) => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [selectedPreset, setSelectedPreset] = useState<string>('');
   const [customPrompt, setCustomPrompt] = useState('');
-  const [credits, setCredits] = useState(0);
+  const [tier, setTier] = useState<string>('free');
+  const [storage, setStorage] = useState<{quota: number; used: number}>({ quota: 0, used: 0 });
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,15 +35,16 @@ export const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => voi
     "映画のポスターのような雰囲気"
   ];
 
-  // 初期化時にクレジット残高を取得
+  // 初期化時にプランと保存容量を取得
   useEffect(() => {
     const loadBalance = async () => {
       try {
         const balance = await apiClient.getBalance();
-        setCredits(balance.credits);
+        if (balance.subscription?.tier) setTier(balance.subscription.tier);
+        if (balance.storage) setStorage(balance.storage);
       } catch (error) {
         console.error('Failed to load balance:', error);
-        setError('残高の取得に失敗しました');
+        setError('プラン情報の取得に失敗しました');
       }
     };
     
@@ -66,13 +70,6 @@ export const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => voi
       alert('プリセットを選択するか、カスタムプロンプトを入力してください');
       return;
     }
-    
-    if (credits <= 0) {
-      alert('クレジットが不足しています。課金画面に移動しますか？');
-      onNavigate('purchase');
-      return;
-    }
-
     setIsGenerating(true);
     setError(null);
     
@@ -89,19 +86,13 @@ export const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => voi
       sessionStorage.setItem('original-image-url', URL.createObjectURL(selectedImage));
       sessionStorage.setItem('used-prompt', prompt);
       
-      // クレジット残高を更新
-      setCredits(result.creditsRemaining);
-      
       // 結果画面に遷移
       onNavigate('results');
       
     } catch (error: any) {
       console.error('Generation failed:', error);
       
-      if (error.message.includes('INSUFFICIENT_CREDITS')) {
-        alert('クレジットが不足しています。課金画面に移動しますか？');
-        onNavigate('purchase');
-      } else if (error.message.includes('SAFETY_BLOCKED')) {
+      if (error.message.includes('SAFETY_BLOCKED')) {
         setError('プロンプトに不適切な内容が含まれています。別の内容で試してください。');
       } else if (error.message.includes('API_UNAVAILABLE')) {
         setError('サービスが一時的に利用できません。しばらく待ってから再試行してください。');
@@ -142,13 +133,28 @@ export const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => voi
             className="bg-white/20 border-white/30 text-white hover:bg-white/30"
           >
             <BoltCircleIcon size={16} />
-            {credits}
+            プラン: {tier.toUpperCase()} / 保存 {formatStorage(storage.used)} / {formatStorage(storage.quota)}
           </DSButton>
         </div>
       </DSToolbar>
 
       {/* Content */}
       <div className="pt-[140px] pb-[var(--space-24)] px-[var(--space-16)] grid-8pt">
+        {/* Storage Usage */}
+        <div className="mb-4 p-4 rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-card)]">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[color:var(--color-text-primary)] text-sm font-medium">保存容量</span>
+            <span className="text-[color:var(--color-text-secondary)] text-xs">
+              {formatStorage(storage.used)} / {formatStorage(storage.quota)}
+            </span>
+          </div>
+          <div className="w-full h-2 rounded-full bg-[color:var(--color-border)] overflow-hidden">
+            <div
+              className={pickBarClass(storage.used, storage.quota)}
+              style={{ width: `${toPercent(storage.used, storage.quota)}%`, height: '100%' }}
+            />
+          </div>
+        </div>
         {/* Error Display */}
         {error && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -292,3 +298,14 @@ export const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => voi
     </div>
   );
 };
+
+function formatStorage(bytes: number) {
+  if (!bytes || bytes <= 0) return '0B';
+  const k = 1024;
+  const sizes = ['B','KB','MB','GB','TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  const value = (bytes / Math.pow(k, i)).toFixed(1);
+  return `${value}${sizes[i]}`;
+}
+
+// バーの色と割合は src/config/storage.ts の設定値を使用

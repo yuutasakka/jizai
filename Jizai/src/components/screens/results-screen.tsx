@@ -138,7 +138,7 @@ export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
                   "jz-text-caption",
                   retryCount > 0 ? "text-[color:var(--color-jz-success)]" : "text-[color:var(--color-jz-text-tertiary)]"
                 )}>
-                  やり直し（無料） 残り{retryCount}回
+                  やり直し 残り{retryCount}回
                 </span>
               </div>
             </div>

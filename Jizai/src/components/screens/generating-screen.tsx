@@ -38,7 +38,7 @@ export const GeneratingScreen = ({ onNavigate }: { onNavigate: (screen: string) 
   };
 
   const handleCancel = () => {
-    if (confirm('生成をキャンセルしますか？使用したクレジットは返還されません。')) {
+    if (confirm('生成を止めますか？')) {
       onNavigate('home');
     }
   };
@@ -56,7 +56,7 @@ export const GeneratingScreen = ({ onNavigate }: { onNavigate: (screen: string) 
       {/* Header */}
       <DSToolbar position="top" className="bg-[color:var(--color-surface)] border-b border-[color:var(--color-border)]">
         <div className="flex justify-between items-center pt-[44px]">
-          <h1 className="font-display text-display-medium text-[color:var(--color-text-primary)]">生成中</h1>
+            <h1 className="font-display text-display-medium text-[color:var(--color-text-primary)]">生成中</h1>
           <DSButton
             variant="tertiary"
             size="sm"

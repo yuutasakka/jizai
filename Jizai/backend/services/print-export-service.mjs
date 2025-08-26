@@ -60,10 +60,7 @@ export class PrintExportService {
       // Get memory and verify ownership
       const { data: memory, error: memoryError } = await supabaseService
         .from('memories')
-        .select(`
-          *,
-          vault:vaults(device_id)
-        `)
+        .select('*')
         .eq('id', memoryId)
         .single();
 
@@ -71,7 +68,7 @@ export class PrintExportService {
         throw new Error('Memory not found');
       }
 
-      if (memory.vault.device_id !== deviceId) {
+      if (memory.uploaded_by !== deviceId) {
         throw new Error('Access denied to memory');
       }
 
@@ -82,7 +79,8 @@ export class PrintExportService {
       }
 
       // Download original image
-      const originalImageBuffer = await this.downloadMemoryFile(memory.file_path);
+      const filePath = memory.file_path || this.extractStoragePath(memory.file_url);
+      const originalImageBuffer = await this.downloadMemoryFile(filePath);
       
       // Process image for print
       const processedImage = await this.processImageForPrint(
@@ -215,6 +213,29 @@ export class PrintExportService {
     } catch (error) {
       console.error('❌ Download memory file error:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Extract storage path from a Supabase Storage public URL or stored path
+   */
+  extractStoragePath(fileUrlOrPath) {
+    if (!fileUrlOrPath) return null;
+    // If already a relative path
+    if (!fileUrlOrPath.startsWith('http')) return fileUrlOrPath;
+    try {
+      const idx = fileUrlOrPath.indexOf('/object/');
+      if (idx !== -1) {
+        const after = fileUrlOrPath.substring(idx + '/object/'.length);
+        // after is like: public/vault-storage/<path> or vault-storage/<path>
+        const cleaned = after.replace(/^public\//, '');
+        const parts = cleaned.split('/');
+        // drop bucket name
+        return parts.slice(1).join('/');
+      }
+      return fileUrlOrPath;
+    } catch {
+      return fileUrlOrPath;
     }
   }
 

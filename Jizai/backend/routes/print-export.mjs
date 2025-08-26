@@ -316,7 +316,8 @@ router.post('/:exportId/download', async (req, res) => {
 router.delete('/:exportId', async (req, res) => {
     try {
         const { exportId } = req.params;
-        const { deviceId } = req.body;
+        // Some clients/proxies drop DELETE bodies; accept query/header as well
+        const deviceId = (req.body && req.body.deviceId) || req.query.deviceId || req.headers['x-device-id'];
 
         if (!deviceId) {
             return res.status(400).json({

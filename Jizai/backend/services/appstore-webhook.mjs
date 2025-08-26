@@ -12,7 +12,8 @@ import { createClient } from '@supabase/supabase-js';
 // Initialize Supabase client
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  // Use a single, consistent service key name across the project
+  process.env.SUPABASE_SERVICE_KEY
 );
 
 /**
@@ -402,7 +403,7 @@ export class AppStoreWebhookHandler {
    */
   async logNotification(notification, status, errorMessage = null) {
     try {
-      const { data: signedTransactionInfo } = notification.data || {};
+      const { signedTransactionInfo } = notification.data || {};
       const transactionInfo = signedTransactionInfo ? jwt.decode(signedTransactionInfo) : null;
 
       const logData = {

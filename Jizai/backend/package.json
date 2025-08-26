@@ -2,14 +2,14 @@
   "name": "jizai-backend",
   "version": "1.0.0",
   "description": "Backend API server for Jizai iOS image editing app",
-  "main": "index.mjs",
+  "main": "index-vault-integration.mjs",
   "type": "module",
   "engines": {
     "node": ">=20.0.0"
   },
   "scripts": {
-    "start": "node index.mjs",
-    "dev": "node --watch index.mjs",
+    "start": "node index-vault-integration.mjs",
+    "dev": "node --watch index-vault-integration.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

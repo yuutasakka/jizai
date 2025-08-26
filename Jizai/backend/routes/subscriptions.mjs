@@ -10,6 +10,31 @@ const router = express.Router();
 const subscriptionService = new SubscriptionService();
 const storageQuotaService = new StorageQuotaService();
 
+// Basic admin auth middleware for internal endpoints
+const requireAdmin = (req, res, next) => {
+    const token = req.headers['x-admin-token'];
+    const expected = process.env.ADMIN_TOKEN;
+
+    if (!expected) {
+        if (process.env.NODE_ENV === 'production') {
+            return res.status(503).json({
+                error: 'Service Unavailable',
+                message: 'Admin token not configured',
+                code: 'ADMIN_NOT_CONFIGURED'
+            });
+        }
+    }
+
+    if (expected && token === expected) {
+        return next();
+    }
+    return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Admin token required',
+        code: 'ADMIN_AUTH_REQUIRED'
+    });
+};
+
 // ========================================
 // SUBSCRIPTION STATUS & VALIDATION
 // ========================================
@@ -338,7 +363,7 @@ router.post('/storage/check', async (req, res) => {
  * GET /v1/subscription/analytics
  * Get subscription analytics (admin/internal use)
  */
-router.get('/analytics', async (req, res) => {
+router.get('/analytics', requireAdmin, async (req, res) => {
     try {
         // This would typically be protected by admin authentication
         const analytics = await subscriptionService.getSubscriptionAnalytics();

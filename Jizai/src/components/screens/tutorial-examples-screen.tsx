@@ -231,7 +231,7 @@ export const TutorialExamplesScreen = ({ onNavigate, onExampleSelected }: Tutori
               <li>• <strong>具体的に指示：</strong>「青い服を赤に」より「ジャケットを赤に」</li>
               <li>• <strong>元の質感を保持：</strong>「テクスチャはそのまま」を追加</li>
               <li>• <strong>日本語文字：</strong>英語プロンプトの日本語部分を調整</li>
-              <li>• <strong>複数回チャレンジ：</strong>やり直し2回まで無料</li>
+              <li>• <strong>保存は自動：</strong>あとからダウンロードできます</li>
             </ul>
           </div>
         </div>

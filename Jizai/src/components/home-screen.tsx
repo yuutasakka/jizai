@@ -8,7 +8,7 @@ export const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => voi
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [selectedPreset, setSelectedPreset] = useState<string>('');
   const [customPrompt, setCustomPrompt] = useState('');
-  const [credits] = useState(150); // Mock credits
+  // 参考表示: プラン画面へ導線
 
   const presets = [
     { id: 'anime', label: 'アニメ風' },
@@ -38,7 +38,7 @@ export const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => voi
 
   return (
     <div className="min-h-screen bg-[color:var(--color-ios-gray-6)] p-4">
-      {/* Header with Balance */}
+      {/* Header with Plan Shortcut */}
       <div className="flex justify-between items-center mb-6 pt-12">
         <h1 className="text-2xl font-semibold text-gray-900">画像編集AI</h1>
         <IOSButton
@@ -48,7 +48,7 @@ export const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => voi
           className="flex items-center gap-2"
         >
           <span className="w-2 h-2 bg-[color:var(--color-ios-blue)] rounded-full"></span>
-          {credits}クレジット
+          マイプラン
         </IOSButton>
       </div>
 
