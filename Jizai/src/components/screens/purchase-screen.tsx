@@ -46,6 +46,21 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
     }
   ];
 
+  const staffBenefits = [
+    {
+      icon: <JZCheckIcon size={16} className="text-[color:var(--color-jz-success)]" />,
+      text: "日本語OK"
+    },
+    {
+      icon: <JZCheckIcon size={16} className="text-[color:var(--color-jz-success)]" />,
+      text: "保存は手動。"
+    },
+    {
+      icon: <JZCheckIcon size={16} className="text-[color:var(--color-jz-success)]" />,
+      text: "作成データをチャットで送信"
+    }
+  ];
+
   // Web版: 購入操作は提供しない
 
   return (
@@ -151,12 +166,19 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
             const sale = p.salePrice;
             const regular = p.regularPrice;
             const off = percentOff(regular, sale);
-            const pricePer = Math.round((sale / p.units));
+            const pricePer = p.isStaff ? 0 : Math.round((sale / p.units));
             const isRecommended = !!p.recommended;
+            const isStaff = !!p.isStaff;
             return (
             <div key={p.id} className="relative">
               {/* バッジ */}
-              {off > 0 && (
+              {isStaff ? (
+                <div className="absolute -top-[8px] right-[var(--space-16)] z-10">
+                  <div className="bg-gradient-to-r from-[color:var(--color-jz-warning)] to-[color:var(--color-jz-secondary)] text-white px-[var(--space-12)] py-[var(--space-8)] rounded-[10px] jz-text-caption font-semibold">
+                    スタッフおまかせ
+                  </div>
+                </div>
+              ) : off > 0 && (
                 <div className="absolute -top-[8px] right-[var(--space-16)] z-10">
                   <div className="bg-[color:var(--color-jz-secondary)] text-[color:var(--color-jz-surface)] px-[var(--space-12)] py-[var(--space-8)] rounded-[10px] jz-text-caption font-semibold">
                     {off}%OFF
@@ -175,7 +197,7 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
                       {/* タイトル */}
                       <div className="mb-[var(--space-8)]">
                         <span className="jz-font-display text-[22px] font-semibold text-[color:var(--color-jz-text-primary)]">
-                          {p.units}枚（回数の目安）
+                          {isStaff ? 'スタッフにおまかせ' : `${p.units}枚（回数の目安）`}
                         </span>
                       </div>
                       
@@ -184,7 +206,7 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
                         <span className="jz-font-display text-[22px] font-semibold text-[color:var(--color-jz-text-primary)]">
                           {formatYen(sale)}
                         </span>
-                        {off > 0 && (
+                        {!isStaff && off > 0 && (
                           <span className="jz-text-caption text-[color:var(--color-jz-text-tertiary)] line-through">
                             {formatYen(regular)}
                           </span>
@@ -194,7 +216,7 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
                       {/* 小ラベル */}
                       <div className="mb-[var(--space-12)]">
                         <span className="text-[14px] text-[color:var(--color-jz-text-secondary)]">
-                          1枚=¥{pricePer}（通常¥100）
+                          {isStaff ? '人手チェック付き' : `1枚=¥${pricePer}（通常¥100）`}
                         </span>
                       </div>
                       
@@ -209,7 +231,7 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
                       
                       {/* ベネフィット */}
                       <div className="space-y-[var(--space-8)]">
-                        {benefits.map((benefit, index) => (
+                        {(isStaff ? staffBenefits : benefits).map((benefit, index) => (
                           <div key={index} className="flex items-center gap-[var(--space-8)]">
                             <JZCheckIcon size={14} className="text-[color:var(--color-jz-success)] flex-shrink-0" />
                             <span className="text-[15px] text-[color:var(--color-jz-text-secondary)]">
@@ -238,6 +260,49 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
             </div>
           );})}
         </div>
+
+        {/* お急ぎ便オプション */}
+        <JZCard>
+          <JZCardHeader>
+            <h2 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)]">
+              お急ぎ便オプション
+            </h2>
+          </JZCardHeader>
+          <JZCardContent>
+            <div className="bg-gradient-to-r from-[color:var(--color-jz-warning)] to-[color:var(--color-jz-secondary)] rounded-[--radius-jz-button] p-[var(--space-16)] text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold mb-[var(--space-4)]">特急1,980円</h3>
+                  <p className="text-sm opacity-90 mb-[var(--space-8)]">60分以内に返信</p>
+                  <div className="space-y-[var(--space-4)]">
+                    <div className="flex items-center gap-[var(--space-8)]">
+                      <JZCheckIcon size={14} className="text-white flex-shrink-0" />
+                      <span className="text-sm">チャットサポート</span>
+                    </div>
+                    <div className="flex items-center gap-[var(--space-8)]">
+                      <JZCheckIcon size={14} className="text-white flex-shrink-0" />
+                      <span className="text-sm">優先対応</span>
+                    </div>
+                    <div className="flex items-center gap-[var(--space-8)]">
+                      <JZCheckIcon size={14} className="text-white flex-shrink-0" />
+                      <span className="text-sm">品質保証</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl mb-[var(--space-8)]">⚡</div>
+                  <JZButton
+                    tone="secondary"
+                    size="md"
+                    className="bg-white/20 border-white/30 text-white hover:bg-white/30"
+                  >
+                    チャット開始
+                  </JZButton>
+                </div>
+              </div>
+            </div>
+          </JZCardContent>
+        </JZCard>
 
         {/* Purchase Button */}
         <JZCard>

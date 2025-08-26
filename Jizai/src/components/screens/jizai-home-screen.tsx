@@ -40,13 +40,8 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState(false);
   const [isExampleLoaded, setIsExampleLoaded] = useState(false);
+  const [isPreviewCollapsed, setIsPreviewCollapsed] = useState(true);
 
-  // 人気の編集 - 英語プロンプト
-  const recommendedPrompts = [
-    "Change OPEN to CLOSED",
-    "Change SALE 20% to 30%", 
-    "Change background to night scene"
-  ];
 
   const handleImageSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files?.[0]) {
@@ -195,15 +190,7 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
     }
   };
 
-  const handleSampleTry = () => {
-    setError(null);
-    onNavigate('progress');
-  };
 
-  const handleRecommendedPrompt = (prompt: string) => {
-    setCustomPrompt(prompt);
-    setError(null);
-  };
 
   const handleRetry = () => {
     setError(null);
@@ -226,14 +213,25 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
               <h1 className="jz-font-display jz-text-display-medium text-[color:var(--color-jz-text-primary)]">JIZAI</h1>
               <p className="jz-text-caption text-[color:var(--color-jz-text-secondary)] mt-[2px]">写真、思いのままに。</p>
             </div>
-            <JZButton
-              tone="secondary"
-              size="md"
-              onClick={() => onNavigate('purchase')}
-              className="bg-[color:var(--color-jz-accent)]/20 border-[color:var(--color-jz-accent)]/30 text-[color:var(--color-jz-accent)]"
-            >
-              マイプラン
-            </JZButton>
+            <div className="flex items-center gap-[var(--space-8)]">
+              {/* お急ぎサポートバナー */}
+              <div className="bg-gradient-to-r from-[color:var(--color-jz-warning)] to-[color:var(--color-jz-secondary)] rounded-[--radius-jz-button] px-[var(--space-12)] py-[var(--space-8)] border border-[color:var(--color-jz-warning)]/30">
+                <div className="text-center">
+                  <div className="text-white text-xs font-semibold leading-tight">お急ぎの方はこちら</div>
+                  <div className="text-white text-xs opacity-90">（チャット）</div>
+                  <div className="text-white text-xs font-bold">特急1,980円</div>
+                  <div className="text-white text-xs opacity-80">60分以内に返信</div>
+                </div>
+              </div>
+              <JZButton
+                tone="secondary"
+                size="md"
+                onClick={() => onNavigate('purchase')}
+                className="bg-[color:var(--color-jz-accent)]/20 border-[color:var(--color-jz-accent)]/30 text-[color:var(--color-jz-accent)]"
+              >
+                マイプラン
+              </JZButton>
+            </div>
           </div>
         </div>
       </div>
@@ -250,37 +248,6 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
           </p>
         </div>
 
-        {/* Recommended Prompts - 英語プロンプト */}
-        <JZCard>
-          <JZCardHeader>
-            <div className="flex items-center justify-between">
-              <h3 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)]">人気の編集</h3>
-              <JZButton
-                tone="tertiary"
-                size="sm"
-                onClick={() => onNavigate('tutorial-examples')}
-                className="text-[color:var(--color-jz-accent)] hover:text-[color:var(--color-jz-accent)]"
-              >
-                実例を見る →
-              </JZButton>
-            </div>
-          </JZCardHeader>
-          <JZCardContent>
-            <div className="flex flex-wrap gap-[var(--space-8)]">
-              {recommendedPrompts.map((prompt, index) => (
-                <JZChip
-                  key={index}
-                  size="md"
-                  variant={customPrompt === prompt ? 'selected' : 'default'}
-                  onClick={() => handleRecommendedPrompt(prompt)}
-                  className="bg-[color:var(--color-jz-accent)]/10 text-[color:var(--color-jz-accent)] border-[color:var(--color-jz-accent)]/30 hover:bg-[color:var(--color-jz-accent)]/20"
-                >
-                  {prompt}
-                </JZChip>
-              ))}
-            </div>
-          </JZCardContent>
-        </JZCard>
 
         {/* Error State */}
         {error && (
@@ -379,14 +346,20 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
               />
             </div>
             
-            {/* 英語プロンプト */}
+            {/* 送信内容プレビュー（折りたたみ式） */}
             <div className="space-y-[var(--space-8)]">
               <div className="flex items-center justify-between">
-                <label className="jz-text-body font-medium text-[color:var(--color-jz-text-primary)]">
-                  英語プロンプト
-                </label>
+                <JZButton
+                  tone="tertiary"
+                  size="sm"
+                  onClick={() => setIsPreviewCollapsed(!isPreviewCollapsed)}
+                  className="flex items-center gap-[var(--space-8)] text-[color:var(--color-jz-text-primary)]"
+                >
+                  <span className={`transform transition-transform ${isPreviewCollapsed ? '' : 'rotate-90'}`}>▶</span>
+                  送信内容プレビュー
+                </JZButton>
                 <div className="flex items-center gap-[var(--space-8)]">
-                  {englishPreview && (
+                  {englishPreview && !isPreviewCollapsed && (
                     <JZButton
                       tone="tertiary"
                       size="sm"
@@ -412,38 +385,41 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
                 </div>
               </div>
               
-              <div className="p-[var(--space-16)] bg-[color:var(--color-jz-surface)] rounded-[--radius-jz-button] border border-[color:var(--color-jz-border)] min-h-[80px]">
-                {isTranslating ? (
-                  <div className="flex items-center gap-[var(--space-12)]">
-                    <div className="w-[16px] h-[16px] border-2 border-[color:var(--color-jz-accent)] border-t-transparent rounded-full animate-spin" />
-                    <span className="jz-text-caption text-[color:var(--color-jz-text-secondary)]">変換中...</span>
-                  </div>
-                ) : englishPreview ? (
-                  <div>
-                    <div className="jz-text-caption text-[color:var(--color-jz-text-secondary)] font-mono leading-relaxed mb-[var(--space-12)]">
-                      {englishPreview}
+              {!isPreviewCollapsed && (
+                <div className="p-[var(--space-16)] bg-[color:var(--color-jz-surface)] rounded-[--radius-jz-button] border border-[color:var(--color-jz-border)] min-h-[80px]">
+                  {isTranslating ? (
+                    <div className="flex items-center gap-[var(--space-12)]">
+                      <div className="w-[16px] h-[16px] border-2 border-[color:var(--color-jz-accent)] border-t-transparent rounded-full animate-spin" />
+                      <span className="jz-text-caption text-[color:var(--color-jz-text-secondary)]">変換中...</span>
                     </div>
-                    {selectedExample && (
-                      <div className="p-[var(--space-12)] bg-[color:var(--color-jz-accent)]/10 rounded-[--radius-jz-button] border border-[color:var(--color-jz-accent)]/20">
-                        <p className="jz-text-caption text-[color:var(--color-jz-accent)] flex items-center gap-[var(--space-8)]">
-                          <span>✨</span>
-                          例から自動設定されました
-                        </p>
+                  ) : englishPreview ? (
+                    <div>
+                      <div className="jz-text-caption text-[color:var(--color-jz-text-secondary)] font-mono leading-relaxed mb-[var(--space-12)]">
+                        {englishPreview}
                       </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="jz-text-caption text-[color:var(--color-jz-text-tertiary)]">
-                    日本語で指示を入力すると、英語プロンプトが表示されます
-                  </div>
-                )}
-              </div>
+                      {selectedExample && (
+                        <div className="p-[var(--space-12)] bg-[color:var(--color-jz-accent)]/10 rounded-[--radius-jz-button] border border-[color:var(--color-jz-accent)]/20">
+                          <p className="jz-text-caption text-[color:var(--color-jz-accent)] flex items-center gap-[var(--space-8)]">
+                            <span>✨</span>
+                            例から自動設定されました
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="jz-text-caption text-[color:var(--color-jz-text-tertiary)]">
+                      日本語で指示を入力すると、英語プロンプトが表示されます
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             
             {/* 注意書き */}
             <div className="p-[var(--space-12)] bg-[color:var(--color-jz-card)] rounded-[--radius-jz-button] border border-[color:var(--color-jz-border)]">
               <p className="jz-text-caption text-[#A1A1AA]">
-                ※プレビューは英語です。<strong>画像に日本語の文字を入れる場合は、その部分を日本語に置き換えてから生成</strong>してください。
+                ※プレビューは英語です。<strong>画像に日本語の文字を入れる場合は、その部分を日本語に置き換えてから生成</strong>してください。<br/>
+                ※生成された画像は自動でクラウドに保存されます。
               </p>
             </div>
           </JZCardContent>
@@ -486,15 +462,6 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
               state={(!selectedImage && !selectedExample) || (!customPrompt && !japaneseInput.trim() && !englishPreview.trim()) ? 'disabled' : 'default'}
             >
               写真を変える
-            </JZButton>
-            <JZButton
-              tone="tertiary"
-              size="md"
-              fullWidth
-              onClick={handleSampleTry}
-              className="text-[color:var(--color-jz-text-secondary)]"
-            >
-              おためし
             </JZButton>
           </JZCardContent>
         </JZCard>

@@ -16,7 +16,6 @@ import {
 
 export const SettingsScreen = ({ onNavigate }: { onNavigate: (screen: string) => void }) => {
   const [notifications, setNotifications] = useState(true);
-  const [autoSave, setAutoSave] = useState(true);
 
   const settingsSections = [
     {
@@ -29,14 +28,6 @@ export const SettingsScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
           action: 'toggle',
           value: notifications,
           onChange: setNotifications
-        },
-        {
-          icon: <JZPhotographIcon size={20} className="text-[color:var(--color-jz-success)]" />,
-          title: '自動で保存',
-          subtitle: 'できた写真を自動で保存する',
-          action: 'toggle',
-          value: autoSave,
-          onChange: setAutoSave
         },
         {
           icon: <JZPhotographIcon size={20} className="text-[color:var(--color-jz-accent)]" />,
