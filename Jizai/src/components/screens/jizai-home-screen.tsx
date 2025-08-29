@@ -205,7 +205,7 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
 
   return (
     <div className="min-h-screen bg-[color:var(--color-jz-surface)]">
-      {/* Header with Glass Effect */}
+      {/* Header with Glass Effect */
       <div className="fixed top-0 left-0 right-0 z-50">
         <div className="jz-glass-effect border-b border-[color:var(--color-jz-border)]">
           <div className="flex justify-between items-center pt-[44px] px-[var(--space-16)] pb-[var(--space-16)]">
@@ -214,20 +214,17 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
               <p className="jz-text-caption text-[color:var(--color-jz-text-secondary)] mt-[2px]">写真、思いのままに。</p>
             </div>
             <div className="flex items-center gap-[var(--space-8)]">
-              {/* お急ぎサポートバナー */}
-              <div className="bg-gradient-to-r from-[color:var(--color-jz-warning)] to-[color:var(--color-jz-secondary)] rounded-[--radius-jz-button] px-[var(--space-12)] py-[var(--space-8)] border border-[color:var(--color-jz-warning)]/30">
-                <div className="text-center">
-                  <div className="text-white text-xs font-semibold leading-tight">お急ぎの方はこちら</div>
-                  <div className="text-white text-xs opacity-90">（チャット）</div>
-                  <div className="text-white text-xs font-bold">特急1,980円</div>
-                  <div className="text-white text-xs opacity-80">60分以内に返信</div>
-                </div>
-              </div>
+              <a
+                href="#support"
+                className="px-[var(--space-12)] py-[var(--space-8)] rounded-[--radius-jz-button] bg-[color:var(--color-jz-accent)] text-white font-semibold border border-[color:var(--color-jz-accent)]/20 shadow-sm hover:opacity-90 transition"
+              >
+                24時間サポート（電話/チャット）
+              </a>
               <JZButton
                 tone="secondary"
                 size="md"
                 onClick={() => onNavigate('purchase')}
-                className="bg-[color:var(--color-jz-accent)]/20 border-[color:var(--color-jz-accent)]/30 text-[color:var(--color-jz-accent)]"
+                className="bg-[color:var(--color-jz-accent)]/10 border-[color:var(--color-jz-accent)]/30 text-[color:var(--color-jz-accent)]"
               >
                 マイプラン
               </JZButton>
@@ -240,12 +237,30 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
       <div className="pt-[140px] pb-[var(--space-24)] px-[var(--space-16)] jz-grid-8pt jz-spacing-16">
         {/* Hero Area */}
         <div className="text-center py-[var(--space-24)]">
-          <h2 className="jz-font-display jz-text-display-large text-[color:var(--color-jz-text-primary)] mb-[var(--space-12)]">
-            写真、思いのままに。
-          </h2>
-          <p className="jz-text-body text-[color:var(--color-jz-text-secondary)] max-w-[280px] mx-auto leading-relaxed">
-            変えたいところだけ、意図どおりに。
+          <h1 className="jz-font-display jz-text-display-large text-[color:var(--color-jz-text-primary)] mb-[var(--space-12)]">
+            遺影写真の編集と仕上げ、すぐに。
+          </h1>
+          <p className="jz-text-body text-[color:var(--color-jz-text-secondary)] max-w-[360px] mx-auto leading-relaxed mb-[var(--space-16)]">
+            四つ切・A4・L判対応／1件〜当日仕上げ／やり直し2回無料
           </p>
+          <div className="flex items-center justify-center gap-[var(--space-12)]">
+            <JZButton
+              tone="primary"
+              size="lg"
+              onClick={() => {
+                const el = document.getElementById('photo-input') as HTMLInputElement | null;
+                el?.click();
+              }}
+            >
+              遺影を作成する
+            </JZButton>
+            <a
+              href="#support"
+              className="px-[var(--space-16)] py-[10px] rounded-[--radius-jz-button] border border-[color:var(--color-jz-border)] text-[color:var(--color-jz-text-primary)] hover:bg-[color:var(--color-jz-card)] transition"
+            >
+              お急ぎの方（今すぐ相談）
+            </a>
+          </div>
         </div>
 
 
@@ -369,7 +384,7 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
                       }`}
                     >
                       <JZCopyIcon size={14} />
-                      {copied ? 'コピー済み' : copyError ? '手動選択' : 'Copy'}
+                      {copied ? 'コピー済み' : copyError ? '手動選択' : 'コピー'}
                     </JZButton>
                   )}
                   <JZButton
@@ -408,7 +423,7 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
                     </div>
                   ) : (
                     <div className="jz-text-caption text-[color:var(--color-jz-text-tertiary)]">
-                      日本語で指示を入力すると、英語プロンプトが表示されます
+                      日本語で指示を入力すると、内容が自動で整形されます
                     </div>
                   )}
                 </div>
@@ -418,7 +433,7 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
             {/* 注意書き */}
             <div className="p-[var(--space-12)] bg-[color:var(--color-jz-card)] rounded-[--radius-jz-button] border border-[color:var(--color-jz-border)]">
               <p className="jz-text-caption text-[#A1A1AA]">
-                ※プレビューは英語です。<strong>画像に日本語の文字を入れる場合は、その部分を日本語に置き換えてから生成</strong>してください。<br/>
+                ※プレビューは送信内容の表示です。<strong>画像内の日本語文字は、そのままの表記で生成</strong>してください。<br/>
                 ※生成された画像は自動でクラウドに保存されます。
               </p>
             </div>
@@ -437,7 +452,7 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
                 setCustomPrompt(e.target.value);
                 setError(null);
               }}
-              placeholder="例：Change OPEN to CLOSED"
+              placeholder="例：看板の『営業中』という文字を『準備中』に変えてください"
               className="w-full h-[100px] p-[var(--space-16)] bg-[color:var(--color-jz-surface)] border border-[color:var(--color-jz-border)] rounded-[--radius-jz-button] resize-none focus:outline-none focus:ring-2 focus:ring-[color:var(--color-jz-accent)] focus:border-transparent jz-text-body text-[color:var(--color-jz-text-primary)] placeholder:text-[color:var(--color-jz-text-tertiary)]"
               rows={3}
             />
