@@ -140,6 +140,8 @@ struct ProductCard: View {
     let appState: AppState
     
     @State private var isPurchasing = false
+    @State private var showStaffTicket = false
+    @State private var staffTicket = ""
     
     var body: some View {
         VStack(spacing: 12) {
@@ -155,7 +157,7 @@ struct ProductCard: View {
                         .lineLimit(2)
                     
                     if let jizaiProduct = storeManager.getJizaiProduct(for: product) {
-                        Text("\(jizaiProduct.credits)クレジット")
+                        Text(jizaiProduct.displayName)
                             .font(.subheadline)
                             .foregroundColor(.blue)
                             .fontWeight(.medium)
@@ -204,6 +206,11 @@ struct ProductCard: View {
                 .cornerRadius(8)
             }
             .disabled(isPurchasing || storeManager.isLoading)
+            .alert("スタッフ受付", isPresented: $showStaffTicket) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("受付番号: \(staffTicket.prefix(8))")
+            }
         }
         .padding()
         .background(Color(.systemGray6))
@@ -220,6 +227,12 @@ struct ProductCard: View {
             case .success:
                 // Refresh balance after successful purchase
                 await appState.refreshBalance()
+                
+                // If staff service, show ticket number (temporary client-side)
+                if product.id == JizaiProduct.staffService.rawValue {
+                    staffTicket = UUID().uuidString
+                    showStaffTicket = true
+                }
                 
             case .cancelled:
                 break // User cancelled, no action needed
@@ -242,6 +255,7 @@ struct ProductCard: View {
         
         let currentPrice = Double(product.price)
         let currentCredits = Double(jizaiProduct.credits)
+        guard currentCredits > 0 else { return 0 }
         let currentPricePerCredit = currentPrice / currentCredits
         
         let savings = (basePricePerCredit - currentPricePerCredit) / basePricePerCredit * 100

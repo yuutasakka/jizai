@@ -18,9 +18,12 @@ class StoreManager: ObservableObject {
     
     // Product IDs matching backend
     private let productIDs: Set<String> = [
-        "com.example.jizai.coins20",
-        "com.example.jizai.coins100", 
-        "com.example.jizai.coins300"
+        "com.jizai.coins2",
+        "com.jizai.coins10",
+        "com.jizai.coins20",
+        "com.jizai.coins50",
+        "com.jizai.coins100",
+        "com.jizai.staff.service"
     ]
     
     private init() {

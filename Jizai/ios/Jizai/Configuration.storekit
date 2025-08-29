@@ -4,66 +4,18 @@
 
   ],
   "products" : [
-    {
-      "displayPrice" : "320",
-      "familyShareable" : false,
-      "identifier" : "com.example.jizai.coins20",
-      "localizations" : [
-        {
-          "description" : "20クレジットパック - 20回の画像編集が可能",
-          "displayName" : "20クレジット",
-          "locale" : "ja"
-        },
-        {
-          "description" : "20 credits pack - 20 image edits available",
-          "displayName" : "20 Credits",
-          "locale" : "en_US"
-        }
-      ],
-      "productID" : "com.example.jizai.coins20",
-      "referenceName" : "20 Credits",
-      "type" : "Consumable"
-    },
-    {
-      "displayPrice" : "1200",
-      "familyShareable" : false,
-      "identifier" : "com.example.jizai.coins100",
-      "localizations" : [
-        {
-          "description" : "100クレジットパック - 100回の画像編集が可能（20%お得）",
-          "displayName" : "100クレジット",
-          "locale" : "ja"
-        },
-        {
-          "description" : "100 credits pack - 100 image edits available (20% off)",
-          "displayName" : "100 Credits",
-          "locale" : "en_US"
-        }
-      ],
-      "productID" : "com.example.jizai.coins100",
-      "referenceName" : "100 Credits",
-      "type" : "Consumable"
-    },
-    {
-      "displayPrice" : "2800",
-      "familyShareable" : false,
-      "identifier" : "com.example.jizai.coins300",
-      "localizations" : [
-        {
-          "description" : "300クレジットパック - 300回の画像編集が可能（30%お得）",
-          "displayName" : "300クレジット",
-          "locale" : "ja"
-        },
-        {
-          "description" : "300 credits pack - 300 image edits available (30% off)",
-          "displayName" : "300 Credits",
-          "locale" : "en_US"
-        }
-      ],
-      "productID" : "com.example.jizai.coins300",
-      "referenceName" : "300 Credits",
-      "type" : "Consumable"
-    }
+    { "identifier": "com.jizai.coins2", "productID": "com.jizai.coins2", "referenceName": "2 Credits", "type": "Consumable", "displayPrice": "160", "familyShareable": false,
+      "localizations": [ {"description":"2枚（回数の目安）","displayName":"2クレジット","locale":"ja"}, {"description":"2 credits pack","displayName":"2 Credits","locale":"en_US"} ] },
+    { "identifier": "com.jizai.coins10", "productID": "com.jizai.coins10", "referenceName": "10 Credits", "type": "Consumable", "displayPrice": "700", "familyShareable": false,
+      "localizations": [ {"description":"10枚（回数の目安）","displayName":"10クレジット","locale":"ja"}, {"description":"10 credits pack","displayName":"10 Credits","locale":"en_US"} ] },
+    { "identifier": "com.jizai.coins20", "productID": "com.jizai.coins20", "referenceName": "20 Credits", "type": "Consumable", "displayPrice": "1400", "familyShareable": false,
+      "localizations": [ {"description":"20枚（回数の目安）","displayName":"20クレジット","locale":"ja"}, {"description":"20 credits pack","displayName":"20 Credits","locale":"en_US"} ] },
+    { "identifier": "com.jizai.coins50", "productID": "com.jizai.coins50", "referenceName": "50 Credits", "type": "Consumable", "displayPrice": "3250", "familyShareable": false,
+      "localizations": [ {"description":"50枚（回数の目安）","displayName":"50クレジット","locale":"ja"}, {"description":"50 credits pack","displayName":"50 Credits","locale":"en_US"} ] },
+    { "identifier": "com.jizai.coins100", "productID": "com.jizai.coins100", "referenceName": "100 Credits", "type": "Consumable", "displayPrice": "6000", "familyShareable": false,
+      "localizations": [ {"description":"100枚（回数の目安）","displayName":"100クレジット","locale":"ja"}, {"description":"100 credits pack","displayName":"100 Credits","locale":"en_US"} ] },
+    { "identifier": "com.jizai.staff.service", "productID": "com.jizai.staff.service", "referenceName": "Staff Service", "type": "Consumable", "displayPrice": "5980", "familyShareable": false,
+      "localizations": [ {"description":"スタッフにおまかせ（有人仕上げ/1件）","displayName":"スタッフにおまかせ","locale":"ja"}, {"description":"Staff assisted finishing (1 job)","displayName":"Staff Service","locale":"en_US"} ] }
   ],
   "settings" : {
     "_applicationInternalID" : "6475512345",
