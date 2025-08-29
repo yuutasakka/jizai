@@ -1,3 +1,5 @@
+// TODO: /public/examples/* に実画像を配置したら src を差し替え
+// 命名規則：human_01_before.jpg / human_01_after.jpg 等
 import React from 'react';
 import { JZButton } from '../components/design-system/jizai-button';
 import { JZCard, JZCardContent, JZCardHeader } from '../components/design-system/jizai-card';
@@ -220,9 +222,9 @@ function BaseMemorialPage({ h1, desc, steps, presets, examples, faq, serviceType
   );
 }
 
-// 画像はフリーのプレースホルダ
-const PH_BEFORE = 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&q=60';
-const PH_AFTER  = 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&q=60&sat=-100';
+// 画像は一時的に Unsplash のプレースホルダを使用（差し替え前提）
+const PH_BEFORE = 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=1200&q=80';
+const PH_AFTER  = 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=1200&q=80&sat=-100';
 
 export function MemorialHumanPage() {
   return (
