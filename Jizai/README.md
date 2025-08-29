@@ -24,3 +24,17 @@
     - GitHub の PR 画面で Vercel のチェック/コメントに表示される URL を開く。
     - または Vercel ダッシュボード > 該当プロジェクト > Deployments の最新 "Preview" を開く。
   - 注意: Production 反映は `main` ブランチに merge されたときのみ行われます（Preview とは別 URL）。
+
+  ## ローカルでの変更確認（LPプレビュー）
+
+  - フロントエンドのみで確認する場合（Hero文言・CTA等の見た目確認）
+    - 依存関係インストール: `npm i`
+    - 開発サーバ起動: `npm run dev`
+    - ブラウザで `http://localhost:5173` を開く（Vite のデフォルト）
+  - バックエンドも起動して動作を確認する場合（任意）
+    - ルートに `.env.local`（任意）で `VITE_API_BASE_URL=http://localhost:3000` を設定
+    - `backend/` に移動して `npm i`、`.env` を作成（`backend/.env.example` を参考に値をセット）
+    - `cd backend && npm run dev`（ポート `3000`）
+    - 別ターミナルでフロントエンドを `npm run dev` 起動
+  - 既知の注意点
+    - バックエンドは Supabase と DashScope のキーが必要です。LPの見た目だけ確認する場合はフロントエンドのみ起動で十分です。
