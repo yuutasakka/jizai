@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { track } from './lib/analytics';
+import { setupGlobalErrorHandling, setupPerformanceMonitoring, errorTracker } from './lib/error-tracking';
 import { JizaiOnboardingScreen } from './components/screens/jizai-onboarding-screen';
 import { JizaiHomeScreen } from './components/screens/jizai-home-screen';
 import { JizaiProgressScreen } from './components/screens/jizai-progress-screen';
@@ -28,6 +30,35 @@ export default function App() {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [selectedExample, setSelectedExample] = useState<ExampleData | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // エラートラッキングとモニタリングの初期化
+  useEffect(() => {
+    setupGlobalErrorHandling();
+    setupPerformanceMonitoring();
+    
+    errorTracker.log('info', 'App initialized', {
+      userAgent: navigator.userAgent,
+      viewport: {
+        width: window.innerWidth,
+        height: window.innerHeight
+      }
+    });
+  }, []);
+
+  // Detect preset complete from URL (/?usecase=&preset=) and fire event once per session
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      const usecase = url.searchParams.get('usecase');
+      if (usecase) {
+        const preset = url.searchParams.get('preset') || '';
+        if (!sessionStorage.getItem('ga_preset_complete')) {
+          track('preset_complete', { usecase, preset });
+          sessionStorage.setItem('ga_preset_complete', '1');
+        }
+      }
+    } catch {}
+  }, []);
 
   const handleOnboardingComplete = () => {
     setHasCompletedOnboarding(true);
