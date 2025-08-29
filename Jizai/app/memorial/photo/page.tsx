@@ -12,7 +12,9 @@ export const generateMetadata = (): Metadata => ({
     description: '法要・命日の写真整えと印刷最適化。四つ切/A4/L判。',
     url: 'https://{your-domain}/memorial/photo',
     type: 'website',
+    images: ['/og.png'],
   },
+  twitter: { images: ['/og.png'] },
 });
 
 const jsonLd = {

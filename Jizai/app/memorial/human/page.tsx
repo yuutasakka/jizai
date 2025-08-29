@@ -14,7 +14,9 @@ export const generateMetadata = (): Metadata => ({
       '四つ切・A4・L判に最適化。服装・背景・肌/髪の整え。やり直し2回無料、当日仕上げ可。',
     url: 'https://{your-domain}/memorial/human',
     type: 'website',
+    images: ['/og.png'],
   },
+  twitter: { images: ['/og.png'] },
 });
 
 const jsonLd = {

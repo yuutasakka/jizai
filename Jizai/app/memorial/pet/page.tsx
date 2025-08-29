@@ -12,7 +12,9 @@ export const generateMetadata = (): Metadata => ({
     description: '毛並みの整え・背景無地化・色味補正。四つ切/A4/L判、当日対応。',
     url: 'https://{your-domain}/memorial/pet',
     type: 'website',
+    images: ['/og.png'],
   },
+  twitter: { images: ['/og.png'] },
 });
 
 const jsonLd = {

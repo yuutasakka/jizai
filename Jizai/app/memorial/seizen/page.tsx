@@ -12,7 +12,9 @@ export const generateMetadata = (): Metadata => ({
     description: '終活ポートレートの整えとサイズ書き出し。自然な仕上がりで。',
     url: 'https://{your-domain}/memorial/seizen',
     type: 'website',
+    images: ['/og.png'],
   },
+  twitter: { images: ['/og.png'] },
 });
 
 const jsonLd = {
