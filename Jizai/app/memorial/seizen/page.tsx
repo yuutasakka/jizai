@@ -3,14 +3,16 @@ import Script from 'next/script';
 
 export const dynamic = 'force-static';
 
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://{your-domain}';
+
 export const generateMetadata = (): Metadata => ({
   title: '生前撮影（終活）のレタッチ・最適仕上げ – JIZAI',
   description: '生前撮影の肌や色味を自然に整え、四つ切・A4・L判へ書き出し。断裁ガイド付きで失敗しません。',
-  alternates: { canonical: 'https://{your-domain}/memorial/seizen' },
+  alternates: { canonical: `${SITE}/memorial/seizen` },
   openGraph: {
     title: '生前撮影（終活）のレタッチ・最適仕上げ – JIZAI',
     description: '生前撮影の肌や色味を自然に整え、四つ切・A4・L判へ書き出し。断裁ガイド付きで失敗しません。',
-    url: 'https://{your-domain}/memorial/seizen',
+    url: `${SITE}/memorial/seizen`,
     type: 'website',
   },
 });
@@ -147,9 +149,9 @@ export default function Page() {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://{your-domain}/' },
-          { '@type': 'ListItem', position: 2, name: '用途別', item: 'https://{your-domain}/memorial/human' },
-          { '@type': 'ListItem', position: 3, name: '生前撮影', item: 'https://{your-domain}/memorial/seizen' },
+          { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE}/` },
+          { '@type': 'ListItem', position: 2, name: '用途別', item: `${SITE}/memorial/human` },
+          { '@type': 'ListItem', position: 3, name: '生前撮影', item: `${SITE}/memorial/seizen` },
         ]
       }) }} />
       <Script id="jsonld-service" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />

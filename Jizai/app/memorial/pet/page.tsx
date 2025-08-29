@@ -5,14 +5,16 @@ import Image from 'next/image';
 
 export const dynamic = 'force-static';
 
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://{your-domain}';
+
 export const generateMetadata = (): Metadata => ({
   title: 'ペット遺影の編集｜毛並み整え・背景無地化 – JIZAI',
   description: 'ペット遺影の毛並み整え・背景無地化・色味補正。四つ切・A4・L判対応。自然な仕上がりで当日対応。',
-  alternates: { canonical: 'https://{your-domain}/memorial/pet' },
+  alternates: { canonical: `${SITE}/memorial/pet` },
   openGraph: {
     title: 'ペット遺影の編集｜毛並み整え・背景無地化 – JIZAI',
     description: 'ペット遺影の毛並み整え・背景無地化・色味補正。四つ切・A4・L判対応。自然な仕上がりで当日対応。',
-    url: 'https://{your-domain}/memorial/pet',
+    url: `${SITE}/memorial/pet`,
     type: 'website',
   },
 });
@@ -151,9 +153,9 @@ export default function Page() {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://{your-domain}/' },
-          { '@type': 'ListItem', position: 2, name: '用途別', item: 'https://{your-domain}/memorial/human' },
-          { '@type': 'ListItem', position: 3, name: 'ペット遺影', item: 'https://{your-domain}/memorial/pet' },
+          { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE}/` },
+          { '@type': 'ListItem', position: 2, name: '用途別', item: `${SITE}/memorial/human` },
+          { '@type': 'ListItem', position: 3, name: 'ペット遺影', item: `${SITE}/memorial/pet` },
         ]
       }) }} />
       <Script id="jsonld-service" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />

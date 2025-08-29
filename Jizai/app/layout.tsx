@@ -2,7 +2,7 @@ import Script from 'next/script';
 import { Noto_Sans_JP } from 'next/font/google';
 
 export const metadata = {
-  metadataBase: new URL('https://{your-domain}'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://{your-domain}'),
   openGraph: {
     type: 'website',
     siteName: 'JIZAI',

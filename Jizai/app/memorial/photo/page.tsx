@@ -5,14 +5,16 @@ import Image from 'next/image';
 
 export const dynamic = 'force-static';
 
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://{your-domain}';
+
 export const generateMetadata = (): Metadata => ({
   title: 'メモリアルフォト編集｜法要・命日の最適化 – JIZAI',
   description: '法要・命日の写真をA4・L判に最適化。色味補正・不要物軽減・断裁ガイド付き。やり直し2回無料。',
-  alternates: { canonical: 'https://{your-domain}/memorial/photo' },
+  alternates: { canonical: `${SITE}/memorial/photo` },
   openGraph: {
     title: 'メモリアルフォト編集｜法要・命日の最適化 – JIZAI',
     description: '法要・命日の写真をA4・L判に最適化。色味補正・不要物軽減・断裁ガイド付き。やり直し2回無料。',
-    url: 'https://{your-domain}/memorial/photo',
+    url: `${SITE}/memorial/photo`,
     type: 'website',
   },
 });
@@ -151,9 +153,9 @@ export default function Page() {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://{your-domain}/' },
-          { '@type': 'ListItem', position: 2, name: '用途別', item: 'https://{your-domain}/memorial/human' },
-          { '@type': 'ListItem', position: 3, name: 'メモリアルフォト', item: 'https://{your-domain}/memorial/photo' },
+          { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE}/` },
+          { '@type': 'ListItem', position: 2, name: '用途別', item: `${SITE}/memorial/human` },
+          { '@type': 'ListItem', position: 3, name: 'メモリアルフォト', item: `${SITE}/memorial/photo` },
         ]
       }) }} />
       <Script id="jsonld-service" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />

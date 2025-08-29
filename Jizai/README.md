@@ -47,7 +47,16 @@
   - サイトマップURL: `https://{your-domain}/sitemap.xml` を送信
   - 収集後、カバレッジで `/memorial/human|pet|seizen|photo` が列挙されることを確認
   - 注意: 既存SPAの head と重複しないよう、用途別ページは Server Component 側でメタ/OG/JSON-LD を出力しています。
-  - 環境変数: `.env.local` に `NEXT_PUBLIC_SITE_URL` と `NEXT_PUBLIC_GSC_VERIF` を設定すると、`app/layout.tsx` に検証メタが出力されます。
+  - 環境変数: `.env.local` に `NEXT_PUBLIC_SITE_URL` と `NEXT_PUBLIC_GSC_VERIF` を設定すると、`app/layout.tsx` に検証メタが出力されます。`NEXT_PUBLIC_SITE_URL` は canonical/OG/Twitter の基準URLにも使用されます。
+  - Vercel 環境変数: Preview/Production で `NEXT_PUBLIC_SITE_URL` をそれぞれのドメインに設定してください。
+
+  ## 本番リリース前の最終設定
+
+  - セキュリティヘッダ: `middleware.ts` で X-Frame-Options / X-Content-Type-Options / Referrer-Policy を付与
+  - キャッシュ: `next.config.js` の headers で `/og.png` と `/examples/*` に `immutable` キャッシュ
+  - リダイレクト: `/memorial` → `/memorial/human` を permanent で設定
+  - 404/500 UI: `app/not-found.tsx` / `app/error.tsx`
+  - GA4: 管理画面で `begin_edit` / `preset_complete` / `export_print` / `cta_emergency` をコンバージョン登録
 
   ## Lighthouse CI（PR自動チェック）
 

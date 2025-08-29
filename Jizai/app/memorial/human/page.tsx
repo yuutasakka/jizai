@@ -5,16 +5,18 @@ import Image from 'next/image';
 
 export const dynamic = 'force-static';
 
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://{your-domain}';
+
 export const generateMetadata = (): Metadata => ({
   title: '遺影写真の編集・四つ切/A4/L判対応｜当日仕上げ – JIZAI',
   description:
     '遺影の背景・服装・肌/髪の整えを自然に。四つ切・A4・L判に最適化、やり直し2回無料。最短当日で仕上げます。',
-  alternates: { canonical: 'https://{your-domain}/memorial/human' },
+  alternates: { canonical: `${SITE}/memorial/human` },
   openGraph: {
     title: '遺影写真の編集・四つ切/A4/L判対応｜当日仕上げ – JIZAI',
     description:
       '遺影の背景・服装・肌/髪の整えを自然に。四つ切・A4・L判に最適化、やり直し2回無料。最短当日で仕上げます。',
-    url: 'https://{your-domain}/memorial/human',
+    url: `${SITE}/memorial/human`,
     type: 'website',
   },
 });
@@ -218,9 +220,9 @@ export default function Page() {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://{your-domain}/' },
-          { '@type': 'ListItem', position: 2, name: '用途別', item: 'https://{your-domain}/memorial/human' },
-          { '@type': 'ListItem', position: 3, name: '遺影写真（人）', item: 'https://{your-domain}/memorial/human' },
+          { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE}/` },
+          { '@type': 'ListItem', position: 2, name: '用途別', item: `${SITE}/memorial/human` },
+          { '@type': 'ListItem', position: 3, name: '遺影写真（人）', item: `${SITE}/memorial/human` },
         ]
       }) }} />
       <Script id="jsonld-service" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
