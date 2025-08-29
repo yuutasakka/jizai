@@ -47,3 +47,14 @@
   - サイトマップURL: `https://{your-domain}/sitemap.xml` を送信
   - 収集後、カバレッジで `/memorial/human|pet|seizen|photo` が列挙されることを確認
   - 注意: 既存SPAの head と重複しないよう、用途別ページは Server Component 側でメタ/OG/JSON-LD を出力しています。
+
+  ## GA4（計測）設定とイベント
+
+  - 環境変数: `.env.local` に `NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX`
+  - 反映箇所: `app/layout.tsx` で GA4 スニペットを条件付き挿入（同意モード簡易/匿名IP）
+  - 主要イベント（Console で確認可能）:
+    - `begin_edit`: 画像アップロード直後
+    - `preset_complete`: 用途ページの「この設定で作成する」から遷移時（クエリをSPA側で検知）
+    - `export_print`: 書き出し成功
+    - `cta_emergency`: “今すぐ相談” クリック
+  - ページビュー: Preview で `page_view` が送信されることを確認

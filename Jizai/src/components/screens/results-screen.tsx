@@ -14,6 +14,7 @@ import {
 } from '../design-system/jizai-icons';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { cn } from '../ui/utils';
+import { track } from '../../lib/analytics';
 
 export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => void }) => {
   const [beforeAfterSlider, setBeforeAfterSlider] = useState(50);
@@ -51,6 +52,7 @@ export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
       alert('画像を保存しました！');
+      track('export_print');
     } catch (error) {
       setHasError(true);
     } finally {

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { track } from '../../lib/analytics';
 import Link from 'next/link';
 import { JZButton } from '../design-system/jizai-button';
 import { JZCard, JZCardHeader, JZCardContent } from '../design-system/jizai-card';
@@ -53,6 +54,7 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
       try {
         await new Promise(resolve => setTimeout(resolve, 1500));
         setSelectedImage(event.target.files[0]);
+        track('begin_edit');
       } catch (err) {
         setError('写真が読み込めませんでした。別の写真を選んでください。');
       } finally {
@@ -235,6 +237,7 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
               </div>
               <a
                 href="#support"
+                onClick={() => track('cta_emergency')}
                 className="px-[var(--space-12)] py-[var(--space-8)] rounded-[--radius-jz-button] bg-[color:var(--color-jz-accent)] text-white font-semibold border border-[color:var(--color-jz-accent)]/20 shadow-sm hover:opacity-90 transition"
               >
                 24時間サポート（電話/チャット）

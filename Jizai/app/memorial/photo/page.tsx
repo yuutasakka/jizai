@@ -6,16 +6,17 @@ import Image from 'next/image';
 export const dynamic = 'force-static';
 
 export const generateMetadata = (): Metadata => ({
-  title: 'メモリアルフォトの編集｜四つ切/A4/L判対応 – JIZAI',
-  description: '法要・命日の写真整えと印刷最適化。四つ切/A4/L判。',
+  title: 'メモリアルフォト編集｜法要・命日の最適化 – JIZAI',
+  description: '法要・命日の写真をA4・L判に最適化。色味補正・不要物軽減・断裁ガイド付き。やり直し2回無料。',
   alternates: { canonical: 'https://{your-domain}/memorial/photo' },
   openGraph: {
-    title: 'メモリアルフォトの編集 – JIZAI',
-    description: '法要・命日の写真整えと印刷最適化。四つ切/A4/L判。',
+    title: 'メモリアルフォト編集｜法要・命日の最適化 – JIZAI',
+    description: '法要・命日の写真をA4・L判に最適化。色味補正・不要物軽減・断裁ガイド付き。やり直し2回無料。',
     url: 'https://{your-domain}/memorial/photo',
     type: 'website',
   },
 });
+export const revalidate = 86400;
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -100,8 +101,8 @@ export default function Page() {
         <h2 className="jz-font-display jz-text-display-small mb-4">仕上がり例（Before/After）</h2>
         <div className="grid gap-4 md:grid-cols-3">
           <div className="grid grid-cols-2 gap-2">
-            <Image src="/examples/photo_01_before.png" width={600} height={600} priority alt="メモリアルフォトの不要物を軽減した例（Before）" className="rounded-md aspect-square object-cover" />
-            <Image src="/examples/photo_01_after.png" width={600} height={600} alt="メモリアルフォトの不要物を軽減した例（After）" className="rounded-md aspect-square object-cover" />
+            <Image src="/examples/photo_01_before.png" width={600} height={600} sizes="(max-width: 768px) 100vw, 600px" priority alt="メモリアルフォトの不要物を軽減した例（Before）" className="rounded-md aspect-square object-cover" />
+            <Image src="/examples/photo_01_after.png" width={600} height={600} sizes="(max-width: 768px) 100vw, 600px" alt="メモリアルフォトの不要物を軽減した例（After）" className="rounded-md aspect-square object-cover" />
           </div>
         </div>
         <div className="mt-4"><a href="/?usecase=photo&preset=remove-objects" className="underline">この例で試す</a></div>

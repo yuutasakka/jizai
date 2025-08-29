@@ -6,18 +6,19 @@ import Image from 'next/image';
 export const dynamic = 'force-static';
 
 export const generateMetadata = (): Metadata => ({
-  title: '遺影写真の編集と仕上げ｜四つ切/A4/L判対応 – JIZAI',
+  title: '遺影写真の編集・四つ切/A4/L判対応｜当日仕上げ – JIZAI',
   description:
-    '四つ切・A4・L判に最適化。服装・背景・肌/髪の整え。やり直し2回無料、当日仕上げ可。',
+    '遺影の背景・服装・肌/髪の整えを自然に。四つ切・A4・L判に最適化、やり直し2回無料。最短当日で仕上げます。',
   alternates: { canonical: 'https://{your-domain}/memorial/human' },
   openGraph: {
-    title: '遺影写真の編集と仕上げ – JIZAI',
+    title: '遺影写真の編集・四つ切/A4/L判対応｜当日仕上げ – JIZAI',
     description:
-      '四つ切・A4・L判に最適化。服装・背景・肌/髪の整え。やり直し2回無料、当日仕上げ可。',
+      '遺影の背景・服装・肌/髪の整えを自然に。四つ切・A4・L判に最適化、やり直し2回無料。最短当日で仕上げます。',
     url: 'https://{your-domain}/memorial/human',
     type: 'website',
   },
 });
+export const revalidate = 86400;
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -145,8 +146,8 @@ export default function Page() {
         <h2 className="jz-font-display jz-text-display-small mb-4">仕上がり例（Before/After）</h2>
         <div className="grid gap-4 md:grid-cols-3">
           <div className="grid grid-cols-2 gap-2">
-            <Image src="/examples/human_01_before.png" width={600} height={600} priority alt="遺影の背景を無地にした仕上がり例（Before）" className="rounded-md aspect-square object-cover" />
-            <Image src="/examples/human_01_after.png" width={600} height={600} alt="遺影の背景を無地にした仕上がり例（After）" className="rounded-md aspect-square object-cover" />
+            <Image src="/examples/human_01_before.png" width={600} height={600} sizes="(max-width: 768px) 100vw, 600px" priority alt="遺影の背景を無地にした仕上がり例（Before）" className="rounded-md aspect-square object-cover" />
+            <Image src="/examples/human_01_after.png" width={600} height={600} sizes="(max-width: 768px) 100vw, 600px" alt="遺影の背景を無地にした仕上がり例（After）" className="rounded-md aspect-square object-cover" />
           </div>
         </div>
         <div className="mt-4"><a href="/?usecase=human&preset=bg-plain" className="underline">この例で試す</a></div>

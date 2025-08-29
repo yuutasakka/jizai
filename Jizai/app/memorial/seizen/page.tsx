@@ -4,16 +4,17 @@ import Script from 'next/script';
 export const dynamic = 'force-static';
 
 export const generateMetadata = (): Metadata => ({
-  title: '生前撮影のレタッチと最適仕上げ｜四つ切/A4/L判対応 – JIZAI',
-  description: '終活ポートレートの整えとサイズ書き出し。自然な仕上がりで。',
+  title: '生前撮影（終活）のレタッチ・最適仕上げ – JIZAI',
+  description: '生前撮影の肌や色味を自然に整え、四つ切・A4・L判へ書き出し。断裁ガイド付きで失敗しません。',
   alternates: { canonical: 'https://{your-domain}/memorial/seizen' },
   openGraph: {
-    title: '生前撮影のレタッチと最適仕上げ – JIZAI',
-    description: '終活ポートレートの整えとサイズ書き出し。自然な仕上がりで。',
+    title: '生前撮影（終活）のレタッチ・最適仕上げ – JIZAI',
+    description: '生前撮影の肌や色味を自然に整え、四つ切・A4・L判へ書き出し。断裁ガイド付きで失敗しません。',
     url: 'https://{your-domain}/memorial/seizen',
     type: 'website',
   },
 });
+export const revalidate = 86400;
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -97,8 +98,8 @@ export default function Page() {
         <h2 className="jz-font-display jz-text-display-small mb-4">仕上がり例（Before/After）</h2>
         <div className="grid gap-4 md:grid-cols-3">
           <div className="grid grid-cols-2 gap-2">
-            <Image src="/examples/seizen_01_before.png" width={600} height={600} priority alt="生前撮影の自然なレタッチ例（Before）" className="rounded-md aspect-square object-cover" />
-            <Image src="/examples/seizen_01_after.png" width={600} height={600} alt="生前撮影の自然なレタッチ例（After）" className="rounded-md aspect-square object-cover" />
+            <Image src="/examples/seizen_01_before.png" width={600} height={600} sizes="(max-width: 768px) 100vw, 600px" priority alt="生前撮影の自然なレタッチ例（Before）" className="rounded-md aspect-square object-cover" />
+            <Image src="/examples/seizen_01_after.png" width={600} height={600} sizes="(max-width: 768px) 100vw, 600px" alt="生前撮影の自然なレタッチ例（After）" className="rounded-md aspect-square object-cover" />
           </div>
         </div>
         <div className="mt-4"><a href="/?usecase=seizen&preset=natural-retouch" className="underline">この例で試す</a></div>

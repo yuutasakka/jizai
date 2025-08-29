@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { track } from './lib/analytics';
 import { setupGlobalErrorHandling, setupPerformanceMonitoring, errorTracker } from './lib/error-tracking';
 import { JizaiOnboardingScreen } from './components/screens/jizai-onboarding-screen';
 import { JizaiHomeScreen } from './components/screens/jizai-home-screen';
@@ -42,6 +43,21 @@ export default function App() {
         height: window.innerHeight
       }
     });
+  }, []);
+
+  // Detect preset complete from URL (/?usecase=&preset=) and fire event once per session
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      const usecase = url.searchParams.get('usecase');
+      if (usecase) {
+        const preset = url.searchParams.get('preset') || '';
+        if (!sessionStorage.getItem('ga_preset_complete')) {
+          track('preset_complete', { usecase, preset });
+          sessionStorage.setItem('ga_preset_complete', '1');
+        }
+      }
+    } catch {}
   }, []);
 
   const handleOnboardingComplete = () => {
