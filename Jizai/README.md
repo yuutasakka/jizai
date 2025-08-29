@@ -38,3 +38,12 @@
     - 別ターミナルでフロントエンドを `npm run dev` 起動
   - 既知の注意点
     - バックエンドは Supabase と DashScope のキーが必要です。LPの見た目だけ確認する場合はフロントエンドのみ起動で十分です。
+
+  ## Google Search Console 登録・サイトマップ送信手順（Next.js）
+
+  - 確認対象ブランチ: `feat/next-app-router-partial-ssg`（App Router で /memorial/* をSSG）
+  - Vercel Preview でドメイン（例: `https://{preview}.vercel.app`）を控える
+  - GSC にプロパティ追加 → HTMLタグ or DNSで所有権確認
+  - サイトマップURL: `https://{your-domain}/sitemap.xml` を送信
+  - 収集後、カバレッジで `/memorial/human|pet|seizen|photo` が列挙されることを確認
+  - 注意: 既存SPAの head と重複しないよう、用途別ページは Server Component 側でメタ/OG/JSON-LD を出力しています。
