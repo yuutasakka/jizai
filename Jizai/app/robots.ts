@@ -4,4 +4,3 @@ export default function robots() {
     sitemap: 'https://{your-domain}/sitemap.xml',
   } as const;
 }
-

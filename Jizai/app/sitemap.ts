@@ -1,3 +1,4 @@
+// Next.js sitemap for static memorial pages
 export default function sitemap() {
   return [
     { url: 'https://{your-domain}/' },
@@ -7,4 +8,3 @@ export default function sitemap() {
     { url: 'https://{your-domain}/memorial/photo' },
   ];
 }
-
