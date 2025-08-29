@@ -74,64 +74,84 @@ export default function Page() {
         </div>
       </section>
 
-      {/* 使い方3ステップ */}
-      <section className="mb-10">
-        <h2 className="jz-font-display jz-text-display-small mb-4">使い方3ステップ</h2>
-        <ol className="grid gap-4 md:grid-cols-3 list-decimal list-inside jz-text-body">
-          <li>写真を選ぶ（スキャン/スマホ撮影可）</li>
-          <li>整えたい点を選択（服・背景・肌/髪）</li>
-          <li>仕上がりを確認して保存（当日OK）</li>
-        </ol>
+      {/* 使い方（3ステップ） */}
+      <section id="howto" className="mb-12">
+        <h2 className="jz-font-display jz-text-display-small mb-4">使い方（3ステップ）</h2>
+        <div className="grid gap-4 md:grid-cols-3">
+          <div>
+            <h3 className="font-medium mb-1">1. 写真を選ぶ</h3>
+            <p className="jz-text-body">スマホ撮影でもOK。反射を避け、正面・ピント・影の少ない写真が理想です。</p>
+          </div>
+          <div>
+            <h3 className="font-medium mb-1">2. プリセットを選ぶ</h3>
+            <p className="jz-text-body">服装（喪服/白シャツ+黒ネクタイ）、背景（白/薄グレー/やわらかグラデ）、整え（髪の乱れ・肌・メガネ反射）を選択。<br/>※自由入力は折りたたみ（上級者向け）。</p>
+          </div>
+          <div>
+            <h3 className="font-medium mb-1">3. サイズ・書き出し</h3>
+            <p className="jz-text-body">四つ切/A4/L判/小キャビネ/2L、<strong>300/350dpi</strong>、<strong>塗り足し3mm</strong>に対応。断裁ガイドで構図を確認して書き出し。</p>
+          </div>
+        </div>
       </section>
 
       {/* 用途別プリセット（推奨） */}
-      <section className="mb-10">
-        <h2 className="jz-font-display jz-text-display-small mb-4">用途別プリセット</h2>
-        <div className="flex flex-wrap gap-2">
-          <span className="px-3 py-2 rounded-md border bg-[color:var(--color-jz-card)]">背景無地化（推奨）</span>
-          <span className="px-3 py-2 rounded-md border bg-[color:var(--color-jz-card)]">肌・髪の整え</span>
-          <span className="px-3 py-2 rounded-md border bg-[color:var(--color-jz-card)]">服装の整え</span>
-        </div>
+      <section id="preset" className="mb-12">
+        <h2 className="jz-font-display jz-text-display-small mb-4">用途別プリセット（推奨）</h2>
+        <ul className="jz-text-body space-y-1 mb-4">
+          <li>• 服装：喪服 / 白シャツ＋黒ネクタイ</li>
+          <li>• 背景：無地白 / 薄グレー / やわらかグラデ（淡）</li>
+          <li>• 整え：髪の乱れの整え・肌の自然な補正・メガネ反射の軽減</li>
+        </ul>
+        <a href="/?usecase=human&preset=bg-plain" className="inline-block px-4 py-2 rounded-md border bg-[color:var(--color-jz-card)] hover:bg-[color:var(--color-jz-surface)]">この設定で作成する</a>
       </section>
 
-      {/* サイズ/印刷 */}
-      <section className="mb-10">
-        <h2 className="jz-font-display jz-text-display-small mb-4">サイズ / 印刷</h2>
+      {/* サイズ・印刷設定 */}
+      <section id="print" className="mb-12">
+        <h2 className="jz-font-display jz-text-display-small mb-4">サイズ・印刷設定</h2>
         <ul className="jz-text-body space-y-1">
-          <li>対応サイズ：四つ切 / A4 / L判 / 小キャビネ / 2L</li>
-          <li>解像度：300 / 350 dpi</li>
-          <li>塗り足し：3mm（各辺）</li>
+          <li>・対応サイズ：四つ切(254×305mm) / A4(210×297mm) / L判(89×127mm) / 小キャビネ(120×165mm) / 2L(127×178mm)</li>
+          <li>・解像度：<strong>300/350dpi</strong>、色空間：<strong>sRGB</strong></li>
+          <li>・断裁：<strong>塗り足し3mm</strong>、セーフマージン5mm（顔や文字が縁に寄らないように）</li>
+          <li>・リサイズ：<strong>フィット（余白）</strong> / <strong>フィル（トリミング）</strong></li>
         </ul>
       </section>
 
-      {/* 実例 */}
-      <section className="mb-10">
-        <h2 className="jz-font-display jz-text-display-small mb-4">実例</h2>
+      {/* 仕上がり例（Before/After） */}
+      <section id="examples" className="mb-12">
+        <h2 className="jz-font-display jz-text-display-small mb-4">仕上がり例（Before/After）</h2>
         <div className="grid gap-4 md:grid-cols-3">
-          {[1,2,3].map((i) => (
-            <div key={i} className="grid grid-cols-2 gap-2">
-              <img src={`https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&q=60`} alt="before" className="rounded-md aspect-square object-cover" />
-              <img src={`https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&q=60&sat=-100`} alt="after" className="rounded-md aspect-square object-cover" />
-            </div>
-          ))}
+          <div className="grid grid-cols-2 gap-2">
+            <img src="/examples/human_01_before.png" alt="遺影の背景を無地にした仕上がり例（Before）" className="rounded-md aspect-square object-cover" />
+            <img src="/examples/human_01_after.png" alt="遺影の背景を無地にした仕上がり例（After）" className="rounded-md aspect-square object-cover" />
+          </div>
+        </div>
+        <div className="mt-4"><a href="/?usecase=human&preset=bg-plain" className="underline">この例で試す</a></div>
+      </section>
+
+      {/* 料金 */}
+      <section id="pricing" className="mb-12">
+        <h2 className="jz-font-display jz-text-display-small mb-4">料金</h2>
+        <div className="space-y-2 jz-text-body">
+          <p><strong>セルフ仕上げ ¥1,480</strong> … 差し戻し2回無料 / 当日可 / 四つ切〜2L対応</p>
+          <p><strong>おまかせ仕上げ ¥3,980</strong> … 人手チェック（色/髪/肌）/ 優先対応</p>
+          <p><strong>高度修復 ¥6,980〜</strong> … 破損修復・白黒→カラー・服装合成（見積）</p>
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="mb-10">
-        <h2 className="jz-font-display jz-text-display-small mb-4">FAQ</h2>
+      {/* よくある質問 */}
+      <section id="faq" className="mb-12">
+        <h2 className="jz-font-display jz-text-display-small mb-4">よくある質問</h2>
         <div className="space-y-3 jz-text-body">
           <div>
-            <p className="font-medium">どの写真が適切ですか？</p>
-            <p>正面・ピント良・影少なめ。スマホ撮影は反射を避け真上から。</p>
+            <h3 className="font-medium">Q. どの写真が適切ですか？</h3>
+            <p>A. 正面・ピント良・影少なめ。スマホ撮影は反射を避け、真上から。</p>
           </div>
           <div>
-            <p className="font-medium">不自然になりませんか？</p>
-            <p>自然さ優先。服装/背景は仕上げ前にプレビューで確認できます。</p>
+            <h3 className="font-medium">Q. 不自然になりませんか？</h3>
+            <p>A. 自然さを最優先に仕上げます。保存前にプレビューで確認できます。</p>
           </div>
           <div>
-            <p className="font-medium">サイズは？</p>
-            <p>祭壇は四つ切、掲示はA4、自宅・焼香台はL判/小キャビネが一般的です。</p>
+            <h3 className="font-medium">Q. サイズの選び方は？</h3>
+            <p>A. 祭壇＝四つ切、掲示＝A4、自宅・焼香台＝L判/小キャビネが一般的です。</p>
           </div>
         </div>
       </section>
@@ -178,7 +198,33 @@ export default function Page() {
         ]
       }) }} />
       <Script id="jsonld-service" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <Script id="jsonld-faq" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />
+      <Script id="jsonld-faq" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        ...faqLd,
+        mainEntity: [
+          { '@type': 'Question', name: 'どの写真が適切ですか？', acceptedAnswer: { '@type': 'Answer', text: '正面・ピント良・影少なめ。スマホ撮影は反射を避け、真上から。' }},
+          { '@type': 'Question', name: '不自然になりませんか？', acceptedAnswer: { '@type': 'Answer', text: '自然さを最優先に仕上げます。保存前にプレビューで確認できます。' }},
+          { '@type': 'Question', name: 'サイズの選び方は？', acceptedAnswer: { '@type': 'Answer', text: '祭壇＝四つ切、掲示＝A4、自宅・焼香台＝L判/小キャビネが一般的です。' }},
+        ]
+      }) }} />
+      <Script id="jsonld-howto" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'HowTo',
+        name: '遺影写真の作成手順',
+        step: [
+          { '@type': 'HowToStep', name: '写真を選ぶ', text: 'スマホ撮影でもOK。反射を避け、正面・ピント良・影少なめの写真を選びます。' },
+          { '@type': 'HowToStep', name: 'プリセットを選ぶ', text: '服装・背景・整えの項目から選びます。自由入力は上級者向け。' },
+          { '@type': 'HowToStep', name: 'サイズ・書き出し', text: '四つ切/A4/L判/小キャビネ/2L・300/350dpi・塗り足し3mmで書き出します。' },
+        ],
+      }) }} />
+
+      {/* 関連リンク（用途横断） */}
+      <aside id="links" className="mt-10 text-center">
+        <h2 className="jz-font-display jz-text-display-small mb-3">関連リンク（用途横断）</h2>
+        <div className="inline-flex flex-wrap gap-4 jz-text-body">
+          <a className="underline" href="/memorial/seizen">生前撮影</a>
+          <a className="underline" href="/memorial/photo">メモリアルフォト</a>
+        </div>
+      </aside>
     </main>
   );
 }

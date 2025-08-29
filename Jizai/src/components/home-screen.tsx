@@ -40,7 +40,7 @@ export const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => voi
     <div className="min-h-screen bg-[color:var(--color-ios-gray-6)] p-4">
       {/* Header with Plan Shortcut */}
       <div className="flex justify-between items-center mb-6 pt-12">
-        <h1 className="text-2xl font-semibold text-gray-900">画像編集AI</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">画像編集</h1>
         <IOSButton
           variant="secondary"
           size="sm"
