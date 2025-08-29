@@ -84,7 +84,7 @@ export const GeneratingScreen = ({ onNavigate }: { onNavigate: (screen: string) 
             {/* Status */}
             <div className="text-sm text-[color:var(--color-ios-gray-1)]">
               {progress < 30 && "画像を解析中..."}
-              {progress >= 30 && progress < 70 && "AIが画像を生成中..."}
+              {progress >= 30 && progress < 70 && "画像を生成中..."}
               {progress >= 70 && progress < 100 && "最終調整を実行中..."}
               {progress >= 100 && "完了しました！"}
             </div>

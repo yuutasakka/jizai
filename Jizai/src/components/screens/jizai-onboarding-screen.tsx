@@ -62,7 +62,7 @@ export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenPr
                 生成
               </h4>
               <p className="jz-text-caption text-[color:var(--color-jz-text-secondary)]">
-                AI が思い通りに写真を編集
+                思い通りに写真を編集
               </p>
             </div>
           </div>
@@ -79,7 +79,7 @@ export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenPr
     },
     {
       id: 'preview',
-      title: '英語プレビューで高精度',
+      title: 'プレビューで高精度',
       subtitle: null,
       content: (
         <div className="space-y-[var(--space-20)]">
@@ -100,7 +100,7 @@ export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenPr
               
               <div>
                 <p className="jz-text-caption text-[color:var(--color-jz-text-primary)] font-medium mb-[var(--space-8)]">
-                  英語プレビュー
+                  プレビュー
                 </p>
                 <p className="jz-text-caption text-[color:var(--color-jz-accent)] font-mono bg-[color:var(--color-jz-surface)] p-[var(--space-12)] rounded-[var(--radius-jz-button)]">
                   Change "営業中" to "準備中" on the sign

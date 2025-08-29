@@ -243,7 +243,7 @@ export const TutorialExamplesScreen = ({ onNavigate, onExampleSelected }: Tutori
             <ul className="space-y-[var(--space-8)] jz-text-body text-[color:var(--color-jz-text-secondary)]">
               <li>• <strong>具体的に指示：</strong>「青い服を赤に」より「ジャケットを赤に」</li>
               <li>• <strong>元の質感を保持：</strong>「テクスチャはそのまま」を追加</li>
-              <li>• <strong>日本語文字：</strong>英語プロンプトの日本語部分を調整</li>
+              <li>• <strong>日本語文字：</strong>プロンプトの日本語部分を調整</li>
               <li>• <strong>保存は自動：</strong>あとからダウンロードできます</li>
             </ul>
           </div>

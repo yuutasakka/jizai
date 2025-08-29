@@ -51,10 +51,10 @@ export const SettingsScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
           <div className="w-20 h-20 bg-gradient-to-br from-[color:var(--color-ios-blue)] to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <GearIcon size={32} className="text-white" />
           </div>
-          <h2 className="text-xl font-medium mb-1">画像編集AI</h2>
+          <h2 className="text-xl font-medium mb-1">画像編集</h2>
           <p className="text-[color:var(--color-ios-gray-1)] mb-2">Version 1.0.0</p>
           <p className="text-sm text-[color:var(--color-ios-gray-1)]">
-            AIを活用した高品質な画像編集アプリ
+            高品質な画像編集アプリ
           </p>
         </IOSCardContent>
       </IOSCard>
@@ -86,7 +86,7 @@ export const SettingsScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
       {/* Footer */}
       <div className="mt-12 text-center">
         <p className="text-sm text-[color:var(--color-ios-gray-1)] mb-4">
-          © 2025 画像編集AI. All rights reserved.
+          © 2025 JIZAI. All rights reserved.
         </p>
         <IOSButton
           variant="ghost"

@@ -19,7 +19,7 @@ export const JZExampleCard = ({
   title,
   description,
   promptEn,
-  notice = "※プレビューは英語です。画像に日本語の文字を入れる場合は、その部分を日本語に置き換えてから生成してください。",
+  notice = "※プレビューは送信内容の表示です。画像に日本語の文字が含まれる場合は、その表記を維持して生成してください。",
   beforeImage,
   afterImage,
   thumbnailImage,
@@ -159,7 +159,7 @@ export const JZExampleCard = ({
         {/* Prompt Section */}
         <div className="space-y-[var(--space-8)]">
           <h4 className="jz-text-caption font-medium text-[color:var(--color-jz-text-primary)]">
-            Prompt (EN)
+            送信内容
           </h4>
           <div className="p-[var(--space-12)] bg-[color:var(--color-jz-surface)] rounded-[var(--radius-jz-button)] border border-[color:var(--color-jz-border)]">
             <p 

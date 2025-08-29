@@ -44,7 +44,7 @@ export const JizaiProgressScreen = ({ onNavigate }: { onNavigate: (screen: strin
 
   const getStatusText = () => {
     if (progress < 20) return "画像を解析中...";
-    if (progress < 60) return "AIが思いのままに編集中...";
+    if (progress < 60) return "編集中...";
     if (progress < 90) return "最終調整を実行中...";
     if (progress < 100) return "もうすぐ完了...";
     return "完了しました！";

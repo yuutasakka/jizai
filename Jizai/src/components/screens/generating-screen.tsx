@@ -45,7 +45,7 @@ export const GeneratingScreen = ({ onNavigate }: { onNavigate: (screen: string) 
 
   const getStatusText = () => {
     if (progress < 20) return "画像を解析中...";
-    if (progress < 60) return "AIが画像を生成中...";
+    if (progress < 60) return "画像を生成中...";
     if (progress < 90) return "最終調整を実行中...";
     if (progress < 100) return "もうすぐ完了...";
     return "完了しました！";

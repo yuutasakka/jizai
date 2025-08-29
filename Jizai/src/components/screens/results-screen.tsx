@@ -21,7 +21,7 @@ export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [retryCount, setRetryCount] = useState(2); // 無料やり直し残り回数
-  const [translationEnabled] = useState(true); // 翻訳の状態
+  const [translationEnabled] = useState(true); // 変換の状態
   const [showEnglishLog, setShowEnglishLog] = useState(false);
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
@@ -129,7 +129,7 @@ export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
                   variant="selected"
                   className="bg-[color:var(--color-jz-success)]/20 text-[color:var(--color-jz-success)] border-[color:var(--color-jz-success)]/30"
                 >
-                  翻訳：ON（DashScopeへは英訳を送信）
+                  変換：ON
                 </JZChip>
               </div>
               
@@ -143,12 +143,12 @@ export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
               </div>
             </div>
             
-            {/* 英語送信ログ折りたたみ */}
+            {/* 送信ログ折りたたみ */}
             <Collapsible open={showEnglishLog} onOpenChange={setShowEnglishLog}>
               <CollapsibleTrigger asChild>
                 <div className="flex items-center justify-between cursor-pointer p-[var(--space-12)] bg-[color:var(--color-jz-card)] rounded-[--radius-jz-button] border border-[color:var(--color-jz-border)] hover:bg-[color:var(--color-jz-card)]/80 transition-colors">
                   <span className="jz-text-body text-[color:var(--color-jz-text-primary)]">
-                    最終英語指示（送信ログ）
+                    最終送信内容（ログ）
                   </span>
                   <JZChevronDownIcon 
                     size={16} 
