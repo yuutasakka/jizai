@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { JZButton } from '../design-system/jizai-button';
 import { JZCard, JZCardHeader, JZCardContent } from '../design-system/jizai-card';
 import { JZChip } from '../design-system/jizai-chip';
@@ -225,10 +226,10 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
                 </button>
                 {navOpen && (
                   <div className="absolute right-0 mt-[var(--space-8)] w-[240px] bg-[color:var(--color-jz-card)] border border-[color:var(--color-jz-border)] rounded-[--radius-jz-card] shadow-lg z-50">
-                    <a href="/memorial/human" className="block px-[12px] py-[10px] hover:bg-[color:var(--color-jz-surface)]">遺影写真（人）</a>
-                    <a href="/memorial/pet" className="block px-[12px] py-[10px] hover:bg-[color:var(--color-jz-surface)]">ペット遺影</a>
-                    <a href="/memorial/seizen" className="block px-[12px] py-[10px] hover:bg-[color:var(--color-jz-surface)]">生前撮影</a>
-                    <a href="/memorial/photo" className="block px-[12px] py-[10px] hover:bg-[color:var(--color-jz-surface)]">メモリアルフォト</a>
+                    <Link href="/memorial/human" className="block px-[12px] py-[10px] hover:bg-[color:var(--color-jz-surface)]">遺影写真（人）</Link>
+                    <Link href="/memorial/pet" className="block px-[12px] py-[10px] hover:bg-[color:var(--color-jz-surface)]">ペット遺影</Link>
+                    <Link href="/memorial/seizen" className="block px-[12px] py-[10px] hover:bg-[color:var(--color-jz-surface)]">生前撮影</Link>
+                    <Link href="/memorial/photo" className="block px-[12px] py-[10px] hover:bg-[color:var(--color-jz-surface)]">メモリアルフォト</Link>
                   </div>
                 )}
               </div>
@@ -292,7 +293,9 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
               </JZCardHeader>
               <JZCardContent>
                 <p className="jz-text-body text-[color:var(--color-jz-text-secondary)] mb-[var(--space-12)]">服装・背景・肌/髪の整え。四つ切/A4/L判対応。</p>
-                <JZButton tone="secondary" onClick={() => (window.location.href = '/memorial/human')}>この用途で作成する</JZButton>
+                <Link href="/memorial/human" className="inline-block">
+                  <JZButton tone="secondary">この用途で作成する</JZButton>
+                </Link>
               </JZCardContent>
             </JZCard>
             {/* ペット */}
@@ -302,7 +305,9 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
               </JZCardHeader>
               <JZCardContent>
                 <p className="jz-text-body text-[color:var(--color-jz-text-secondary)] mb-[var(--space-12)]">毛並みの整え・背景無地化・色味補正。</p>
-                <JZButton tone="secondary" onClick={() => (window.location.href = '/memorial/pet')}>この用途で作成する</JZButton>
+                <Link href="/memorial/pet" className="inline-block">
+                  <JZButton tone="secondary">この用途で作成する</JZButton>
+                </Link>
               </JZCardContent>
             </JZCard>
             {/* 生前撮影 */}
@@ -312,7 +317,9 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
               </JZCardHeader>
               <JZCardContent>
                 <p className="jz-text-body text-[color:var(--color-jz-text-secondary)] mb-[var(--space-12)]">自然なレタッチとサイズ書き出し。</p>
-                <JZButton tone="secondary" onClick={() => (window.location.href = '/memorial/seizen')}>この用途で作成する</JZButton>
+                <Link href="/memorial/seizen" className="inline-block">
+                  <JZButton tone="secondary">この用途で作成する</JZButton>
+                </Link>
               </JZCardContent>
             </JZCard>
             {/* メモリアルフォト */}
@@ -322,7 +329,9 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
               </JZCardHeader>
               <JZCardContent>
                 <p className="jz-text-body text-[color:var(--color-jz-text-secondary)] mb-[var(--space-12)]">法要・命日の写真整えと印刷最適化。</p>
-                <JZButton tone="secondary" onClick={() => (window.location.href = '/memorial/photo')}>この用途で作成する</JZButton>
+                <Link href="/memorial/photo" className="inline-block">
+                  <JZButton tone="secondary">この用途で作成する</JZButton>
+                </Link>
               </JZCardContent>
             </JZCard>
           </div>

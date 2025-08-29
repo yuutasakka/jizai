@@ -38,7 +38,29 @@ export default function Page() {
   return (
     <main className="max-w-5xl mx-auto px-4 py-8">
       <nav className="text-sm mb-6 text-[color:var(--color-jz-text-secondary)]">
-        <a href="/" className="underline">Home</a> <span>›</span> <span>用途別</span> <span>›</span> <strong>生前撮影</strong>
+        <Link href="/" className="underline">Home</Link> <span>›</span> <Link href="/memorial/human" className="underline">用途別</Link> <span>›</span> <strong>生前撮影</strong>
+      </nav>
+      {/* 目次（TOC） */}
+      <nav aria-label="目次" className="mb-6">
+        <div className="hidden md:flex gap-4 jz-text-caption">
+          <a href="#howto" className="underline">使い方</a>
+          <a href="#preset" className="underline">用途別プリセット</a>
+          <a href="#print" className="underline">サイズ・印刷</a>
+          <a href="#examples" className="underline">仕上がり例</a>
+          <a href="#pricing" className="underline">料金</a>
+          <a href="#faq" className="underline">FAQ</a>
+        </div>
+        <details className="md:hidden">
+          <summary className="jz-text-caption cursor-pointer">目次</summary>
+          <div className="mt-2 flex flex-wrap gap-3 jz-text-caption">
+            <a href="#howto" className="underline">使い方</a>
+            <a href="#preset" className="underline">用途別プリセット</a>
+            <a href="#print" className="underline">サイズ・印刷</a>
+            <a href="#examples" className="underline">仕上がり例</a>
+            <a href="#pricing" className="underline">料金</a>
+            <a href="#faq" className="underline">FAQ</a>
+          </div>
+        </details>
       </nav>
       <section className="text-center mb-10">
         <h1 className="jz-font-display jz-text-display-large mb-3">生前撮影のレタッチと最適仕上げ</h1>
@@ -75,8 +97,8 @@ export default function Page() {
         <h2 className="jz-font-display jz-text-display-small mb-4">仕上がり例（Before/After）</h2>
         <div className="grid gap-4 md:grid-cols-3">
           <div className="grid grid-cols-2 gap-2">
-            <img src="/examples/seizen_01_before.png" alt="生前撮影の自然なレタッチ例（Before）" className="rounded-md aspect-square object-cover" />
-            <img src="/examples/seizen_01_after.png" alt="生前撮影の自然なレタッチ例（After）" className="rounded-md aspect-square object-cover" />
+            <Image src="/examples/seizen_01_before.png" width={600} height={600} priority alt="生前撮影の自然なレタッチ例（Before）" className="rounded-md aspect-square object-cover" />
+            <Image src="/examples/seizen_01_after.png" width={600} height={600} alt="生前撮影の自然なレタッチ例（After）" className="rounded-md aspect-square object-cover" />
           </div>
         </div>
         <div className="mt-4"><a href="/?usecase=seizen&preset=natural-retouch" className="underline">この例で試す</a></div>
@@ -125,7 +147,7 @@ export default function Page() {
         '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://{your-domain}/' },
-          { '@type': 'ListItem', position: 2, name: '用途別', item: 'https://{your-domain}/' },
+          { '@type': 'ListItem', position: 2, name: '用途別', item: 'https://{your-domain}/memorial/human' },
           { '@type': 'ListItem', position: 3, name: '生前撮影', item: 'https://{your-domain}/memorial/seizen' },
         ]
       }) }} />
@@ -150,8 +172,8 @@ export default function Page() {
       <aside id="links" className="mt-10 text-center">
         <h2 className="jz-font-display jz-text-display-small mb-3">関連リンク（用途横断）</h2>
         <div className="inline-flex flex-wrap gap-4 jz-text-body">
-          <a className="underline" href="/memorial/human">遺影写真（人）</a>
-          <a className="underline" href="/memorial/photo">メモリアルフォト</a>
+          <Link className="underline" href="/memorial/human">遺影写真（人）の整えを見る</Link>
+          <Link className="underline" href="/memorial/photo">メモリアルフォトの整えを見る</Link>
         </div>
       </aside>
     </main>
