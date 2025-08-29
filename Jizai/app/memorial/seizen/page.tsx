@@ -105,6 +105,14 @@ export default function Page() {
         <a href="#privacy" className="underline mr-3">プライバシー</a>
         <a href="#commerce" className="underline">特定商取引法</a>
       </section>
+      <footer className="mt-6 text-center">
+        <div className="inline-flex flex-wrap gap-4 jz-text-caption">
+          <a className="underline" href="/memorial/human">遺影写真（人）</a>
+          <a className="underline" href="/memorial/pet">ペット遺影</a>
+          <a className="underline" href="/memorial/seizen">生前撮影</a>
+          <a className="underline" href="/memorial/photo">メモリアルフォト</a>
+        </div>
+      </footer>
       <Script id="jsonld-breadcrumb" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
