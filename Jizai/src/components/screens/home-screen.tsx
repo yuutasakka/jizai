@@ -15,6 +15,7 @@ export const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => voi
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [selectedPreset, setSelectedPreset] = useState<string>('');
   const [customPrompt, setCustomPrompt] = useState('');
+  const [selectedModel, setSelectedModel] = useState<'modelA' | 'modelB'>('modelA');
   const [tier, setTier] = useState<string>('free');
   const [storage, setStorage] = useState<{quota: number; used: number}>({ quota: 0, used: 0 });
   const [isLoading, setIsLoading] = useState(false);
@@ -78,7 +79,7 @@ export const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => voi
       const prompt = customPrompt || getPresetPrompt(selectedPreset);
       
       // 画像生成API呼び出し
-      const result = await apiClient.editImage(selectedImage, prompt);
+      const result = await apiClient.editImage(selectedImage, prompt, selectedModel);
       
       // 生成された画像をローカルストレージに保存（一時的に）
       const imageUrl = URL.createObjectURL(result.blob);
@@ -161,6 +162,35 @@ export const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => voi
             <p className="text-red-800 text-sm">{error}</p>
           </div>
         )}
+        {/* AI Model Selection */}
+        <DSCard>
+          <DSCardHeader>
+            <h2 className="font-display text-display-small text-[color:var(--color-text-primary)]">AIモデル選択</h2>
+          </DSCardHeader>
+          <DSCardContent>
+            <div className="grid grid-cols-2 gap-[12px]">
+              <DSChip
+                variant={selectedModel === 'modelA' ? 'selected' : 'default'}
+                onClick={() => setSelectedModel('modelA')}
+              >
+                モデル A
+              </DSChip>
+              <DSChip
+                variant={selectedModel === 'modelB' ? 'selected' : 'default'}
+                onClick={() => setSelectedModel('modelB')}
+              >
+                モデル B
+              </DSChip>
+            </div>
+            <p className="text-caption text-[color:var(--color-text-tertiary)] mt-[8px]">
+              {selectedModel === 'modelA' 
+                ? 'モデル A: 高速で安定した画像生成に特化' 
+                : 'モデル B: 高品質で詳細な画像生成に特化'
+              }
+            </p>
+          </DSCardContent>
+        </DSCard>
+
         {/* Photo Selection */}
         <DSCard>
           <DSCardHeader>

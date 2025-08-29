@@ -212,10 +212,13 @@ class JizaiApiClient {
   }
 
   // 画像編集
-  async editImage(imageFile: File, prompt: string): Promise<EditResponse> {
+  async editImage(imageFile: File, prompt: string, model?: 'modelA' | 'modelB'): Promise<EditResponse> {
     const formData = new FormData();
     formData.append('image', imageFile);
     formData.append('prompt', prompt);
+    if (model) {
+      formData.append('model', model);
+    }
 
     const response = await fetch(`${API_BASE_URL}/v1/edit`, {
       method: 'POST',

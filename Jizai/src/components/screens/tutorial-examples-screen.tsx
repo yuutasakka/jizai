@@ -18,7 +18,7 @@ interface TutorialExamplesScreenProps {
   onExampleSelected: (example: ExampleData) => void;
 }
 
-type CategoryFilter = 'all' | 'text-replace' | 'number-percent' | 'color-change' | 'background' | 'object-removal' | 'angle-pose';
+type CategoryFilter = 'all' | 'modelA' | 'modelB' | 'text-replace' | 'number-percent' | 'color-change' | 'background' | 'object-removal' | 'angle-pose';
 
 interface LocalExampleData {
   id: string;
@@ -31,56 +31,61 @@ interface LocalExampleData {
   thumbnailImage?: string;
 }
 
-const exampleData: LocalExampleData[] = [
+// Model A Examples (fast and stable)
+const modelAExamples: LocalExampleData[] = [
   {
-    id: 'open-closed',
+    id: 'a-open-closed',
     title: 'OPEN → CLOSED',
-    description: '看板の文字をOPENからCLOSEDに置き換え',
+    description: '看板の文字をOPENからCLOSEDに置き換え (モデルA)',
     promptEn: 'Replace the sign text from 『OPEN』 to 『CLOSED』. Keep the original font, size, color, kerning and layout unchanged.',
     category: ['text-replace'],
     beforeImage: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&q=80',
     afterImage: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&q=80&sat=-100'
   },
   {
-    id: 'sale-percent',
+    id: 'a-sale-percent',
     title: 'SALE 20% → 30%',
-    description: '割引表示を20%から30%に変更',
+    description: '割引表示を20%から30%に変更 (モデルA)',
     promptEn: 'Replace the discount text from 『SALE 20%』 to 『SALE 30%』. Keep font family, weight, spacing and alignment unchanged.',
     category: ['number-percent', 'text-replace'],
     beforeImage: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&q=80',
     afterImage: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&q=80&hue=30'
   },
   {
-    id: 'jacket-color',
+    id: 'a-jacket-color',
     title: '色変更（上着→パステルピンク）',
-    description: '上着の色をパステルピンクに変更',
+    description: '上着の色をパステルピンクに変更 (モデルA)',
     promptEn: 'Change the jacket color to pastel pink while preserving fabric texture, shadows and lighting.',
     category: ['color-change'],
     beforeImage: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&q=80',
     afterImage: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&q=80&hue=300'
-  },
+  }
+];
+
+// Model B Examples (high quality and detailed)
+const modelBExamples: LocalExampleData[] = [
   {
-    id: 'hair-removal',
+    id: 'b-hair-removal',
     title: '不要物削除（前髪の乱れ）',
-    description: '前髪の乱れを自然に除去',
+    description: '前髪の乱れを自然に除去 (モデルB)',
     promptEn: 'Remove stray hair around the forehead while keeping skin texture and lighting unchanged.',
     category: ['object-removal'],
     beforeImage: 'https://images.unsplash.com/photo-1494790108755-2616c056f0db?w=400&q=80',
     afterImage: 'https://images.unsplash.com/photo-1494790108755-2616c056f0db?w=400&q=80&blur=1'
   },
   {
-    id: 'background-night',
+    id: 'b-background-night',
     title: '背景変更（室内→夜景）',
-    description: '背景を室内から夜景に変更',
+    description: '背景を室内から夜景に変更 (モデルB)',
     promptEn: 'Replace the background with a night cityscape. Keep the subject edges clean and lighting consistent.',
     category: ['background'],
     beforeImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
     afterImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80&blend=40404040'
   },
   {
-    id: 'mug-rotate',
+    id: 'b-mug-rotate',
     title: '角度変更（マグカップ）',
-    description: 'マグカップを90度回転させる',
+    description: 'マグカップを90度回転させる (モデルB)',
     promptEn: 'Rotate the mug by 90 degrees so the handle faces left. Keep shadows and reflections consistent.',
     category: ['angle-pose'],
     beforeImage: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=400&q=80',
@@ -88,8 +93,12 @@ const exampleData: LocalExampleData[] = [
   }
 ];
 
+const exampleData: LocalExampleData[] = [...modelAExamples, ...modelBExamples];
+
 const categoryFilters: { id: CategoryFilter; label: string }[] = [
   { id: 'all', label: 'すべて' },
+  { id: 'modelA', label: 'モデルA例' },
+  { id: 'modelB', label: 'モデルB例' },
   { id: 'text-replace', label: '文字置換' },
   { id: 'number-percent', label: '数字・%' },
   { id: 'color-change', label: '色変更' },
@@ -103,6 +112,10 @@ export const TutorialExamplesScreen = ({ onNavigate, onExampleSelected }: Tutori
 
   const filteredExamples = selectedCategory === 'all' 
     ? exampleData 
+    : selectedCategory === 'modelA'
+    ? modelAExamples
+    : selectedCategory === 'modelB' 
+    ? modelBExamples
     : exampleData.filter(example => example.category.includes(selectedCategory));
 
   const handleTryExample = (example: LocalExampleData) => {

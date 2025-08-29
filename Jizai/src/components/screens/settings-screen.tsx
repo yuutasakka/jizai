@@ -65,7 +65,7 @@ export const SettingsScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
           title: '使い方',
           subtitle: 'よくある質問と答え',
           action: 'navigate',
-          onClick: () => alert('使い方を表示')
+          onClick: () => onNavigate('tutorial-examples')
         },
         {
           icon: <JZMagicWandIcon size={20} className="text-[color:var(--color-jz-secondary)]" />,
