@@ -165,12 +165,31 @@ function BaseMemorialPage({ h1, desc, steps, presets, examples, faq }: {
   examples: { before: string; after: string; label?: string }[];
   faq: QA[];
 }) {
+  const [navOpen, setNavOpen] = React.useState(false);
   return (
     <div className="min-h-screen bg-[color:var(--color-jz-surface)]">
       <header className="sticky top-0 z-40 jz-glass-effect border-b border-[color:var(--color-jz-border)]">
         <div className="max-w-5xl mx-auto px-[var(--space-16)] py-[var(--space-16)] flex items-center justify-between">
           <a href="/" className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)]">JIZAI</a>
-          <a href="#support" className="px-[var(--space-12)] py-[var(--space-8)] rounded-[--radius-jz-button] bg-[color:var(--color-jz-accent)] text-white">24時間サポート</a>
+          <div className="flex items-center gap-[var(--space-8)] relative">
+            <div className="relative">
+              <button
+                onClick={() => setNavOpen(!navOpen)}
+                className="px-[var(--space-12)] py-[var(--space-8)] rounded-[--radius-jz-button] border border-[color:var(--color-jz-border)] text-[color:var(--color-jz-text-primary)] hover:bg-[color:var(--color-jz-card)]"
+              >
+                用途別 ▾
+              </button>
+              {navOpen && (
+                <div className="absolute right-0 mt-[var(--space-8)] w-[240px] bg-[color:var(--color-jz-card)] border border-[color:var(--color-jz-border)] rounded-[--radius-jz-card] shadow-lg z-50">
+                  <a href="/memorial/human" className="block px-[12px] py-[10px] hover:bg-[color:var(--color-jz-surface)]">遺影写真（人）</a>
+                  <a href="/memorial/pet" className="block px-[12px] py-[10px] hover:bg-[color:var(--color-jz-surface)]">ペット遺影</a>
+                  <a href="/memorial/seizen" className="block px-[12px] py-[10px] hover:bg-[color:var(--color-jz-surface)]">生前撮影</a>
+                  <a href="/memorial/photo" className="block px-[12px] py-[10px] hover:bg-[color:var(--color-jz-surface)]">メモリアルフォト</a>
+                </div>
+              )}
+            </div>
+            <a href="#support" className="px-[var(--space-12)] py-[var(--space-8)] rounded-[--radius-jz-button] bg-[color:var(--color-jz-accent)] text-white">24時間サポート</a>
+          </div>
         </div>
       </header>
       <main className="max-w-5xl mx-auto pb-[var(--space-24)]">
@@ -298,4 +317,3 @@ export function MemorialPhotoPage() {
     />
   );
 }
-
