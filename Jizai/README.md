@@ -47,6 +47,14 @@
   - サイトマップURL: `https://{your-domain}/sitemap.xml` を送信
   - 収集後、カバレッジで `/memorial/human|pet|seizen|photo` が列挙されることを確認
   - 注意: 既存SPAの head と重複しないよう、用途別ページは Server Component 側でメタ/OG/JSON-LD を出力しています。
+  - 環境変数: `.env.local` に `NEXT_PUBLIC_SITE_URL` と `NEXT_PUBLIC_GSC_VERIF` を設定すると、`app/layout.tsx` に検証メタが出力されます。
+
+  ## Lighthouse CI（PR自動チェック）
+
+  - 依存: `@lhci/cli`（devDependencies）
+  - 設定: `.lighthouserc.json` / `.github/workflows/lhci.yml`
+  - PRごとに `seo`/`best-practices` が 0.9 未満なら失敗として検知します。
+
 
   ## GA4（計測）設定とイベント
 

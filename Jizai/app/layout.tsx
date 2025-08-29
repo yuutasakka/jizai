@@ -1,4 +1,5 @@
 import Script from 'next/script';
+import { Noto_Sans_JP } from 'next/font/google';
 
 export const metadata = {
   metadataBase: new URL('https://{your-domain}'),
@@ -33,9 +34,19 @@ const siteLd = {
   },
 };
 
+const noto = Noto_Sans_JP({ subsets: ['latin'], display: 'swap' });
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ja">
+    <html lang="ja" className={noto.className}>
+      <head>
+        {process.env.NEXT_PUBLIC_GSC_VERIF && (
+          <meta name="google-site-verification" content={process.env.NEXT_PUBLIC_GSC_VERIF} />
+        )}
+        {process.env.VERCEL_ENV === 'preview' && (
+          <meta name="robots" content="noindex,nofollow" />
+        )}
+      </head>
       <body>
         {children}
         <Script id="jsonld-org" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgLd) }} />
