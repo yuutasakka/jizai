@@ -2,6 +2,7 @@ import React from 'react';
 import { JZButton } from '../components/design-system/jizai-button';
 import { JZCard, JZCardContent, JZCardHeader } from '../components/design-system/jizai-card';
 import { JZChip } from '../components/design-system/jizai-chip';
+import { setSEO } from '../lib/seo';
 
 type QA = { q: string; a: string };
 type Preset = { id: string; label: string; recommended?: boolean };
@@ -157,15 +158,28 @@ function LegalLinks() {
   );
 }
 
-function BaseMemorialPage({ h1, desc, steps, presets, examples, faq }: {
+function BaseMemorialPage({ h1, desc, steps, presets, examples, faq, serviceType, path }: {
   h1: string;
   desc: string;
   steps: string[];
   presets: Preset[];
   examples: { before: string; after: string; label?: string }[];
   faq: QA[];
+  serviceType: string;
+  path: string;
 }) {
   const [navOpen, setNavOpen] = React.useState(false);
+  React.useEffect(() => {
+    const origin = window.location.origin;
+    const url = `${origin}${path}`;
+    setSEO({
+      title: `${h1}｜JIZAI – 四つ切/A4対応・当日仕上げ`,
+      description: desc,
+      url,
+      serviceType,
+      faq,
+    });
+  }, [h1, desc, serviceType, path, faq]);
   return (
     <div className="min-h-screen bg-[color:var(--color-jz-surface)]">
       <header className="sticky top-0 z-40 jz-glass-effect border-b border-[color:var(--color-jz-border)]">
@@ -215,6 +229,8 @@ export function MemorialHumanPage() {
     <BaseMemorialPage
       h1="遺影写真の編集と仕上げ"
       desc="四つ切・A4・L判対応。服装・背景・肌/髪の整え。やり直し2回無料、当日仕上げ可。"
+      serviceType="遺影写真編集"
+      path="/memorial/human"
       steps={[
         '写真を選ぶ（スキャンやスマホ写真でも可）',
         '整えたい点を選択（服・背景・肌や髪など）',
@@ -232,6 +248,7 @@ export function MemorialHumanPage() {
       faq={[
         { q: '昔の写真でも大丈夫ですか？', a: 'スマホ撮影の写真でも対応可能です。できるだけ明るく撮影してください。' },
         { q: '服装の差し替えは可能ですか？', a: '自然な印象を損なわない範囲で整えます。' },
+        { q: '当日仕上げはできますか？', a: '内容によりますが、当日対応も可能です。お急ぎの場合はご相談ください。' },
       ]}
     />
   );
@@ -242,6 +259,8 @@ export function MemorialPetPage() {
     <BaseMemorialPage
       h1="ペット遺影の編集と仕上げ"
       desc="毛並みの整え・背景無地化・色味補正。四つ切/A4/L判、当日対応。"
+      serviceType="ペット遺影編集"
+      path="/memorial/pet"
       steps={[
         'お手持ちの写真を選択',
         '毛並み・背景・色味の整えを選ぶ',
@@ -259,6 +278,7 @@ export function MemorialPetPage() {
       faq={[
         { q: '動いている写真でも大丈夫？', a: 'ブレが少ない写真を推奨しますが、軽微なブレは整え可能です。' },
         { q: '小物を消せますか？', a: '自然な範囲で不要物の削除に対応します。' },
+        { q: '背景は好きな色にできますか？', a: '無地化や色の調整が可能です。お好みに合わせて仕上げます。' },
       ]}
     />
   );
@@ -269,6 +289,8 @@ export function MemorialSeizenPage() {
     <BaseMemorialPage
       h1="生前撮影のレタッチと最適仕上げ"
       desc="終活ポートレートの整えとサイズ書き出し。自然な仕上がりで。"
+      serviceType="生前撮影レタッチ"
+      path="/memorial/seizen"
       steps={[
         '写真を選ぶ（スタジオ/ご自宅どちらでも）',
         '明るさ・肌の整え・背景の最適化を選ぶ',
@@ -286,6 +308,7 @@ export function MemorialSeizenPage() {
       faq={[
         { q: '派手になりすぎませんか？', a: '自然な印象を重視したレタッチを行います。' },
         { q: '服のシワは整えられますか？', a: '目立つシワは目立ちにくく調整可能です。' },
+        { q: 'サイズの指定は可能ですか？', a: '四つ切/A4/L判など、ご希望のサイズで書き出せます。' },
       ]}
     />
   );
@@ -296,6 +319,8 @@ export function MemorialPhotoPage() {
     <BaseMemorialPage
       h1="メモリアルフォトの編集"
       desc="法要・命日の写真整えと印刷最適化。四つ切/A4/L判。"
+      serviceType="メモリアルフォト編集"
+      path="/memorial/photo"
       steps={[
         '行事のお写真を選ぶ',
         '不要物の除去やトリミングを指定',
@@ -313,6 +338,7 @@ export function MemorialPhotoPage() {
       faq={[
         { q: '人物の追加・削除はできますか？', a: '大きな構図変更は要相談ですが、軽微な調整は可能です。' },
         { q: 'アルバム用にまとめて依頼可能ですか？', a: '複数枚にも対応しています。まずはご相談ください。' },
+        { q: '印刷向けの色味調整は可能ですか？', a: '印刷に適した色味・明るさへ最適化します。' },
       ]}
     />
   );
