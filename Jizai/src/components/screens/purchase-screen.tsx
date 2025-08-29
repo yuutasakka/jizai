@@ -159,14 +159,15 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
         {/* Pricing Plans */}
         <div className="space-y-[var(--space-12)]">
           <h2 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)] text-center mb-[var(--space-20)]">
-            プランについて（参考情報）
+            クレジット（枚）プラン
           </h2>
           
           {planData.map((p) => {
             const sale = p.salePrice;
             const regular = p.regularPrice;
-            const off = percentOff(regular, sale);
-            const pricePer = p.isStaff ? 0 : Math.round((sale / p.units));
+            const isTwoPack = p.id === '2';
+            const off = isTwoPack ? percentOff(regular, sale) : 0;
+            const pricePer = p.isStaff || p.units === 0 ? 0 : Math.round(sale / p.units);
             const isRecommended = !!p.recommended;
             const isStaff = !!p.isStaff;
             return (
@@ -178,10 +179,10 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
                     スタッフおまかせ
                   </div>
                 </div>
-              ) : off > 0 && (
+              ) : isTwoPack && off > 0 && (
                 <div className="absolute -top-[8px] right-[var(--space-16)] z-10">
                   <div className="bg-[color:var(--color-jz-secondary)] text-[color:var(--color-jz-surface)] px-[var(--space-12)] py-[var(--space-8)] rounded-[10px] jz-text-caption font-semibold">
-                    {off}%OFF
+                    今だけ
                   </div>
                 </div>
               )}
@@ -206,7 +207,7 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
                         <span className="jz-font-display text-[22px] font-semibold text-[color:var(--color-jz-text-primary)]">
                           {formatYen(sale)}
                         </span>
-                        {!isStaff && off > 0 && (
+                        {isTwoPack && off > 0 && (
                           <span className="jz-text-caption text-[color:var(--color-jz-text-tertiary)] line-through">
                             {formatYen(regular)}
                           </span>
@@ -216,15 +217,15 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
                       {/* 小ラベル */}
                       <div className="mb-[var(--space-12)]">
                         <span className="text-[14px] text-[color:var(--color-jz-text-secondary)]">
-                          {isStaff ? '人手チェック付き' : `1枚=¥${pricePer}（通常¥100）`}
+                          {isStaff ? '有人仕上げ / 1件' : (p.unitLabel || `1枚=¥${pricePer}`)}
                         </span>
                       </div>
                       
                       {/* お得感 */}
-                      {off > 0 && (
+                      {isTwoPack && off > 0 && (
                         <div className="mb-[var(--space-12)]">
                           <span className="jz-text-caption text-[color:var(--color-jz-success)] font-medium">
-                            期間限定セール
+                            期間限定セール / {p.compareAtLabel}
                           </span>
                         </div>
                       )}

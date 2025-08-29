@@ -28,7 +28,7 @@ const jsonLd = {
   serviceType: '遺影写真編集',
   provider: { '@type': 'Organization', name: 'JIZAI' },
   areaServed: 'JP',
-  offers: { '@type': 'AggregateOffer', lowPrice: '1480', priceCurrency: 'JPY' },
+  offers: { '@type': 'AggregateOffer', lowPrice: '160', priceCurrency: 'JPY' },
 };
 
 const faqLd = {
@@ -158,11 +158,9 @@ export default function Page() {
       {/* 料金 */}
       <section id="pricing" className="mb-12">
         <h2 className="jz-font-display jz-text-display-small mb-4">料金</h2>
-        <div className="space-y-2 jz-text-body">
-          <p><strong>セルフ仕上げ ¥1,480</strong> … 差し戻し2回無料 / 当日可 / 四つ切〜2L対応</p>
-          <p><strong>おまかせ仕上げ ¥3,980</strong> … 人手チェック（色/髪/肌）/ 優先対応</p>
-          <p><strong>高度修復 ¥6,980〜</strong> … 破損修復・白黒→カラー・服装合成（見積）</p>
-        </div>
+        {/* 新・クレジットプラン */}
+        {/* @ts-expect-error Server Component import */}
+        {require('../../_components/PricingCredits').default()}
       </section>
 
       {/* よくある質問 */}
@@ -184,19 +182,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* 料金 */}
-      <section className="mb-10">
-        <h2 className="jz-font-display jz-text-display-small mb-4">料金</h2>
-        <div className="grid md:grid-cols-3 gap-4">
-          {[{t:'セルフ',p:'¥1,500'},{t:'おまかせ',p:'¥3,500'},{t:'高度修復',p:'¥8,000'}].map(x=> (
-            <div key={x.t} className="border rounded-md p-4">
-              <h3 className="font-semibold mb-2">{x.t}</h3>
-              <p className="text-xl mb-2">{x.p}</p>
-              <a className="inline-block px-3 py-2 rounded-md border" href="/">このプランで進む</a>
-            </div>
-          ))}
-        </div>
-      </section>
+      
 
       {/* 法務 */}
       <section className="text-center jz-text-caption text-[color:var(--color-jz-text-tertiary)]">
