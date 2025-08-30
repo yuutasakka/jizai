@@ -6,12 +6,19 @@ import axios from 'axios';
 import rateLimit from 'express-rate-limit';
 import { readFile } from 'fs/promises';
 import store from './store.mjs';
+import { secureLogger } from './utils/secure-logger.mjs';
+import { getCorsConfig, initializeCors } from './utils/cors-config.mjs';
+import { initializeSecurityHeaders, initializeCSPReporting } from './utils/security-headers.mjs';
+import { cspReportHandler, cspStatsHandler } from './utils/csp-reporter.mjs';
 
 // 環境変数を読み込み
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Initialize CORS configuration
+initializeCors();
 
 // NGワード読み込み
 let banned = ['csam','child','terror','hate','beheading'];
@@ -43,37 +50,17 @@ const upload = multer({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// CORS設定（iOSアプリからのアクセス許可）
-const allowedOrigins = process.env.ORIGIN_ALLOWLIST?.split(',').map(origin => origin.trim()) || [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'capacitor://localhost',  // Capacitor
-    'ionic://localhost',      // Ionic
-    'http://localhost',       // iOS Simulator
-    'https://localhost'       // iOS実機HTTPS
-];
+// Apply environment-aware CORS configuration
+app.use(cors(getCorsConfig()));
 
-app.use(cors({
-    origin: (origin, callback) => {
-        // iOS アプリからのリクエスト（originなし）を許可
-        if (!origin) return callback(null, true);
-        
-        // 許可されたオリジンチェック
-        if (allowedOrigins.includes(origin)) {
-            return callback(null, true);
-        }
-        
-        // 開発環境では全てのlocalhostを許可
-        if (process.env.NODE_ENV === 'development' && origin.includes('localhost')) {
-            return callback(null, true);
-        }
-        
-        callback(new Error('Not allowed by CORS'));
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-device-id']
-}));
+// Apply security headers (including HSTS for production)
+app.use(initializeSecurityHeaders());
+
+// Apply CSP Report-Only mode for violation collection
+app.use(initializeCSPReporting({ reportOnly: true }));
+
+// CSP report collection endpoint
+app.use(cspReportHandler());
 
 // Rate Limiting設定
 const generalLimiter = rateLimit({
@@ -126,6 +113,9 @@ app.use(generalLimiter);
 app.get('/v1/health', (req, res) => {
     res.json({ ok: true });
 });
+
+// CSP statistics endpoint (for security monitoring)
+app.get('/v1/security/csp-stats', cspStatsHandler());
 
 // ルートパス: ローカル確認用の案内
 app.get('/', (req, res) => {
@@ -203,7 +193,8 @@ app.post('/v1/edit', editLimiter, upload.single('image'), async (req, res) => {
         const mimeType = imageFile.mimetype;
         const dataURL = `data:${mimeType};base64,${base64Data}`;
 
-        console.log(`📝 Edit request: prompt="${prompt}" size=${imageFile.size} bytes`);
+        // Use secure logger to sanitize PII from prompt logs
+        secureLogger.editRequest(deviceId, prompt, imageFile.size);
 
         // Qwen-Image-Edit API呼び出し
         const qwenResponse = await axios.post(

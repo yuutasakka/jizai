@@ -30,7 +30,7 @@ router.post('/create', async (req, res) => {
         }
 
         // Check if user has permission to create family sharing
-        const hasPermission = await familySharingService.canCreateFamilySharing(deviceId, vaultId);
+        const hasPermission = await familySharingService.canCreateFamilySharing(req.supabaseAuth, deviceId, vaultId);
         if (!hasPermission.allowed) {
             return res.status(403).json({
                 error: 'Forbidden',
@@ -40,7 +40,7 @@ router.post('/create', async (req, res) => {
         }
 
         const familyVault = await familySharingService.createFamilyVault(
-            deviceId, 
+            req.supabaseAuth,  // 認証クライアント使用
             vaultId, 
             familyName, 
             maxMembers
@@ -93,7 +93,7 @@ router.get('/vault/:vaultId', async (req, res) => {
             });
         }
 
-        const familyInfo = await familySharingService.getFamilyVaultInfo(vaultId, deviceId);
+        const familyInfo = await familySharingService.getFamilyVaultInfo(req.supabaseAuth, vaultId, deviceId);
 
         if (!familyInfo) {
             return res.status(404).json({
@@ -131,7 +131,7 @@ router.get('/my-families', async (req, res) => {
             });
         }
 
-        const families = await familySharingService.getUserFamilies(deviceId);
+        const families = await familySharingService.getUserFamilies(req.supabaseAuth, deviceId);
 
         res.json({
             families: families.map(family => ({
@@ -190,6 +190,7 @@ router.post('/invite', async (req, res) => {
         }
 
         const invitation = await familySharingService.inviteToFamily(
+            req.supabaseAuth,
             deviceId,
             familyVaultId,
             inviteEmail,
@@ -256,7 +257,7 @@ router.post('/join/:inviteCode', async (req, res) => {
             });
         }
 
-        const joinResult = await familySharingService.joinFamilyByCode(deviceId, inviteCode);
+        const joinResult = await familySharingService.joinFamilyByCode(req.supabaseAuth, deviceId, inviteCode);
 
         res.json({
             success: true,
@@ -317,6 +318,7 @@ router.post('/request-access', async (req, res) => {
         }
 
         const accessRequest = await familySharingService.requestFamilyAccess(
+            req.supabaseAuth,
             deviceId,
             familyVaultId,
             message

@@ -6,6 +6,7 @@
  */
 
 import { supabaseService } from '../config/supabase.mjs';
+import { auditServiceClientUsage } from '../utils/service-client-audit.mjs';
 
 export class NotificationService {
   constructor() {
@@ -33,6 +34,7 @@ export class NotificationService {
         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
       };
 
+      auditServiceClientUsage('family_invitation', 'system_notification', { type: 'family_invitation' }, true);
       const { data, error } = await supabaseService
         .from('notifications')
         .insert(notification)
@@ -67,6 +69,7 @@ export class NotificationService {
         created_at: new Date()
       };
 
+      auditServiceClientUsage('access_request', 'system_notification', { type: 'access_request' }, true);
       const { data, error } = await supabaseService
         .from('notifications')
         .insert(notification)
@@ -129,6 +132,7 @@ export class NotificationService {
         created_at: new Date()
       };
 
+      auditServiceClientUsage('subscription_change', 'system_notification', { type: 'subscription_change', changeType }, true);
       const { data, error } = await supabaseService
         .from('notifications')
         .insert(notification)
@@ -174,6 +178,7 @@ export class NotificationService {
         created_at: new Date()
       };
 
+      auditServiceClientUsage('storage_warning', 'system_notification', { type: 'storage_warning', usagePercentage }, true);
       const { data, error } = await supabaseService
         .from('notifications')
         .insert(notification)
@@ -194,6 +199,7 @@ export class NotificationService {
    */
   async getUserNotifications(deviceId, limit = 50, offset = 0, unreadOnly = false) {
     try {
+      auditServiceClientUsage('get_notifications', 'notification_system', { unreadOnly }, true);
       let query = supabaseService
         .from('notifications')
         .select('*')
@@ -226,6 +232,7 @@ export class NotificationService {
    */
   async markAsRead(notificationId, deviceId) {
     try {
+      auditServiceClientUsage('mark_read', 'notification_system', { notificationId }, true);
       const { data, error } = await supabaseService
         .from('notifications')
         .update({
@@ -251,6 +258,7 @@ export class NotificationService {
    */
   async markAllAsRead(deviceId) {
     try {
+      auditServiceClientUsage('mark_all_read', 'notification_system', {}, true);
       const { data, error } = await supabaseService
         .from('notifications')
         .update({
@@ -274,6 +282,7 @@ export class NotificationService {
    */
   async deleteNotification(notificationId, deviceId) {
     try {
+      auditServiceClientUsage('delete_notification', 'notification_system', { notificationId }, true);
       const { error } = await supabaseService
         .from('notifications')
         .delete()
@@ -294,6 +303,7 @@ export class NotificationService {
    */
   async getUnreadCount(deviceId) {
     try {
+      auditServiceClientUsage('get_unread_count', 'notification_system', {}, true);
       const { count, error } = await supabaseService
         .from('notifications')
         .select('*', { count: 'exact', head: true })
@@ -315,6 +325,7 @@ export class NotificationService {
    */
   async cleanupOldNotifications() {
     try {
+      auditServiceClientUsage('cleanup_notifications', 'system_maintenance', {}, true);
       const cutoffDate = new Date(Date.now() - (this.defaultRetentionDays * 24 * 60 * 60 * 1000));
 
       // Delete old read notifications
@@ -352,6 +363,7 @@ export class NotificationService {
     try {
       let notifications = [];
 
+      auditServiceClientUsage('system_announcement', 'system_notification', { priority, targetCount: targetDeviceIds?.length || 'broadcast' }, true);
       if (targetDeviceIds) {
         // Send to specific devices
         notifications = targetDeviceIds.map(deviceId => ({
@@ -418,6 +430,7 @@ export class NotificationService {
    */
   async getNotificationStats() {
     try {
+      auditServiceClientUsage('get_stats', 'notification_system', {}, true);
       // Total notifications by type
       const { data: typeStats, error: typeError } = await supabaseService
         .from('notifications')
@@ -484,6 +497,7 @@ export class NotificationService {
         created_at: new Date()
       };
 
+      auditServiceClientUsage('welcome_notification', 'system_notification', { type: 'welcome' }, true);
       const { data, error } = await supabaseService
         .from('notifications')
         .insert(notification)

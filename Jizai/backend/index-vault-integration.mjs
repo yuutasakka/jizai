@@ -7,9 +7,14 @@ import multer from 'multer';
 import axios from 'axios';
 import rateLimit from 'express-rate-limit';
 import { readFile } from 'fs/promises';
+import { secureLogger, sanitizeText } from './utils/secure-logger.mjs';
+import { getCorsConfig, initializeCors } from './utils/cors-config.mjs';
+import { initializeSecurityHeaders, initializeCSPReporting } from './utils/security-headers.mjs';
+import { cspReportHandler, cspStatsHandler } from './utils/csp-reporter.mjs';
 
 // Import vault subscription system
 import { initializeDatabase, checkDatabaseHealth } from './config/supabase.mjs';
+import { rlsAuthMiddleware } from './middleware/rls-auth.mjs';
 import subscriptionRoutes from './routes/subscriptions.mjs';
 import familySharingRoutes from './routes/family-sharing.mjs';
 import printExportRoutes from './routes/print-export.mjs';
@@ -23,6 +28,9 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Initialize CORS configuration
+initializeCors();
 
 // ========================================
 // INITIALIZATION
@@ -86,37 +94,17 @@ const vaultUpload = createMemoryUpload(100 * 1024 * 1024); // 100MB for vault me
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Enhanced CORS for vault system
-const allowedOrigins = process.env.ORIGIN_ALLOWLIST?.split(',').map(origin => origin.trim()) || [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'capacitor://localhost',  // Capacitor
-    'ionic://localhost',      // Ionic
-    'http://localhost',       // iOS Simulator
-    'https://localhost'       // iOS実機HTTPS
-];
+// Apply environment-aware CORS configuration
+app.use(cors(getCorsConfig()));
 
-app.use(cors({
-    origin: (origin, callback) => {
-        // iOS アプリからのリクエスト（originなし）を許可
-        if (!origin) return callback(null, true);
-        
-        // 許可されたオリジンチェック
-        if (allowedOrigins.includes(origin)) {
-            return callback(null, true);
-        }
-        
-        // 開発環境では全てのlocalhostを許可
-        if (process.env.NODE_ENV === 'development' && origin.includes('localhost')) {
-            return callback(null, true);
-        }
-        
-        callback(new Error('Not allowed by CORS'));
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-device-id', 'x-api-version']
-}));
+// Apply security headers (including HSTS for production)
+app.use(initializeSecurityHeaders());
+
+// Apply CSP Report-Only mode for violation collection
+app.use(initializeCSPReporting({ reportOnly: true }));
+
+// CSP report collection endpoint
+app.use(cspReportHandler());
 
 // ========================================
 // RATE LIMITING
@@ -213,6 +201,9 @@ app.get('/v1/health', async (req, res) => {
     res.status(statusCode).json(health);
 });
 
+// CSP statistics endpoint (for security monitoring)
+app.get('/v1/security/csp-stats', cspStatsHandler());
+
 // API version check
 app.get('/v1/version', (req, res) => {
     res.json({
@@ -236,6 +227,11 @@ app.get('/v1/version', (req, res) => {
 // ========================================
 
 if (databaseInitialized) {
+    // Apply RLS authentication middleware to user-facing routes
+    app.use('/v1/subscription/*', rlsAuthMiddleware());
+    app.use('/v1/family/*', rlsAuthMiddleware());
+    app.use('/v1/print-export/*', rlsAuthMiddleware());
+    
     // Subscription management
     app.use('/v1/subscription', subscriptionRoutes);
     
@@ -245,10 +241,10 @@ if (databaseInitialized) {
     // Print export
     app.use('/v1/print-export', printExportRoutes);
     
-    // App Store webhooks
+    // App Store webhooks (no auth needed - external service)
     app.use('/v1/webhooks', webhookRoutes);
     
-    console.log('✅ Vault subscription routes registered');
+    console.log('✅ Vault subscription routes registered with RLS authentication');
 }
 
 // ========================================
@@ -258,11 +254,12 @@ if (databaseInitialized) {
 // 画像編集エンドポイント（既存機能を保持）
 import { supabaseService, supabaseStorage } from './config/supabase.mjs';
 import { SubscriptionService } from './services/subscription-service.mjs';
+import { rlsAuthMiddleware, monitorServiceClientUsage } from './middleware/rls-auth.mjs';
 import { randomUUID } from 'crypto';
 
 const subscriptionService = new SubscriptionService();
 
-app.post('/v1/edit', editLimiter, upload.single('image'), async (req, res) => {
+app.post('/v1/edit', editLimiter, rlsAuthMiddleware(), upload.single('image'), async (req, res) => {
     try {
         const { prompt } = req.body;
         const imageFile = req.file;
@@ -327,7 +324,8 @@ app.post('/v1/edit', editLimiter, upload.single('image'), async (req, res) => {
         const mimeType = imageFile.mimetype;
         const dataURL = `data:${mimeType};base64,${base64Data}`;
 
-        console.log(`📝 Edit request: prompt="${prompt}" size=${imageFile.size} bytes`);
+        // Use secure logger to sanitize PII from prompt logs
+        secureLogger.editRequest(deviceId, prompt, imageFile.size);
 
         // Qwen-Image-Edit API呼び出し
         const qwenResponse = await axios.post(
@@ -428,13 +426,12 @@ app.post('/v1/edit', editLimiter, upload.single('image'), async (req, res) => {
         // Persist original and edited images to Supabase Storage and record as memories
         const user = await subscriptionService.getOrCreateUser(deviceId);
 
-        // Ensure a default vault exists for this user
+        // Ensure a default vault exists for this user (using authenticated client)
         let targetVaultId = providedVaultId;
         if (!targetVaultId) {
-            const { data: existingVault } = await supabaseService
+            const { data: existingVault } = await req.supabaseAuth
                 .from('vaults')
                 .select('id')
-                .eq('owner_id', user.id)
                 .is('deleted_at', null)
                 .order('created_at', { ascending: true })
                 .limit(1)
@@ -442,10 +439,10 @@ app.post('/v1/edit', editLimiter, upload.single('image'), async (req, res) => {
             if (existingVault?.id) {
                 targetVaultId = existingVault.id;
             } else {
-                const { data: newVault, error: vaultErr } = await supabaseService
+                const { data: newVault, error: vaultErr } = await req.supabaseAuth
                     .from('vaults')
                     .insert({
-                        owner_id: user.id,
+                        owner_id: req.user.id,
                         name: 'My Vault',
                         description: 'Default vault',
                         created_at: new Date()
@@ -499,14 +496,14 @@ app.post('/v1/edit', editLimiter, upload.single('image'), async (req, res) => {
                 file_size_bytes: imageDownload.data.length,
                 mime_type: 'image/png',
                 file_url: editedPath,
-                title: `Edited: ${prompt?.slice(0, 60) || ''}`,
+                title: `Edited: ${sanitizeText(prompt, { maxLength: 60 })}`,
                 uploaded_by: deviceId,
                 uploaded_at: new Date().toISOString(),
                 processing_status: 'completed'
             }
         ];
 
-        await supabaseService.from('memories').insert(memoryRecords);
+        await req.supabaseAuth.from('memories').insert(memoryRecords);
 
         // Return generated image as PNG to the client
         res.setHeader('Content-Type', 'image/png');

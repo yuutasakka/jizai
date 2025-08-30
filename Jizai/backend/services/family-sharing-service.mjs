@@ -6,6 +6,7 @@
  */
 
 import { supabaseService } from '../config/supabase.mjs';
+import { monitorServiceClientUsage } from '../middleware/rls-auth.mjs';
 import crypto from 'crypto';
 
 export class FamilySharingService {
@@ -18,14 +19,13 @@ export class FamilySharingService {
   /**
    * Create a new family vault
    */
-  async createFamilyVault(deviceId, vaultId, familyName, maxMembers = this.defaultMaxMembers) {
+  async createFamilyVault(supabaseAuth, vaultId, familyName, maxMembers = this.defaultMaxMembers) {
     try {
-      // Verify the vault exists and belongs to the user
-      const { data: vault, error: vaultError } = await supabaseService
+      // Verify the vault exists and belongs to the user (RLS enforced)
+      const { data: vault, error: vaultError } = await supabaseAuth
         .from('vaults')
         .select('*')
         .eq('id', vaultId)
-        .eq('device_id', deviceId)
         .single();
 
       if (vaultError || !vault) {
@@ -33,7 +33,7 @@ export class FamilySharingService {
       }
 
       // Check if family vault already exists for this vault
-      const { data: existingFamily, error: existingError } = await supabaseService
+      const { data: existingFamily, error: existingError } = await supabaseAuth
         .from('family_vaults')
         .select('*')
         .eq('vault_id', vaultId)
@@ -63,7 +63,7 @@ export class FamilySharingService {
         updated_at: new Date()
       };
 
-      const { data: familyVault, error: createError } = await supabaseService
+      const { data: familyVault, error: createError } = await supabaseAuth
         .from('family_vaults')
         .insert(familyVaultData)
         .select('*')
@@ -91,7 +91,8 @@ export class FamilySharingService {
     while (attempts < maxAttempts) {
       const code = crypto.randomBytes(4).toString('hex').toUpperCase();
       
-      // Check if code already exists
+      // Check if code already exists (system operation)
+      monitorServiceClientUsage('check_invite_code_uniqueness', 'system_operation', { code_check: true }, true);
       const { data: existingCode, error } = await supabaseService
         .from('family_vaults')
         .select('id')
@@ -112,7 +113,7 @@ export class FamilySharingService {
   /**
    * Join family vault using invite code
    */
-  async joinFamilyVault(deviceId, inviteCode) {
+  async joinFamilyVault(supabaseAuth, deviceId, inviteCode) {
     try {
       // Find family vault by invite code
       const { data: familyVault, error: familyError } = await supabaseService

@@ -62,7 +62,7 @@ router.post('/create', exportLimiter, async (req, res) => {
         }
 
         // Check subscription permissions
-        const hasPermission = await printExportService.checkPrintExportPermission(deviceId, exportType);
+        const hasPermission = await printExportService.checkPrintExportPermission(req.supabaseAuth, deviceId, exportType);
         if (!hasPermission.allowed) {
             return res.status(403).json({
                 error: 'Forbidden',
@@ -72,7 +72,7 @@ router.post('/create', exportLimiter, async (req, res) => {
         }
 
         // Validate memory access
-        const memoryAccess = await printExportService.validateMemoryAccess(deviceId, vaultId, memoryIds);
+        const memoryAccess = await printExportService.validateMemoryAccess(req.supabaseAuth, deviceId, vaultId, memoryIds);
         if (!memoryAccess.allowed) {
             return res.status(403).json({
                 error: 'Forbidden',
@@ -82,19 +82,22 @@ router.post('/create', exportLimiter, async (req, res) => {
         }
 
         // Create export job
-        const exportJob = await printExportService.createExportJob({
-            deviceId,
-            vaultId,
-            exportType,
-            memoryIds,
-            settings: {
-                pageSize: settings.pageSize || 'A4',
-                dpi: settings.dpi || 300,
-                colorMode: settings.colorMode || 'color',
-                layoutTemplate: settings.layoutTemplate,
-                ...settings
+        const exportJob = await printExportService.createExportJob(
+            req.supabaseAuth,
+            {
+                deviceId,
+                vaultId,
+                exportType,
+                memoryIds,
+                settings: {
+                    pageSize: settings.pageSize || 'A4',
+                    dpi: settings.dpi || 300,
+                    colorMode: settings.colorMode || 'color',
+                    layoutTemplate: settings.layoutTemplate,
+                    ...settings
+                }
             }
-        });
+        );
 
         res.json({
             success: true,
@@ -158,7 +161,7 @@ router.get('/:exportId/status', async (req, res) => {
             });
         }
 
-        const exportStatus = await printExportService.getExportStatus(exportId, deviceId);
+        const exportStatus = await printExportService.getExportStatus(req.supabaseAuth, exportId, deviceId);
 
         if (!exportStatus) {
             return res.status(404).json({
@@ -211,7 +214,7 @@ router.get('/my-exports', async (req, res) => {
             });
         }
 
-        const exports = await printExportService.getUserExports(deviceId, {
+        const exports = await printExportService.getUserExports(req.supabaseAuth, deviceId, {
             limit: parseInt(limit),
             offset: parseInt(offset),
             status
@@ -268,7 +271,7 @@ router.post('/:exportId/download', async (req, res) => {
             });
         }
 
-        const downloadInfo = await printExportService.generateDownloadUrl(exportId, deviceId);
+        const downloadInfo = await printExportService.generateDownloadUrl(req.supabaseAuth, exportId, deviceId);
 
         res.json({
             success: true,
@@ -327,7 +330,7 @@ router.delete('/:exportId', async (req, res) => {
             });
         }
 
-        await printExportService.cancelExport(exportId, deviceId);
+        await printExportService.cancelExport(req.supabaseAuth, exportId, deviceId);
 
         res.json({
             success: true,
@@ -373,7 +376,7 @@ router.get('/templates', async (req, res) => {
     try {
         const { exportType } = req.query;
 
-        const templates = await printExportService.getExportTemplates(exportType);
+        const templates = await printExportService.getExportTemplates(req.supabaseAuth, exportType);
 
         res.json({
             templates: templates.map(template => ({
@@ -404,7 +407,7 @@ router.get('/templates', async (req, res) => {
  */
 router.get('/options', async (req, res) => {
     try {
-        const printOptions = await printExportService.getPrintOptions();
+        const printOptions = await printExportService.getPrintOptions(req.supabaseAuth);
 
         res.json({
             options: {
@@ -507,7 +510,7 @@ router.post('/preview', async (req, res) => {
             });
         }
 
-        const preview = await printExportService.generatePreview({
+        const preview = await printExportService.generatePreview(req.supabaseAuth, {
             deviceId,
             vaultId,
             exportType,

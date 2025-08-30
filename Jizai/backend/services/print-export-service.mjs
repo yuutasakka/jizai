@@ -7,6 +7,7 @@
 
 import sharp from 'sharp';
 import { supabaseService, supabaseStorage } from '../config/supabase.mjs';
+import { monitorServiceClientUsage } from '../middleware/rls-auth.mjs';
 import path from 'path';
 import { promises as fs } from 'fs';
 
@@ -32,7 +33,7 @@ export class PrintExportService {
   /**
    * Generate print export for memory
    */
-  async generatePrintExport(deviceId, memoryId, exportOptions) {
+  async generatePrintExport(supabaseAuth, deviceId, memoryId, exportOptions) {
     try {
       const {
         printSize,
@@ -57,19 +58,15 @@ export class PrintExportService {
         throw new Error(`Invalid format: ${format}. Supported: ${this.supportedFormats.join(', ')}`);
       }
 
-      // Get memory and verify ownership
-      const { data: memory, error: memoryError } = await supabaseService
+      // Get memory and verify ownership (RLS enforced)
+      const { data: memory, error: memoryError } = await supabaseAuth
         .from('memories')
         .select('*')
         .eq('id', memoryId)
         .single();
 
       if (memoryError || !memory) {
-        throw new Error('Memory not found');
-      }
-
-      if (memory.uploaded_by !== deviceId) {
-        throw new Error('Access denied to memory');
+        throw new Error('Memory not found or access denied');
       }
 
       // Get subscription info to check export limits
@@ -257,7 +254,7 @@ export class PrintExportService {
         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
       };
 
-      const { data: exportRecord, error } = await supabaseService
+      const { data: exportRecord, error } = await supabaseAuth
         .from('print_exports')
         .insert(exportData)
         .select('*')
