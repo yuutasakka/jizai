@@ -1,10 +1,11 @@
 // Vault Subscription API Routes
 // Handles App Store subscriptions, trials, and subscription lifecycle management
 import express from 'express';
-import { supabase } from '../config/supabase.mjs';
+import { supabaseService } from '../config/supabase.mjs';
 import { validateAppStoreReceipt } from '../services/appstore-validator.mjs';
 import { SubscriptionService } from '../services/subscription-service.mjs';
 import { StorageQuotaService } from '../services/storage-quota-service.mjs';
+import { auditServiceClientUsage } from '../utils/service-client-audit.mjs';
 
 const router = express.Router();
 const subscriptionService = new SubscriptionService();
@@ -211,7 +212,9 @@ router.post('/start-trial', async (req, res) => {
  */
 router.get('/tiers', async (req, res) => {
     try {
-        const { data: tiers, error } = await supabase
+        // System operation - public subscription tier information
+        auditServiceClientUsage('get_tiers', 'subscription_routes', {}, true);
+        const { data: tiers, error } = await supabaseService
             .from('subscription_tiers')
             .select('*')
             .order('monthly_price_cents');

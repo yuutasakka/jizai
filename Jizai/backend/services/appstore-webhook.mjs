@@ -7,14 +7,8 @@
 
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-import { createClient } from '@supabase/supabase-js';
-
-// Initialize Supabase client
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  // Use a single, consistent service key name across the project
-  process.env.SUPABASE_SERVICE_KEY
-);
+import { supabaseService } from '../config/supabase.mjs';
+import { auditServiceClientUsage } from '../utils/service-client-audit.mjs';
 
 /**
  * Main webhook handler for App Store Server Notifications V2
@@ -186,8 +180,9 @@ export class AppStoreWebhookHandler {
       return;
     }
 
-    // Get subscription tier info
-    const { data: tier } = await supabase
+    // Get subscription tier info (system operation - bypassing RLS by design)
+    auditServiceClientUsage('get_tier_info', 'appstore_webhook', { plan_key: planKey }, true);
+    const { data: tier } = await supabaseService
       .from('vault_subscription_tiers')
       .select('*')
       .eq('plan_key', planKey)
@@ -217,7 +212,8 @@ export class AppStoreWebhookHandler {
       updated_at: new Date()
     };
 
-    const { error } = await supabase
+    auditServiceClientUsage('subscription_create', 'appstore_webhook', { user_id: userId, plan_key: planKey, transaction_id: originalTransactionId }, true);
+    const { error } = await supabaseService
       .from('vault_subscriptions')
       .upsert(subscriptionData, {
         onConflict: 'original_transaction_id',
@@ -239,7 +235,8 @@ export class AppStoreWebhookHandler {
     const { originalTransactionId, expiresDate } = transactionInfo;
     const renewsAt = new Date(expiresDate);
 
-    const { error } = await supabase
+    auditServiceClientUsage('subscription_renew', 'appstore_webhook', { transaction_id: originalTransactionId }, true);
+    const { error } = await supabaseService
       .from('vault_subscriptions')
       .update({
         status: 'active',
@@ -265,7 +262,8 @@ export class AppStoreWebhookHandler {
     const expiredAt = new Date(expiresDate);
     const gracePeriodEnd = new Date(expiredAt.getTime() + (30 * 24 * 60 * 60 * 1000)); // 30 days
 
-    const { error } = await supabase
+    auditServiceClientUsage('subscription_grace', 'appstore_webhook', { transaction_id: originalTransactionId }, true);
+    const { error } = await supabaseService
       .from('vault_subscriptions')
       .update({
         status: 'in_grace',
@@ -288,7 +286,8 @@ export class AppStoreWebhookHandler {
   async handleExpired(transactionInfo, subtype) {
     const { originalTransactionId } = transactionInfo;
 
-    const { error } = await supabase
+    auditServiceClientUsage('subscription_expire', 'appstore_webhook', { transaction_id: originalTransactionId }, true);
+    const { error } = await supabaseService
       .from('vault_subscriptions')
       .update({
         status: 'expired',
@@ -311,7 +310,8 @@ export class AppStoreWebhookHandler {
     const { originalTransactionId } = transactionInfo;
     const deletionDate = new Date(Date.now() + (90 * 24 * 60 * 60 * 1000)); // 90 days
 
-    const { error } = await supabase
+    auditServiceClientUsage('subscription_cancel', 'appstore_webhook', { transaction_id: originalTransactionId }, true);
+    const { error } = await supabaseService
       .from('vault_subscriptions')
       .update({
         status: 'canceled',
@@ -334,7 +334,8 @@ export class AppStoreWebhookHandler {
   async handleRenewalStatusChanged(transactionInfo) {
     const { originalTransactionId, autoRenewStatus } = transactionInfo;
 
-    const { error } = await supabase
+    auditServiceClientUsage('subscription_renew_status', 'appstore_webhook', { transaction_id: originalTransactionId, auto_renew: autoRenewStatus }, true);
+    const { error } = await supabaseService
       .from('vault_subscriptions')
       .update({
         auto_renew_status: autoRenewStatus,
@@ -356,7 +357,8 @@ export class AppStoreWebhookHandler {
   async handleRefund(transactionInfo) {
     const { originalTransactionId } = transactionInfo;
 
-    const { error } = await supabase
+    auditServiceClientUsage('subscription_refund', 'appstore_webhook', { transaction_id: originalTransactionId }, true);
+    const { error } = await supabaseService
       .from('vault_subscriptions')
       .update({
         status: 'canceled',
@@ -380,7 +382,8 @@ export class AppStoreWebhookHandler {
   async handleRevoke(transactionInfo) {
     const { originalTransactionId } = transactionInfo;
 
-    const { error } = await supabase
+    auditServiceClientUsage('subscription_revoke', 'appstore_webhook', { transaction_id: originalTransactionId }, true);
+    const { error } = await supabaseService
       .from('vault_subscriptions')
       .update({
         status: 'canceled',
@@ -416,7 +419,8 @@ export class AppStoreWebhookHandler {
         error_message: errorMessage
       };
 
-      await supabase
+      auditServiceClientUsage('log_notification', 'appstore_webhook', { uuid: notification.notificationUUID, type: notification.notificationType }, true);
+      await supabaseService
         .from('app_store_notifications')
         .insert(logData);
     } catch (error) {
@@ -443,8 +447,9 @@ export class AppStoreWebhookHandler {
    */
   async getHealthStatus() {
     try {
-      // Check recent notifications
-      const { data: recentNotifications, error } = await supabase
+      // Check recent notifications (system operation - health check)
+      auditServiceClientUsage('health_check', 'appstore_webhook', {}, true);
+      const { data: recentNotifications, error } = await supabaseService
         .from('app_store_notifications')
         .select('processing_status, created_at')
         .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000)) // Last 24 hours
