@@ -1,6 +1,7 @@
 // Storage Quota Service
-// Enforces storage limits based on subscription tiers and manages quota tracking
+// Enforces storage limits based on subscription tiers and manages quota tracking  
 import { supabase } from '../config/supabase.mjs';
+import { monitorServiceClientUsage } from '../middleware/rls-auth.mjs';
 
 export class StorageQuotaService {
     constructor() {
@@ -22,10 +23,12 @@ export class StorageQuotaService {
     }
 
     /**
-     * Get user's current quota information
+     * Get user's current quota information (system operation)
      */
     async getQuotaInfo(deviceId) {
         try {
+            // System operation - quota lookup by device ID
+            monitorServiceClientUsage('get_quota_info', 'storage_quota_system', { device_id: deviceId }, true);
             const { data: user, error } = await supabase
                 .from('users')
                 .select(`

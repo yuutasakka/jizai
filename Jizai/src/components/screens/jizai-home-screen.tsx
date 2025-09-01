@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+// import React, { useState } from 'react';
 import { track } from '../../lib/analytics';
-import Link from 'next/link';
 import { JZButton } from '../design-system/jizai-button';
 import { JZCard, JZCardHeader, JZCardContent } from '../design-system/jizai-card';
 import { JZChip } from '../design-system/jizai-chip';
@@ -31,11 +30,9 @@ interface JizaiHomeScreenProps {
 export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }: JizaiHomeScreenProps) => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [customPrompt, setCustomPrompt] = useState('');
-  // 表示用のボタンはプラン画面への導線に変更
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // 日本語入力フォームの状態
   const [japaneseInput, setJapaneseInput] = useState('');
   const [englishPreview, setEnglishPreview] = useState('');
   const [isTranslating, setIsTranslating] = useState(false);
@@ -44,7 +41,6 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
   const [isExampleLoaded, setIsExampleLoaded] = useState(false);
   const [isPreviewCollapsed, setIsPreviewCollapsed] = useState(true);
   const [navOpen, setNavOpen] = useState(false);
-
 
   const handleImageSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files?.[0]) {
@@ -76,16 +72,13 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
     onNavigate('progress');
   };
 
-  // 英訳プレビューを取得する関数（モック）
   const handleTranslateToEnglish = async () => {
     if (!japaneseInput.trim()) return;
     
     setIsTranslating(true);
     try {
-      // 実際の実装ではDeepL APIを呼び出す
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // モック翻訳
       const mockTranslation = japaneseInput.includes('営業中') && japaneseInput.includes('準備中')
         ? "Change the text '営業中' (Open) on the sign to '準備中' (Preparing), while maintaining the original font, spacing, and layout exactly as they are."
         : `Please ${japaneseInput.toLowerCase().replace('てください', '').replace('して', '')}, maintaining the original design elements and composition.`;
@@ -99,25 +92,22 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
     }
   };
 
-  // 選択された例をロードする効果
   React.useEffect(() => {
     if (selectedExample && !isExampleLoaded) {
-      // 少し遅延を入れて、ユーザーが遷移を認識できるようにする
       setTimeout(() => {
         setEnglishPreview(selectedExample.promptEn);
-        setJapaneseInput(''); // 日本語欄はクリア
+        setJapaneseInput('');
         setIsExampleLoaded(true);
         setError(null);
       }, 200);
     }
   }, [selectedExample, isExampleLoaded]);
 
-  // 日本語入力が変更されたときに自動翻訳
   React.useEffect(() => {
     if (japaneseInput.trim() && !selectedExample) {
       const delayedTranslation = setTimeout(() => {
         handleTranslateToEnglish();
-      }, 500); // 500ms のデバウンス
+      }, 500);
       
       return () => clearTimeout(delayedTranslation);
     } else if (!japaneseInput.trim() && !selectedExample) {
@@ -125,14 +115,12 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
     }
   }, [japaneseInput, selectedExample]);
 
-  // コピー機能（フォールバック付き）
   const handleCopyToClipboard = async () => {
     if (!englishPreview) return;
     
     setCopyError(false);
     
     try {
-      // モダンなClipboard APIを試す
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(englishPreview);
         setCopied(true);
@@ -140,7 +128,6 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
         return;
       }
       
-      // フォールバック: temporary textareaを使用
       const textArea = document.createElement('textarea');
       textArea.value = englishPreview;
       textArea.style.position = 'fixed';
@@ -164,7 +151,6 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
       setCopyError(true);
       setTimeout(() => setCopyError(false), 3000);
       
-      // ユーザーに手動選択を促す（alertの代わりに状態表示）
       const textArea = document.createElement('textarea');
       textArea.value = englishPreview;
       textArea.style.position = 'fixed';
@@ -185,7 +171,6 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
       textArea.focus();
       textArea.select();
       
-      // 3秒後に自動削除
       setTimeout(() => {
         if (document.body.contains(textArea)) {
           document.body.removeChild(textArea);
@@ -193,8 +178,6 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
       }, 3000);
     }
   };
-
-
 
   const handleRetry = () => {
     setError(null);
@@ -209,7 +192,6 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
 
   return (
     <div className="min-h-screen bg-[color:var(--color-jz-surface)]">
-      {/* Header with Glass Effect */
       <div className="fixed top-0 left-0 right-0 z-50">
         <div className="jz-glass-effect border-b border-[color:var(--color-jz-border)]">
           <div className="flex justify-between items-center pt-[44px] px-[var(--space-16)] pb-[var(--space-16)]">
@@ -218,7 +200,6 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
               <p className="jz-text-caption text-[color:var(--color-jz-text-secondary)] mt-[2px]">写真、思いのままに。</p>
             </div>
             <div className="flex items-center gap-[var(--space-8)] relative">
-              {/* 用途別ドロップダウン */}
               <div className="relative">
                 <button
                   onClick={() => setNavOpen(!navOpen)}
@@ -228,10 +209,10 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
                 </button>
                 {navOpen && (
                   <div className="absolute right-0 mt-[var(--space-8)] w-[240px] bg-[color:var(--color-jz-card)] border border-[color:var(--color-jz-border)] rounded-[--radius-jz-card] shadow-lg z-50">
-                    <Link href="/memorial/human" className="block px-[12px] py-[10px] hover:bg-[color:var(--color-jz-surface)]">遺影写真（人）</Link>
-                    <Link href="/memorial/pet" className="block px-[12px] py-[10px] hover:bg-[color:var(--color-jz-surface)]">ペット遺影</Link>
-                    <Link href="/memorial/seizen" className="block px-[12px] py-[10px] hover:bg-[color:var(--color-jz-surface)]">生前撮影</Link>
-                    <Link href="/memorial/photo" className="block px-[12px] py-[10px] hover:bg-[color:var(--color-jz-surface)]">メモリアルフォト</Link>
+                    <button onClick={() => onNavigate('memorial/human')} className="block w-full text-left px-[12px] py-[10px] hover:bg-[color:var(--color-jz-surface)]">遺影写真（人）</button>
+                    <button onClick={() => onNavigate('memorial/pet')} className="block w-full text-left px-[12px] py-[10px] hover:bg-[color:var(--color-jz-surface)]">ペット遺影</button>
+                    <button onClick={() => onNavigate('memorial/seizen')} className="block w-full text-left px-[12px] py-[10px] hover:bg-[color:var(--color-jz-surface)]">生前撮影</button>
+                    <button onClick={() => onNavigate('memorial/photo')} className="block w-full text-left px-[12px] py-[10px] hover:bg-[color:var(--color-jz-surface)]">メモリアルフォト</button>
                   </div>
                 )}
               </div>
@@ -255,9 +236,7 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
         </div>
       </div>
 
-      {/* Content */}
       <div className="pt-[140px] pb-[var(--space-24)] px-[var(--space-16)] jz-grid-8pt jz-spacing-16">
-        {/* Hero Area */
         <div className="text-center py-[var(--space-24)]">
           <h1 className="jz-font-display jz-text-display-large text-[color:var(--color-jz-text-primary)] mb-[var(--space-12)]">
             遺影写真の編集と仕上げ、すぐに。
@@ -285,63 +264,48 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
           </div>
         </div>
 
-        {/* 用途別で選ぶ */}
         <div className="mb-[var(--space-24)]">
           <h2 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)] text-center mb-[var(--space-16)]">用途別で選ぶ</h2>
           <div className="grid gap-[var(--space-16)] grid-cols-1 md:grid-cols-2">
-            {/* 人 */}
             <JZCard>
               <JZCardHeader>
                 <h3 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)]">遺影写真（人）</h3>
               </JZCardHeader>
               <JZCardContent>
                 <p className="jz-text-body text-[color:var(--color-jz-text-secondary)] mb-[var(--space-12)]">服装・背景・肌/髪の整え。四つ切/A4/L判対応。</p>
-                <Link href="/memorial/human" className="inline-block">
-                  <JZButton tone="secondary">この用途で作成する</JZButton>
-                </Link>
+                <JZButton tone="secondary" onClick={() => onNavigate('memorial/human')}>この用途で作成する</JZButton>
               </JZCardContent>
             </JZCard>
-            {/* ペット */}
             <JZCard>
               <JZCardHeader>
                 <h3 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)]">ペット遺影</h3>
               </JZCardHeader>
               <JZCardContent>
                 <p className="jz-text-body text-[color:var(--color-jz-text-secondary)] mb-[var(--space-12)]">毛並みの整え・背景無地化・色味補正。</p>
-                <Link href="/memorial/pet" className="inline-block">
-                  <JZButton tone="secondary">この用途で作成する</JZButton>
-                </Link>
+                <JZButton tone="secondary" onClick={() => onNavigate('memorial/pet')}>この用途で作成する</JZButton>
               </JZCardContent>
             </JZCard>
-            {/* 生前撮影 */}
             <JZCard>
               <JZCardHeader>
                 <h3 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)]">生前撮影</h3>
               </JZCardHeader>
               <JZCardContent>
                 <p className="jz-text-body text-[color:var(--color-jz-text-secondary)] mb-[var(--space-12)]">自然なレタッチとサイズ書き出し。</p>
-                <Link href="/memorial/seizen" className="inline-block">
-                  <JZButton tone="secondary">この用途で作成する</JZButton>
-                </Link>
+                <JZButton tone="secondary" onClick={() => onNavigate('memorial/seizen')}>この用途で作成する</JZButton>
               </JZCardContent>
             </JZCard>
-            {/* メモリアルフォト */}
             <JZCard>
               <JZCardHeader>
                 <h3 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)]">メモリアルフォト</h3>
               </JZCardHeader>
               <JZCardContent>
                 <p className="jz-text-body text-[color:var(--color-jz-text-secondary)] mb-[var(--space-12)]">法要・命日の写真整えと印刷最適化。</p>
-                <Link href="/memorial/photo" className="inline-block">
-                  <JZButton tone="secondary">この用途で作成する</JZButton>
-                </Link>
+                <JZButton tone="secondary" onClick={() => onNavigate('memorial/photo')}>この用途で作成する</JZButton>
               </JZCardContent>
             </JZCard>
           </div>
         </div>
 
-
-        {/* Error State */}
         {error && (
           <JZErrorCard
             message={error}
@@ -350,7 +314,6 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
           />
         )}
 
-        {/* Photo Selection */}
         <JZCard>
           <JZCardHeader>
             <h3 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)]">写真を選択</h3>
@@ -418,13 +381,11 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
           </JZCardContent>
         </JZCard>
 
-        {/* 日本語入力フォーム */}
         <JZCard>
           <JZCardHeader>
             <h3 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)]">指示を日本語で入力してください</h3>
           </JZCardHeader>
           <JZCardContent className="space-y-[var(--space-16)]">
-            {/* 日本語入力 */}
             <div>
               <textarea
                 value={japaneseInput}
@@ -438,7 +399,6 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
               />
             </div>
             
-            {/* 送信内容プレビュー（折りたたみ式） */}
             <div className="space-y-[var(--space-8)]">
               <div className="flex items-center justify-between">
                 <JZButton
@@ -507,7 +467,6 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
               )}
             </div>
             
-            {/* 注意書き */}
             <div className="p-[var(--space-12)] bg-[color:var(--color-jz-card)] rounded-[--radius-jz-button] border border-[color:var(--color-jz-border)]">
               <p className="jz-text-caption text-[#A1A1AA]">
                 ※プレビューは送信内容の表示です。<strong>画像内の日本語文字は、そのままの表記で生成</strong>してください。<br/>
@@ -517,7 +476,6 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
           </JZCardContent>
         </JZCard>
 
-        {/* Custom Prompt */}
         <JZCard>
           <JZCardHeader>
             <h3 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)]">プロンプトを入力する</h3>
@@ -536,10 +494,8 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
           </JZCardContent>
         </JZCard>
 
-        {/* Action Buttons */}
         <JZCard>
           <JZCardContent className="p-[var(--space-16)] space-y-[var(--space-12)]">
-            {/* Cost Notice */}
             <div className="text-center">
               <p className="jz-text-caption text-[color:var(--color-jz-text-tertiary)]">
                 生成は1回ごとに料金がかかります（通常100円/枚。今だけセールあり）

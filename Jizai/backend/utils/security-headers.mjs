@@ -119,32 +119,71 @@ export function initializeSecurityHeaders() {
 }
 
 /**
- * Content Security Policy (CSP) middleware with enhanced reporting
+ * Generate cryptographically secure nonce for CSP
+ * @returns {string} Base64 encoded nonce
+ */
+function generateNonce() {
+    const crypto = require('crypto');
+    return crypto.randomBytes(16).toString('base64');
+}
+
+/**
+ * Content Security Policy (CSP) middleware with enhanced reporting and nonce support
  * @param {Object} options - CSP configuration options
  * @returns {Function} Express middleware
  */
 export function cspHeaders(options = {}) {
     const {
-        reportOnly = true,
+        reportOnly = false, // Changed default to enforcing mode
         reportUri = '/csp-report',
-        enableReporting = process.env.NODE_ENV === 'production'
+        enableReporting = process.env.NODE_ENV === 'production',
+        useNonce = process.env.NODE_ENV === 'production'
     } = options;
     
     return (req, res, next) => {
-        // Enhanced CSP directives for better security
+        const isProduction = process.env.NODE_ENV === 'production';
+        
+        // Generate nonce for this request if enabled
+        let nonce = null;
+        if (useNonce && isProduction) {
+            nonce = generateNonce();
+            res.locals.nonce = nonce; // Make nonce available to templates
+        }
+        
+        // Enhanced CSP directives - PRODUCTION HARDENED
         const cspDirectives = [
             "default-src 'self'",
             "img-src 'self' data: https: blob:",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // TODO: Remove unsafe-* in production
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+            
+            // ENHANCED SCRIPT POLICY - Production hardened, Development flexible
+            isProduction 
+                ? (nonce 
+                    ? `script-src 'self' 'nonce-${nonce}'` 
+                    : "script-src 'self'") // Strict: only self or nonce
+                : "script-src 'self' 'unsafe-inline'", // Dev: removed unsafe-eval as requested
+            
+            // Style sources with conditional nonce
+            isProduction && nonce
+                ? `style-src 'self' 'nonce-${nonce}' https://fonts.googleapis.com`
+                : "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+            
             "font-src 'self' https://fonts.gstatic.com",
+            
+            // Connect sources - minimal necessary connections
             "connect-src 'self' https://dashscope.aliyuncs.com https://vitals.vercel-analytics.com https://api.supabase.co wss://*.supabase.co",
+            
             "media-src 'self' data: blob:",
-            "object-src 'none'",
-            "base-uri 'self'",
-            "frame-ancestors 'none'",
-            "form-action 'self'",
-            "upgrade-insecure-requests"
+            "object-src 'none'", // Block all plugins
+            "base-uri 'self'", // Prevent base tag injection
+            "frame-ancestors 'none'", // Prevent embedding (clickjacking protection)
+            "form-action 'self'", // Only allow form submission to same origin
+            
+            // Production-only directives
+            ...(isProduction ? [
+                "upgrade-insecure-requests", // Force HTTPS upgrades
+                "require-trusted-types-for 'script'", // DOM XSS protection (if supported)
+                "trusted-types 'none'" // Disable Trusted Types fallback
+            ] : [])
         ];
         
         // Add report URI if reporting is enabled
@@ -158,7 +197,7 @@ export function cspHeaders(options = {}) {
         const cspValue = cspDirectives.join('; ');
         const headerName = reportOnly ? 'Content-Security-Policy-Report-Only' : 'Content-Security-Policy';
         
-        // Set CSP header for all responses (API endpoints need it too for security)
+        // Set CSP header for all responses
         res.setHeader(headerName, cspValue);
         
         // Set Reporting API endpoints header (modern browsers)
@@ -171,6 +210,14 @@ export function cspHeaders(options = {}) {
                 ]
             });
             res.setHeader('Report-To', reportingEndpoints);
+        }
+        
+        // Log nonce generation for monitoring
+        if (nonce) {
+            secureLogger.debug('CSP nonce generated', {
+                requestId: req.id,
+                userAgent: req.get('User-Agent')?.substring(0, 50)
+            });
         }
         
         next();

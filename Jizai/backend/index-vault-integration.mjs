@@ -21,7 +21,7 @@ import printExportRoutes from './routes/print-export.mjs';
 import webhookRoutes from './routes/webhooks.mjs';
 
 // Import legacy store for backward compatibility
-// Legacy local store removed: all persistence uses Supabase
+import store from './store.mjs';
 
 // 環境変数を読み込み
 dotenv.config();
@@ -254,7 +254,7 @@ if (databaseInitialized) {
 // 画像編集エンドポイント（既存機能を保持）
 import { supabaseService, supabaseStorage } from './config/supabase.mjs';
 import { SubscriptionService } from './services/subscription-service.mjs';
-import { rlsAuthMiddleware, monitorServiceClientUsage } from './middleware/rls-auth.mjs';
+import { monitorServiceClientUsage } from './middleware/rls-auth.mjs';
 import { randomUUID } from 'crypto';
 
 const subscriptionService = new SubscriptionService();

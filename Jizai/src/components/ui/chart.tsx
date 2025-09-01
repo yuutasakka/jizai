@@ -80,6 +80,8 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
 
   return (
     <style
+      // SECURITY NOTE: This dangerouslySetInnerHTML is safe as it only generates
+      // CSS custom properties from predefined theme constants. No user input.
       dangerouslySetInnerHTML={{
         __html: Object.entries(THEMES)
           .map(

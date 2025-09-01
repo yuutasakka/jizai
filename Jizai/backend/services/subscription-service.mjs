@@ -1,6 +1,7 @@
 // Subscription Service
 // Core business logic for managing App Store subscriptions and user tiers
 import { supabase, supabaseService } from '../config/supabase.mjs';
+import { monitorServiceClientUsage } from '../middleware/rls-auth.mjs';
 
 export class SubscriptionService {
     constructor() {
@@ -19,11 +20,13 @@ export class SubscriptionService {
     }
 
     /**
-     * Get active subscription for user
+     * Get active subscription for user (system operation)
      */
     async getActiveSubscription(deviceId) {
         try {
-            const { data, error } = await supabase
+            // System operation - subscription lookup by device ID
+            monitorServiceClientUsage('get_active_subscription', 'subscription_system', { device_id: deviceId }, true);
+            const { data, error } = await supabaseService
                 .from('subscriptions')
                 .select(`
                     *,
@@ -48,10 +51,13 @@ export class SubscriptionService {
     }
 
     /**
-     * Start trial subscription
+     * Start trial subscription (system operation)
      */
     async startTrial(deviceId, productId) {
         try {
+            // System operation - trial subscription creation
+            monitorServiceClientUsage('start_trial', 'subscription_system', { device_id: deviceId, product_id: productId }, true);
+            
             // Get or create user
             const user = await this.getOrCreateUser(deviceId);
             
@@ -69,8 +75,8 @@ export class SubscriptionService {
             const trialStart = new Date();
             const trialEnd = new Date(trialStart.getTime() + this.trialDurationDays * 24 * 60 * 60 * 1000);
 
-            // Create trial subscription
-            const { data: subscription, error } = await supabase
+            // Create trial subscription (system operation)
+            const { data: subscription, error } = await supabaseService
                 .from('subscriptions')
                 .insert({
                     user_id: user.id,

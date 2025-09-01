@@ -5,7 +5,7 @@
 
 import jwt from 'jsonwebtoken';
 import { createClient } from '@supabase/supabase-js';
-import { subscriptionService } from '../services/subscription-service.mjs';
+import { SubscriptionService } from '../services/subscription-service.mjs';
 import { secureLogger } from '../utils/secure-logger.mjs';
 
 /**
@@ -58,6 +58,7 @@ export function rlsAuthMiddleware() {
             }
             
             // Get or create user for this device
+            const subscriptionService = new SubscriptionService();
             const user = await subscriptionService.getOrCreateUser(deviceId);
             
             // Create JWT token for this user

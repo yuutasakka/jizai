@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+// import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { logReactError } from '../lib/error-tracking';
 
 interface Props {
