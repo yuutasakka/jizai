@@ -24,8 +24,8 @@ export const CREDIT_PLANS: Plan[] = [
 export const STAFF_PLAN: Plan = {
   id: 'staff',
   units: 0,
-  regularPrice: 5980,
-  salePrice: 5980,
+  regularPrice: 4980,
+  salePrice: 4980,
   isStaff: true,
   unitLabel: '有人仕上げ / 1件',
 };
