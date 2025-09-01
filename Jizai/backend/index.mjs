@@ -135,6 +135,7 @@ app.post('/v1/edit', editLimiter, upload.single('image'), async (req, res) => {
         const { prompt } = req.body;
         const imageFile = req.file;
         const deviceId = req.headers['x-device-id'];
+        const profile = (req.body.engine_profile || 'standard').toString();
 
         // バリデーション
         if (!deviceId || typeof deviceId !== 'string' || deviceId.trim().length === 0) {
@@ -199,6 +200,12 @@ app.post('/v1/edit', editLimiter, upload.single('image'), async (req, res) => {
         // Use secure logger to sanitize PII from prompt logs
         secureLogger.editRequest(deviceId, prompt, imageFile.size);
 
+        // 編集エンジン（プロファイル）に応じたパラメータ
+        const ENGINE = {
+            standard: { num_inference_steps: 35, true_cfg_scale: 4.0 },
+            high: { num_inference_steps: 60, true_cfg_scale: 4.6 }
+        }[profile] || { num_inference_steps: 35, true_cfg_scale: 4.0 };
+
         // Qwen-Image-Edit API呼び出し
         const qwenResponse = await axios.post(
             'https://dashscope.aliyuncs.com/api/v1/services/aigc/image-generation/generation',
@@ -209,7 +216,9 @@ app.post('/v1/edit', editLimiter, upload.single('image'), async (req, res) => {
                     prompt: prompt
                 },
                 parameters: {
-                    format: 'png'
+                    format: 'png',
+                    num_inference_steps: ENGINE.num_inference_steps,
+                    true_cfg_scale: ENGINE.true_cfg_scale
                 }
             },
             {

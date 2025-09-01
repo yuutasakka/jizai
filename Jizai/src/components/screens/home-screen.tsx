@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { JZButton } from '../design-system/jizai-button';
 import { JZCard, JZCardHeader, JZCardContent } from '../design-system/jizai-card';
 import { JZChip } from '../design-system/jizai-chip';
+import { EngineSelector, EngineProfile } from '../EngineSelector';
 import { JZPhotographIcon, JZPlusIcon, JZMagicWandIcon, JZBoltIcon } from '../design-system/jizai-icons';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { cn } from '../ui/utils';
@@ -13,7 +14,7 @@ export const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => voi
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [selectedPreset, setSelectedPreset] = useState<string>('');
   const [customPrompt, setCustomPrompt] = useState('');
-  const [selectedModel, setSelectedModel] = useState<'modelA' | 'modelB'>('modelA');
+  const [engineProfile, setEngineProfile] = useState<EngineProfile>('standard');
   const [tier, setTier] = useState<string>('free');
   const [storage, setStorage] = useState<{quota: number; used: number}>({ quota: 0, used: 0 });
   const [isLoading, setIsLoading] = useState(false);
@@ -50,6 +51,17 @@ export const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => voi
     loadBalance();
   }, []);
 
+  // URLクエリから事前設定（/?usecase=&preset=&engine=）
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const presetId = params.get('preset') || '';
+      const engine = (params.get('engine') as EngineProfile) || 'standard';
+      if (presetId) setSelectedPreset(presetId);
+      setEngineProfile(engine);
+    } catch {}
+  }, []);
+
   const handleImageSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files?.[0]) {
       setIsLoading(true);
@@ -77,7 +89,7 @@ export const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => voi
       const prompt = customPrompt || getPresetPrompt(selectedPreset);
       
       // 画像生成API呼び出し
-      const result = await apiClient.editImage(selectedImage, prompt, selectedModel);
+      const result = await apiClient.editImage(selectedImage, prompt, engineProfile);
       
       // 生成された画像をローカルストレージに保存（一時的に）
       const imageUrl = URL.createObjectURL(result.blob);
@@ -161,34 +173,13 @@ export const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => voi
             <p className="text-red-800 text-sm">{error}</p>
           </div>
         )}
-        {/* モデル選択 */}
+        {/* 編集エンジン */}
         <JZCard>
           <JZCardHeader>
-            <h2 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)]">モデル選択</h2>
+            <h2 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)]">編集エンジン</h2>
           </JZCardHeader>
           <JZCardContent>
-            <div className="grid grid-cols-2 gap-[var(--space-12)]">
-              <JZChip
-                size="md"
-                variant={selectedModel === 'modelA' ? 'selected' : 'default'}
-                onClick={() => setSelectedModel('modelA')}
-              >
-                モデル A
-              </JZChip>
-              <JZChip
-                size="md"
-                variant={selectedModel === 'modelB' ? 'selected' : 'default'}
-                onClick={() => setSelectedModel('modelB')}
-              >
-                モデル B
-              </JZChip>
-            </div>
-            <p className="jz-text-caption text-[color:var(--color-jz-text-tertiary)] mt-[var(--space-8)]">
-              {selectedModel === 'modelA' 
-                ? 'モデル A: 高速で安定した画像生成に特化' 
-                : 'モデル B: 高品質で詳細な画像生成に特化'
-              }
-            </p>
+            <EngineSelector value={engineProfile} onChange={setEngineProfile} />
           </JZCardContent>
         </JZCard>
 

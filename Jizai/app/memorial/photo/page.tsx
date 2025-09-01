@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
+import { ExampleGallery } from '@/components/ExampleGallery';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -99,15 +100,10 @@ export default function Page() {
           <li>・リサイズ：<strong>フィット（余白）</strong> / <strong>フィル（トリミング）</strong></li>
         </ul>
       </section>
-      <section id="examples" className="mb-12">
-        <h2 className="jz-font-display jz-text-display-small mb-4">仕上がり例（Before/After）</h2>
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="grid grid-cols-2 gap-2">
-            <Image src="/examples/photo_01_before.png" width={600} height={600} sizes="(max-width: 768px) 100vw, 600px" priority alt="メモリアルフォトの不要物を軽減した例（Before）" className="rounded-md aspect-square object-cover" />
-            <Image src="/examples/photo_01_after.png" width={600} height={600} sizes="(max-width: 768px) 100vw, 600px" alt="メモリアルフォトの不要物を軽減した例（After）" className="rounded-md aspect-square object-cover" />
-          </div>
-        </div>
-        <div className="mt-4"><a href="/?usecase=photo&preset=remove-objects" className="underline">この例で試す</a></div>
+      <section id="examples" className="mb-12 space-y-3">
+        <h2 className="jz-font-display jz-text-display-small mb-2">仕上がり例</h2>
+        <ExampleGallery usecase="photo" />
+        <p className="text-xs text-[color:var(--color-jz-text-tertiary)]">※プレビューは英語表記です。画像に日本語の文字を入れる場合は、その部分を日本語に置き換えてから生成してください。</p>
       </section>
       <section id="pricing" className="mb-12">
         <h2 className="jz-font-display jz-text-display-small mb-4">料金</h2>
