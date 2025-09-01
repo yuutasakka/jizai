@@ -57,7 +57,24 @@ export const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => voi
       const params = new URLSearchParams(window.location.search);
       const presetId = params.get('preset') || '';
       const engine = (params.get('engine') as EngineProfile) || 'standard';
-      if (presetId) setSelectedPreset(presetId);
+      // 例IDが来た場合はexamples.jsonから日本語プロンプトを注入
+      if (presetId) {
+        fetch('/examples/examples.json')
+          .then((r) => r.json())
+          .then((list) => {
+            const ex = (list as any[]).find((x) => x.id === presetId);
+            if (ex?.prompt_ja) {
+              setCustomPrompt(ex.prompt_ja);
+              setSelectedPreset('');
+            } else {
+              // 既存プリセットIDの場合は選択状態にする
+              setSelectedPreset(presetId);
+            }
+          })
+          .catch(() => {
+            setSelectedPreset(presetId);
+          });
+      }
       setEngineProfile(engine);
     } catch {}
   }, []);
