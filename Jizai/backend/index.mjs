@@ -9,6 +9,7 @@ import store from './store.mjs';
 import { secureLogger } from './utils/secure-logger.mjs';
 import { getCorsConfig, initializeCors } from './utils/cors-config.mjs';
 import { initializeSecurityHeaders, initializeCSPReporting } from './utils/security-headers.mjs';
+import { responseSanitizer } from './middleware/response-sanitizer.mjs';
 import { cspReportHandler, cspStatsHandler } from './utils/csp-reporter.mjs';
 
 // 環境変数を読み込み
@@ -49,6 +50,8 @@ const upload = multer({
 // ミドルウェア設定
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+// Sanitize JSON responses (strip codes, mask 5xx messages)
+app.use(responseSanitizer());
 
 // Apply environment-aware CORS configuration
 app.use(cors(getCorsConfig()));

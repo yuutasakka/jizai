@@ -16,8 +16,7 @@ const requireAdmin = (req, res, next) => {
         if (process.env.NODE_ENV === 'production') {
             return res.status(503).json({
                 error: 'Service Unavailable',
-                message: 'Admin token not configured',
-                code: 'ADMIN_NOT_CONFIGURED'
+                message: 'Configuration error'
             });
         }
     }
@@ -27,8 +26,7 @@ const requireAdmin = (req, res, next) => {
     }
     return res.status(401).json({
         error: 'Unauthorized',
-        message: 'Admin token required',
-        code: 'ADMIN_AUTH_REQUIRED'
+        message: 'Authentication required'
     });
 };
 
@@ -57,8 +55,7 @@ const validateWebhookRequest = (req, res, next) => {
     if (process.env.NODE_ENV === 'production' && !userAgent?.includes('App Store')) {
         return res.status(403).json({
             error: 'Forbidden',
-            message: 'Invalid user agent',
-            code: 'INVALID_USER_AGENT'
+            message: 'Access denied'
         });
     }
 

@@ -10,6 +10,7 @@ import { readFile } from 'fs/promises';
 import { secureLogger, sanitizeText } from './utils/secure-logger.mjs';
 import { getCorsConfig, initializeCors } from './utils/cors-config.mjs';
 import { initializeSecurityHeaders, initializeCSPReporting } from './utils/security-headers.mjs';
+import { responseSanitizer } from './middleware/response-sanitizer.mjs';
 import { cspReportHandler, cspStatsHandler } from './utils/csp-reporter.mjs';
 
 // Import vault subscription system
@@ -93,6 +94,8 @@ const vaultUpload = createMemoryUpload(100 * 1024 * 1024); // 100MB for vault me
 // JSON parsing
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+// Sanitize JSON responses (strip codes, mask 5xx messages)
+app.use(responseSanitizer());
 
 // Apply environment-aware CORS configuration
 app.use(cors(getCorsConfig()));
