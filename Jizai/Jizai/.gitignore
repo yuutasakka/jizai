@@ -1,0 +1,11 @@
+# Build outputs
+.next/
+build/
+dist/
+
+# Local service
+.vercel/
+
+# Local data
+backend/store.json
+
