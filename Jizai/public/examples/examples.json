@@ -23,5 +23,41 @@
     "engine_profile": "standard",
     "export": { "size_key": "a4", "dpi": 350, "bleed_mm": 3, "mode": "fit" }
   }
+  ,
+  {
+    "id": "pet_fur_cleanup",
+    "usecase": "pet",
+    "title": "毛並みを自然に整える",
+    "desc": "目の輝きはそのままに、被写体の色を保つ",
+    "before": "/examples/pet_01_before.png",
+    "after": "/examples/pet_01_after.png",
+    "prompt_ja": "毛並みを自然に整えてください。過剰なぼかしは避け、被写体の色味は保ってください。背景は無地の薄いグレーにしてください。",
+    "preset": { "fur": "natural", "bg": "solid-lightgray" },
+    "engine_profile": "standard",
+    "export": { "size_key": "a4", "dpi": 350, "bleed_mm": 3, "mode": "fit" }
+  },
+  {
+    "id": "seizen_natural_retouch",
+    "usecase": "seizen",
+    "title": "肌の自然なレタッチ",
+    "desc": "しわ・くすみを軽く整える（自然さ優先）",
+    "before": "/examples/seizen_01_before.png",
+    "after": "/examples/seizen_01_after.png",
+    "prompt_ja": "肌のしわやくすみを軽く整えてください。自然さを最優先とし、背景は無地の淡いグレーにしてください。",
+    "preset": { "skin": "light-retouch", "bg": "solid-lightgray" },
+    "engine_profile": "high",
+    "export": { "size_key": "yotsugiri", "dpi": 350, "bleed_mm": 3, "mode": "fill" }
+  },
+  {
+    "id": "photo_remove_objects",
+    "usecase": "photo",
+    "title": "不要物を軽減",
+    "desc": "色味補正と断裁を想定したレイアウト",
+    "before": "/examples/photo_01_before.png",
+    "after": "/examples/photo_01_after.png",
+    "prompt_ja": "不要な写り込みを自然に軽減してください。全体の色味を印刷に適した明るさに調整し、断裁を想定した安全な構図にしてください。",
+    "preset": { "cleanup": true, "tone": "print-safe" },
+    "engine_profile": "standard",
+    "export": { "size_key": "a4", "dpi": 350, "bleed_mm": 3, "mode": "fit" }
+  }
 ]
-

@@ -1,11 +1,15 @@
 "use client";
 import Image from "next/image";
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore - allow importing JSON from public via relative path
-import examples from "@/../public/examples/examples.json";
+import React from "react";
 
 export function ExampleGallery({ usecase }: { usecase: "human" | "pet" | "seizen" | "photo" }) {
-  const items = (examples as any[]).filter((x) => x.usecase === usecase);
+  const [items, setItems] = React.useState<any[]>([]);
+  React.useEffect(() => {
+    fetch('/examples/examples.json')
+      .then((r) => r.json())
+      .then((list) => setItems((list as any[]).filter((x) => x.usecase === usecase)))
+      .catch(() => setItems([]));
+  }, [usecase]);
   return (
     <div className="grid gap-6 md:grid-cols-2">
       {items.map((ex) => (
@@ -46,4 +50,3 @@ export function ExampleGallery({ usecase }: { usecase: "human" | "pet" | "seizen
     </div>
   );
 }
-

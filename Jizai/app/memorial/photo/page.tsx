@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
-import { ExampleGallery } from '@/components/ExampleGallery';
+import { ExampleGallery } from '../../src/components/ExampleGallery';
 import Link from 'next/link';
 import Image from 'next/image';
 

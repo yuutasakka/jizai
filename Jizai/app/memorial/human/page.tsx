@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
 import Link from 'next/link';
-import { ExampleGallery } from '@/components/ExampleGallery';
+import { ExampleGallery } from '../../src/components/ExampleGallery';
 import Image from 'next/image';
 
 export const dynamic = 'force-static';
