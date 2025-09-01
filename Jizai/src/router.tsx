@@ -1,4 +1,4 @@
-// import React from 'react';
+import React from 'react';
 import App from './App';
 import { MemorialHumanPage, MemorialPetPage, MemorialSeizenPage, MemorialPhotoPage } from './routes/memorial-pages';
 

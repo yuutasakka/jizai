@@ -1,4 +1,4 @@
-// import React from 'react';
+import React from 'react';
 import { IOSButton } from './ios-button';
 import { IOSCard, IOSCardContent } from './ios-card';
 import { GearIcon } from './ios-icons';

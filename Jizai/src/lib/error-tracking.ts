@@ -22,7 +22,7 @@ interface PerformanceMetrics {
 }
 
 class ErrorTracker {
-  private isProduction = import.meta.env.PROD;
+  private isProduction = (import.meta as any).env?.PROD || false;
   private errorQueue: ErrorLog[] = [];
   private metricsQueue: PerformanceMetrics[] = [];
   private maxQueueSize = 100;

@@ -1,4 +1,4 @@
-// import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { JZButton } from '../design-system/jizai-button';
 import { JZCard, JZCardContent } from '../design-system/jizai-card';
 import { JZXIcon, JZExclamationBubbleIcon } from '../design-system/jizai-icons';
@@ -58,7 +58,7 @@ export const JizaiProgressScreen = ({ onNavigate }: { onNavigate: (screen: strin
           <div className="flex justify-between items-center pt-[44px] px-[var(--space-16)] pb-[var(--space-12)]">
             <h1 className="jz-font-display jz-text-display-medium text-[color:var(--color-jz-text-primary)]">生成中</h1>
             <JZButton
-              variant="tertiary"
+              tone="tertiary"
               size="sm"
               onClick={handleCancel}
             >
@@ -134,7 +134,7 @@ export const JizaiProgressScreen = ({ onNavigate }: { onNavigate: (screen: strin
 
         {/* Cancel Button */}
         <JZButton
-          variant="destructive"
+          tone="destructive"
           onClick={handleCancel}
         >
           キャンセル

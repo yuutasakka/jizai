@@ -1,4 +1,4 @@
-// import React from 'react';
+import React from 'react';
 import { JZButton } from '../design-system/jizai-button';
 import { JZCard, JZCardHeader, JZCardContent } from '../design-system/jizai-card';
 import { JZChip } from '../design-system/jizai-chip';

@@ -1,4 +1,4 @@
-// import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { cn } from '../ui/utils';
 
 export interface JZSliderProps {

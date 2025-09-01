@@ -1,10 +1,10 @@
-// import React from 'react';
+import React from 'react';
 import { cn } from '../ui/utils';
 
 export interface JZButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   tone?: 'primary' | 'secondary' | 'tertiary' | 'destructive';
-  size?: 'md' | 'lg';
-  state?: 'default' | 'pressed' | 'disabled' | 'loading';
+  size?: 'sm' | 'md' | 'lg';
+  state?: 'default' | 'pressed' | 'disabled' | 'loading' | 'enabled';
   fullWidth?: boolean;
   icon?: React.ReactNode;
   iconPosition?: 'left' | 'right';
@@ -28,24 +28,28 @@ export const JZButton = React.forwardRef<HTMLButtonElement, JZButtonProps>(
     const tones = {
       primary: {
         default: "jz-gradient-primary text-white hover:opacity-90 active:opacity-80 active:scale-[0.98] jz-shadow-button",
+        enabled: "jz-gradient-primary text-white hover:opacity-90 active:opacity-80 active:scale-[0.98] jz-shadow-button",
         disabled: "bg-[color:var(--color-jz-text-disabled)] text-[color:var(--color-jz-text-tertiary)] cursor-not-allowed",
         pressed: "jz-gradient-primary text-white opacity-80 scale-[0.98]",
         loading: "jz-gradient-primary text-white opacity-70 cursor-not-allowed"
       },
       secondary: {
         default: "bg-[color:var(--color-jz-card)] text-[color:var(--color-jz-text-primary)] border border-[color:var(--color-jz-border)] hover:bg-[color:var(--color-jz-border)] active:bg-[color:var(--color-jz-border)] active:scale-[0.98]",
+        enabled: "bg-[color:var(--color-jz-card)] text-[color:var(--color-jz-text-primary)] border border-[color:var(--color-jz-border)] hover:bg-[color:var(--color-jz-border)] active:bg-[color:var(--color-jz-border)] active:scale-[0.98]",
         disabled: "bg-[color:var(--color-jz-card)] text-[color:var(--color-jz-text-disabled)] border border-[color:var(--color-jz-text-disabled)] cursor-not-allowed",
         pressed: "bg-[color:var(--color-jz-border)] text-[color:var(--color-jz-text-primary)] border border-[color:var(--color-jz-border)] scale-[0.98]",
         loading: "bg-[color:var(--color-jz-card)] text-[color:var(--color-jz-text-primary)] border border-[color:var(--color-jz-border)] opacity-70 cursor-not-allowed"
       },
       tertiary: {
         default: "text-[color:var(--color-jz-accent)] hover:bg-[color:var(--color-jz-accent)]/10 active:bg-[color:var(--color-jz-accent)]/20 active:scale-[0.98]",
+        enabled: "text-[color:var(--color-jz-accent)] hover:bg-[color:var(--color-jz-accent)]/10 active:bg-[color:var(--color-jz-accent)]/20 active:scale-[0.98]",
         disabled: "text-[color:var(--color-jz-text-disabled)] cursor-not-allowed",
         pressed: "text-[color:var(--color-jz-accent)] bg-[color:var(--color-jz-accent)]/20 scale-[0.98]",
         loading: "text-[color:var(--color-jz-accent)] opacity-70 cursor-not-allowed"
       },
       destructive: {
         default: "bg-[color:var(--color-jz-destructive)] text-white hover:opacity-90 active:opacity-80 active:scale-[0.98] jz-shadow-button",
+        enabled: "bg-[color:var(--color-jz-destructive)] text-white hover:opacity-90 active:opacity-80 active:scale-[0.98] jz-shadow-button",
         disabled: "bg-[color:var(--color-jz-text-disabled)] text-[color:var(--color-jz-text-tertiary)] cursor-not-allowed",
         pressed: "bg-[color:var(--color-jz-destructive)] text-white opacity-80 scale-[0.98]",
         loading: "bg-[color:var(--color-jz-destructive)] text-white opacity-70 cursor-not-allowed"
@@ -54,6 +58,7 @@ export const JZButton = React.forwardRef<HTMLButtonElement, JZButtonProps>(
 
     // 44pt以上のタップ領域確保
     const sizes = {
+      sm: "min-h-[36px] px-[var(--space-12)] py-[var(--space-8)] rounded-[--radius-jz-button] jz-text-caption",
       md: "min-h-[44px] px-[var(--space-16)] py-[var(--space-12)] rounded-[--radius-jz-button] jz-text-button",
       lg: "min-h-[56px] px-[var(--space-24)] py-[var(--space-16)] rounded-[--radius-jz-button] jz-text-button"
     };

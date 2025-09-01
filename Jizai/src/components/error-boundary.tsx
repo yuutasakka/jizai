@@ -1,4 +1,4 @@
-// import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { logReactError } from '../lib/error-tracking';
 
 interface Props {
@@ -22,7 +22,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    logReactError(error, errorInfo);
+    logReactError(error, { componentStack: errorInfo.componentStack || '' });
   }
 
   render() {

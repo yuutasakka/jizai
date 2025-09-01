@@ -1,8 +1,8 @@
-// import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { JZButton } from '../design-system/jizai-button';
 import { JZCard, JZCardHeader, JZCardContent } from '../design-system/jizai-card';
 import { JZChip } from '../design-system/jizai-chip';
-import { JZPhotographIcon, JZPlusIcon, JZSparklesIcon, JZBoltCircleIcon } from '../design-system/jizai-icons';
+import { JZPhotographIcon, JZPlusIcon, JZMagicWandIcon, JZBoltIcon } from '../design-system/jizai-icons';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { cn } from '../ui/utils';
 import { apiClient } from '../../api/client';
@@ -21,11 +21,11 @@ export const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => voi
   const [error, setError] = useState<string | null>(null);
 
   const presets = [
-    { id: 'anime', label: 'アニメ風', icon: <JZSparklesIcon size={16} /> },
-    { id: 'realistic', label: '写実的', icon: <JZSparklesIcon size={16} /> },
-    { id: 'painting', label: '絵画風', icon: <JZSparklesIcon size={16} /> },
-    { id: 'sketch', label: 'スケッチ', icon: <JZSparklesIcon size={16} /> },
-    { id: 'vintage', label: 'ビンテージ', icon: <JZSparklesIcon size={16} /> }
+    { id: 'anime', label: 'アニメ風', icon: <JZMagicWandIcon size={16} /> },
+    { id: 'realistic', label: '写実的', icon: <JZMagicWandIcon size={16} /> },
+    { id: 'painting', label: '絵画風', icon: <JZMagicWandIcon size={16} /> },
+    { id: 'sketch', label: 'スケッチ', icon: <JZMagicWandIcon size={16} /> },
+    { id: 'vintage', label: 'ビンテージ', icon: <JZMagicWandIcon size={16} /> }
   ];
 
   const recommendedPrompts = [
@@ -131,7 +131,7 @@ export const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => voi
               size="sm"
               onClick={() => onNavigate('purchase')}
             >
-              <JZBoltCircleIcon size={16} />
+              <JZBoltIcon size={16} />
               プラン: {tier.toUpperCase()} / 保存 {formatStorage(storage.used)} / {formatStorage(storage.quota)}
             </JZButton>
           </div>
@@ -320,7 +320,7 @@ export const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => voi
               </>
             ) : (
               <>
-                <JZSparklesIcon size={20} />
+                <JZMagicWandIcon size={20} />
                 生成する
               </>
             )}
