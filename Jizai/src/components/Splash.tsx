@@ -9,7 +9,7 @@ const SPLASH_MAX = 1800; // ms (upper bound)
 const messages = [
   "写真、思いのままに。",
   "背景をやさしく、無地に。",
-  "四つ切・A4・L判、準備中。",
+  "四つ切・A4・L判で仕上げ。",
 ];
 
 export default function Splash({ onDone }: { onDone: () => void }) {
@@ -64,7 +64,7 @@ export default function Splash({ onDone }: { onDone: () => void }) {
         className="absolute inset-0"
         aria-hidden
         style={{
-          background: "linear-gradient(135deg,#0A84FF,#7D5CFF)",
+          background: "linear-gradient(135deg,#1E3A8A,#7C3AED)",
           backgroundSize: "200% 200%",
           animation: "bg-breathe 8s ease-in-out infinite alternate",
         }}
@@ -73,7 +73,7 @@ export default function Splash({ onDone }: { onDone: () => void }) {
       {/* Slider motif + copy card */}
       <div
         className="relative flex flex-col items-center gap-5 p-8 rounded-2xl"
-        style={{ backdropFilter: "blur(6px)", backgroundColor: "rgba(17,17,20,0.35)" }}
+        style={{ backdropFilter: "blur(6px)", backgroundColor: "rgba(17,17,20,0.45)" }}
       >
         <div className="relative w-[56vw] max-w-[560px] h-5 rounded-full bg-white/90 overflow-hidden">
           {/* knob */}
@@ -102,4 +102,3 @@ export default function Splash({ onDone }: { onDone: () => void }) {
     </div>
   );
 }
-
