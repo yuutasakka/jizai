@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
 import Link from 'next/link';
+import { CtaButtons } from '../../src/components/CtaButtons';
+import { Testimonials } from '../../src/components/Testimonials';
 import { ExampleGallery } from '../../src/components/ExampleGallery';
 import Image from 'next/image';
 
@@ -72,13 +74,16 @@ export default function Page() {
       </nav>
 
       {/* Hero */}
-      <section className="text-center mb-10">
+      <section className="text-center mb-6">
         <h1 className="jz-font-display jz-text-display-large mb-3">遺影写真の編集と仕上げ</h1>
         <p className="jz-text-body text-[color:var(--color-jz-text-secondary)]">四つ切・A4・L判に最適化。服装・背景・肌/髪の整え。やり直し2回無料、当日仕上げ可。</p>
-        <div className="mt-4">
-          <a href="/" className="inline-block px-5 py-3 rounded-md bg-[color:var(--color-jz-accent)] text-white">この用途で作成する</a>
-        </div>
+        <CtaButtons usecase="human" />
       </section>
+      <Testimonials items={[
+        { name: 'S.K. 様', text: '自然な仕上がりで当日に間に合いました。やり直しも親切でした。' },
+        { name: 'M.N. 様', text: '背景の無地化がとても自然。印刷の仕上がりも満足です。' },
+        { name: 'H.T. 様', text: '高精細で依頼して良かったです。髪の毛先まで違和感なし。' }
+      ]} />
       {/* 仕上がり例（折り目の上に露出を上げる） */}
       <section id="examples" className="mb-12 space-y-3">
         <h2 className="jz-font-display jz-text-display-small mb-2">仕上がり例</h2>

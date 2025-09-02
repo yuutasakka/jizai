@@ -1,8 +1,10 @@
 import Script from 'next/script';
 import { CREDIT_PLANS, STAFF_PLAN, formatYen } from '../../src/config/pricing';
+import { getABVariant } from '../../src/lib/ab';
 
 export default function PricingCredits() {
   const plans = [...CREDIT_PLANS, STAFF_PLAN];
+  const ab = typeof window !== 'undefined' ? getABVariant() : 'a';
   const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://{your-domain}';
   const offerCatalog = {
     '@context': 'https://schema.org',
@@ -43,6 +45,9 @@ export default function PricingCredits() {
             <div key={p.id} className="relative border rounded-md p-4 bg-[color:var(--color-jz-card)]">
               {!p.isStaff && isTwoPack && (
                 <div className="absolute -top-2 right-3 text-xs px-2 py-1 rounded bg-[color:var(--color-jz-secondary)] text-white">今だけ</div>
+              )}
+              {!p.isStaff && p.recommended && ab === 'b' && (
+                <div className="absolute -top-2 left-3 text-xs px-2 py-1 rounded bg-[color:var(--color-jz-accent)] text-white">おすすめ</div>
               )}
               <div className="mb-2 text-[color:var(--color-jz-text-primary)] font-semibold">{title}</div>
               <div className="flex items-baseline gap-2 mb-1">

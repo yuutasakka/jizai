@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
+import { CtaButtons } from '../../src/components/CtaButtons';
 import { ExampleGallery } from '../../src/components/ExampleGallery';
 
 export const dynamic = 'force-static';
@@ -66,10 +67,10 @@ export default function Page() {
           </div>
         </details>
       </nav>
-      <section className="text-center mb-10">
+      <section className="text-center mb-6">
         <h1 className="jz-font-display jz-text-display-large mb-3">生前撮影のレタッチと最適仕上げ</h1>
         <p className="jz-text-body text-[color:var(--color-jz-text-secondary)]">終活ポートレートの整えとサイズ書き出し。自然な仕上がりで。</p>
-        <div className="mt-4"><a href="/" className="inline-block px-5 py-3 rounded-md bg-[color:var(--color-jz-accent)] text-white">この用途で作成する</a></div>
+        <CtaButtons usecase="seizen" />
       </section>
       {/* 仕上がり例（折り目の上に露出を上げる） */}
       <section id="examples" className="mb-12 space-y-3">

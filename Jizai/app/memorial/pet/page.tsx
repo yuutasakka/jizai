@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Script from 'next/script';
 import { ExampleGallery } from '../../src/components/ExampleGallery';
 import Link from 'next/link';
+import { CtaButtons } from '../../src/components/CtaButtons';
 import Image from 'next/image';
 
 export const dynamic = 'force-static';
@@ -69,10 +70,10 @@ export default function Page() {
           </div>
         </details>
       </nav>
-      <section className="text-center mb-10">
+      <section className="text-center mb-6">
         <h1 className="jz-font-display jz-text-display-large mb-3">ペット遺影の編集と仕上げ</h1>
         <p className="jz-text-body text-[color:var(--color-jz-text-secondary)]">毛並みの整え・背景無地化・色味補正。四つ切/A4/L判、当日対応。</p>
-        <div className="mt-4"><a href="/" className="inline-block px-5 py-3 rounded-md bg-[color:var(--color-jz-accent)] text-white">この用途で作成する</a></div>
+        <CtaButtons usecase="pet" />
       </section>
       {/* 仕上がり例（折り目の上に露出を上げる） */}
       <section id="examples" className="mb-12 space-y-3">
