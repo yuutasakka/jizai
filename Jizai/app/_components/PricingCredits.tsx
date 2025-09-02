@@ -38,7 +38,12 @@ export default function PricingCredits() {
   return (
     <>
       <div className="grid gap-4 md:grid-cols-3">
-        {plans.map((p) => {
+        {(ab === 'b' ? [...plans].sort((a, b) => {
+          const ra = (a as any).recommended ? 0 : 1;
+          const rb = (b as any).recommended ? 0 : 1;
+          if (ra !== rb) return ra - rb;
+          return a.salePrice - b.salePrice;
+        }) : plans).map((p) => {
           const isTwoPack = p.id === '2';
           const title = p.isStaff ? 'スタッフにおまかせ' : `${p.units}枚（回数の目安）`;
           return (

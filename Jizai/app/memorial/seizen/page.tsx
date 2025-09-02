@@ -3,7 +3,8 @@ import Script from 'next/script';
 import { CtaButtons } from '../../src/components/CtaButtons';
 import { StickyCta } from '../../src/components/StickyCta';
 import { Testimonials } from '../../src/components/Testimonials';
-import { ExampleGallery } from '../../src/components/ExampleGallery';
+import dynamic from 'next/dynamic';
+const ExampleGallery = dynamic(() => import('../../src/components/ExampleGallery').then(m => m.ExampleGallery), { ssr: false });
 
 export const dynamic = 'force-static';
 
