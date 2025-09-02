@@ -4,6 +4,8 @@ import dynamic from 'next/dynamic';
 const ExampleGallery = dynamic(() => import('../../src/components/ExampleGallery').then(m => m.ExampleGallery), { ssr: false });
 import Link from 'next/link';
 import { CtaButtons } from '../../src/components/CtaButtons';
+import { Testimonials } from '../../src/components/Testimonials';
+import { StickyCtaMobile } from '../../src/components/StickyCtaMobile';
 import { StickyCta } from '../../src/components/StickyCta';
 import { Testimonials } from '../../src/components/Testimonials';
 import Image from 'next/image';
@@ -78,6 +80,8 @@ export default function Page() {
         <p className="jz-text-body text-[color:var(--color-jz-text-secondary)]">毛並みの整え・背景無地化・色味補正。四つ切/A4/L判、当日対応。</p>
         <CtaButtons usecase="pet" />
       </section>
+      <Testimonials usecase="pet" />
+      <StickyCtaMobile usecase="pet" />
       <Testimonials usecase="pet" />
       {/* 仕上がり例（折り目の上に露出を上げる） */}
       <section id="examples" className="mb-12 space-y-3">

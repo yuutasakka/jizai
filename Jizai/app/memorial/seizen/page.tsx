@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
 import { CtaButtons } from '../../src/components/CtaButtons';
+import { Testimonials } from '../../src/components/Testimonials';
+import { StickyCtaMobile } from '../../src/components/StickyCtaMobile';
 import { StickyCta } from '../../src/components/StickyCta';
 import { Testimonials } from '../../src/components/Testimonials';
 import dynamic from 'next/dynamic';
@@ -75,6 +77,8 @@ export default function Page() {
         <p className="jz-text-body text-[color:var(--color-jz-text-secondary)]">終活ポートレートの整えとサイズ書き出し。自然な仕上がりで。</p>
         <CtaButtons usecase="seizen" />
       </section>
+      <Testimonials usecase="seizen" />
+      <StickyCtaMobile usecase="seizen" />
       <Testimonials usecase="seizen" />
       {/* 仕上がり例（折り目の上に露出を上げる） */}
       <section id="examples" className="mb-12 space-y-3">

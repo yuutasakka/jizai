@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { CtaButtons } from '../../src/components/CtaButtons';
 import { StickyCta } from '../../src/components/StickyCta';
 import { Testimonials } from '../../src/components/Testimonials';
+import { StickyCtaMobile } from '../../src/components/StickyCtaMobile';
 import dynamic from 'next/dynamic';
 const ExampleGallery = dynamic(() => import('../../src/components/ExampleGallery').then(m => m.ExampleGallery), { ssr: false });
 import Image from 'next/image';
@@ -81,6 +82,7 @@ export default function Page() {
         <p className="jz-text-body text-[color:var(--color-jz-text-secondary)]">四つ切・A4・L判に最適化。服装・背景・肌/髪の整え。やり直し2回無料、当日仕上げ可。</p>
         <CtaButtons usecase="human" />
       </section>
+      <StickyCtaMobile usecase="human" />
       <Testimonials usecase="human" />
       {/* 仕上がり例（折り目の上に露出を上げる） */}
       <section id="examples" className="mb-12 space-y-3">

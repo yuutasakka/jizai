@@ -1,94 +1,16 @@
 {
   "human": [
-    {
-      "name": "S.K. 様",
-      "text": "自然な仕上がりで当日に間に合いました。やり直しも親切でした。",
-      "rating": 5,
-      "usecase": "human",
-      "verified": true
-    },
-    {
-      "name": "M.N. 様", 
-      "text": "背景の無地化がとても自然。印刷の仕上がりも満足です。",
-      "rating": 5,
-      "usecase": "human",
-      "verified": true
-    },
-    {
-      "name": "H.T. 様",
-      "text": "高精密で依頼して良かったです。髪の毛先まで違和感なし。",
-      "rating": 5,
-      "usecase": "human",
-      "verified": true
-    }
+    { "name": "S.K.", "text": "自然な仕上がりで当日に間に合いました。やり直しも親切でした。", "rating": 5, "verified": true },
+    { "name": "M.N.", "text": "背景の無地化がとても自然。印刷の仕上がりも満足です。", "rating": 5, "verified": true }
   ],
   "pet": [
-    {
-      "name": "R.Y. 様",
-      "text": "愛犬の毛並みが自然に整って、とても満足しています。",
-      "rating": 5,
-      "usecase": "pet",
-      "verified": true
-    },
-    {
-      "name": "K.S. 様",
-      "text": "背景を白にしてもらい、きれいな遺影になりました。",
-      "rating": 5,
-      "usecase": "pet",
-      "verified": true
-    },
-    {
-      "name": "A.M. 様",
-      "text": "耳やひげの細かい部分まで丁寧に仕上げていただき感謝です。",
-      "rating": 5,
-      "usecase": "pet",
-      "verified": true
-    }
+    { "name": "A.Y.", "text": "毛並みの整えが自然で安心しました。", "rating": 5, "verified": true }
   ],
   "photo": [
-    {
-      "name": "T.K. 様",
-      "text": "法要での掲示用にA4で印刷。色味も適切で助かりました。",
-      "rating": 5,
-      "usecase": "photo",
-      "verified": true
-    },
-    {
-      "name": "N.H. 様",
-      "text": "不要な写り込みが自然に除去され、きれいに仕上がりました。",
-      "rating": 5,
-      "usecase": "photo",
-      "verified": true
-    },
-    {
-      "name": "S.F. 様",
-      "text": "断裁ガイド付きで印刷も安心。プロの仕上がりです。",
-      "rating": 4,
-      "usecase": "photo",
-      "verified": true
-    }
+    { "name": "T.K.", "text": "不要物の軽減が自然で法要の掲示に使えました。", "rating": 4, "verified": true }
   ],
   "seizen": [
-    {
-      "name": "M.K. 様",
-      "text": "生前撮影の肌が自然に整って、満足のいく仕上がりでした。",
-      "rating": 5,
-      "usecase": "seizen", 
-      "verified": true
-    },
-    {
-      "name": "Y.N. 様",
-      "text": "派手になりすぎず、自然な印象を保った仕上がりで安心しました。",
-      "rating": 5,
-      "usecase": "seizen",
-      "verified": true
-    },
-    {
-      "name": "H.S. 様",
-      "text": "服のシワも目立ちにくく調整され、きれいなポートレートになりました。",
-      "rating": 4,
-      "usecase": "seizen",
-      "verified": true
-    }
+    { "name": "H.T.", "text": "肌のレタッチが過剰でなく、とても良かったです。", "rating": 5, "verified": true }
   ]
 }
+

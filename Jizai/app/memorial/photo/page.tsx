@@ -4,6 +4,8 @@ import dynamic from 'next/dynamic';
 const ExampleGallery = dynamic(() => import('../../src/components/ExampleGallery').then(m => m.ExampleGallery), { ssr: false });
 import Link from 'next/link';
 import { CtaButtons } from '../../src/components/CtaButtons';
+import { Testimonials } from '../../src/components/Testimonials';
+import { StickyCtaMobile } from '../../src/components/StickyCtaMobile';
 import { StickyCta } from '../../src/components/StickyCta';
 import { Testimonials } from '../../src/components/Testimonials';
 import Image from 'next/image';
@@ -78,6 +80,8 @@ export default function Page() {
         <p className="jz-text-body text-[color:var(--color-jz-text-secondary)]">法要・命日の写真整えと印刷最適化。四つ切/A4/L判。</p>
         <CtaButtons usecase="photo" />
       </section>
+      <Testimonials usecase="photo" />
+      <StickyCtaMobile usecase="photo" />
       <Testimonials usecase="photo" />
       {/* 仕上がり例（折り目の上に露出を上げる） */}
       <section id="examples" className="mb-12 space-y-3">
