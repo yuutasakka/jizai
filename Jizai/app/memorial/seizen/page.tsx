@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
 import { CtaButtons } from '../../src/components/CtaButtons';
+import { StickyCta } from '../../src/components/StickyCta';
+import { Testimonials } from '../../src/components/Testimonials';
 import { ExampleGallery } from '../../src/components/ExampleGallery';
 
 export const dynamic = 'force-static';
@@ -8,8 +10,8 @@ export const dynamic = 'force-static';
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://{your-domain}';
 
 export const generateMetadata = (): Metadata => ({
-  title: '生前撮影（終活）のレタッチ・最適仕上げ – JIZAI',
-  description: '生前撮影の肌や色味を自然に整え、四つ切・A4・L判へ書き出し。断裁ガイド付きで失敗しません。',
+  title: '生前撮影 レタッチ｜終活 ポートレート 最適仕上げ – JIZAI',
+  description: '生前撮影の編集・レタッチサービス。終活ポートレートの肌や色味を自然に整え、四つ切・A4・L判へ最適書き出し。断裁ガイド付きで失敗しません。',
   alternates: { canonical: `${SITE}/memorial/seizen` },
   openGraph: {
     title: '生前撮影（終活）のレタッチ・最適仕上げ – JIZAI',
@@ -72,6 +74,7 @@ export default function Page() {
         <p className="jz-text-body text-[color:var(--color-jz-text-secondary)]">終活ポートレートの整えとサイズ書き出し。自然な仕上がりで。</p>
         <CtaButtons usecase="seizen" />
       </section>
+      <Testimonials usecase="seizen" />
       {/* 仕上がり例（折り目の上に露出を上げる） */}
       <section id="examples" className="mb-12 space-y-3">
         <h2 className="jz-font-display jz-text-display-small mb-2">仕上がり例</h2>
@@ -165,6 +168,7 @@ export default function Page() {
           <Link className="underline" href="/memorial/photo">メモリアルフォトの整えを見る</Link>
         </div>
       </aside>
+      <StickyCta usecase="seizen" />
     </main>
   );
 }

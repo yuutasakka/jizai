@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Script from 'next/script';
 import Link from 'next/link';
 import { CtaButtons } from '../../src/components/CtaButtons';
+import { StickyCta } from '../../src/components/StickyCta';
 import { Testimonials } from '../../src/components/Testimonials';
 import { ExampleGallery } from '../../src/components/ExampleGallery';
 import Image from 'next/image';
@@ -11,14 +12,14 @@ export const dynamic = 'force-static';
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://{your-domain}';
 
 export const generateMetadata = (): Metadata => ({
-  title: '遺影写真の編集・四つ切/A4/L判対応｜当日仕上げ – JIZAI',
+  title: '遺影写真 編集｜四つ切・A4・L判対応 当日仕上げ可 – JIZAI',
   description:
-    '遺影の背景・服装・肌/髪の整えを自然に。四つ切・A4・L判に最適化、やり直し2回無料。最短当日で仕上げます。',
+    '遺影写真の編集・加工サービス。背景無地化、服装補正、肌・髪の整えを自然に仕上げ。四つ切・A4・L判対応、やり直し2回無料、最短当日仕上げ。',
   alternates: { canonical: `${SITE}/memorial/human` },
   openGraph: {
-    title: '遺影写真の編集・四つ切/A4/L判対応｜当日仕上げ – JIZAI',
+    title: '遺影写真 編集｜四つ切・A4・L判対応 当日仕上げ可 – JIZAI',
     description:
-      '遺影の背景・服装・肌/髪の整えを自然に。四つ切・A4・L判に最適化、やり直し2回無料。最短当日で仕上げます。',
+      '遺影写真の編集・加工サービス。背景無地化、服装補正、肌・髪の整えを自然に仕上げ。四つ切・A4・L判対応、やり直し2回無料、最短当日仕上げ。',
     url: `${SITE}/memorial/human`,
     type: 'website',
   },
@@ -79,11 +80,7 @@ export default function Page() {
         <p className="jz-text-body text-[color:var(--color-jz-text-secondary)]">四つ切・A4・L判に最適化。服装・背景・肌/髪の整え。やり直し2回無料、当日仕上げ可。</p>
         <CtaButtons usecase="human" />
       </section>
-      <Testimonials items={[
-        { name: 'S.K. 様', text: '自然な仕上がりで当日に間に合いました。やり直しも親切でした。' },
-        { name: 'M.N. 様', text: '背景の無地化がとても自然。印刷の仕上がりも満足です。' },
-        { name: 'H.T. 様', text: '高精細で依頼して良かったです。髪の毛先まで違和感なし。' }
-      ]} />
+      <Testimonials usecase="human" />
       {/* 仕上がり例（折り目の上に露出を上げる） */}
       <section id="examples" className="mb-12 space-y-3">
         <h2 className="jz-font-display jz-text-display-small mb-2">仕上がり例</h2>
@@ -236,12 +233,31 @@ export default function Page() {
 
       {/* 関連リンク（用途横断） */}
       <aside id="links" className="mt-10 text-center">
-        <h2 className="jz-font-display jz-text-display-small mb-3">関連リンク（用途横断）</h2>
+        <h2 className="jz-font-display jz-text-display-small mb-3">関連サービス・用途別編集</h2>
+        <div className="grid gap-3 md:grid-cols-2 mb-6">
+          <div className="text-left">
+            <h3 className="font-medium mb-2">用途別遺影編集サービス</h3>
+            <div className="space-y-1 text-sm">
+              <div><Link className="underline" href="/memorial/pet">ペット遺影の編集・加工</Link></div>
+              <div><Link className="underline" href="/memorial/seizen">生前撮影のレタッチ・最適化</Link></div>
+              <div><Link className="underline" href="/memorial/photo">メモリアルフォト・法要写真編集</Link></div>
+            </div>
+          </div>
+          <div className="text-left">
+            <h3 className="font-medium mb-2">印刷・サイズ関連</h3>
+            <div className="space-y-1 text-sm">
+              <div><Link className="underline" href="/#pricing">料金プラン・クレジット購入</Link></div>
+              <div><Link className="underline" href="/?engine=high">高精度編集エンジン</Link></div>
+              <div><Link className="underline" href="/?preset=bg-plain">背景無地化プリセット</Link></div>
+            </div>
+          </div>
+        </div>
         <div className="inline-flex flex-wrap gap-4 jz-text-body">
           <Link className="underline" href="/memorial/seizen">生前撮影の整えを見る</Link>
           <Link className="underline" href="/memorial/photo">メモリアルフォトの整えを見る</Link>
         </div>
       </aside>
+      <StickyCta usecase="human" />
     </main>
   );
 }

@@ -52,11 +52,31 @@ export const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => voi
     loadBalance();
   }, []);
 
-  // URLクエリから事前設定（/?usecase=&preset=&engine=）
+  // URLクエリから事前設定（/?usecase=&preset=&engine=）+ デモ画像処理
   useEffect(() => {
     try {
       track('begin_edit');
       const params = new URLSearchParams(window.location.search);
+      
+      // デモモードの処理
+      const isDemo = params.get('demo') === 'true';
+      if (isDemo) {
+        const demoImageUrl = sessionStorage.getItem('demo-image-url');
+        const demoPreset = sessionStorage.getItem('demo-preset');
+        
+        if (demoImageUrl) {
+          // デモ画像をFileオブジェクトに変換
+          fetch(demoImageUrl).then(response => response.blob()).then(blob => {
+            const file = new File([blob], 'demo-image.jpg', { type: blob.type });
+            setSelectedImage(file);
+            setIsLoading(false);
+          }).catch(console.error);
+        }
+        
+        if (demoPreset) {
+          setSelectedPreset(demoPreset);
+        }
+      }
       const usecase = params.get('usecase') || '';
       const presetId = params.get('preset') || '';
       const engine = (params.get('engine') as EngineProfile) || 'standard';

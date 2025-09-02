@@ -3,6 +3,8 @@ import Script from 'next/script';
 import { ExampleGallery } from '../../src/components/ExampleGallery';
 import Link from 'next/link';
 import { CtaButtons } from '../../src/components/CtaButtons';
+import { StickyCta } from '../../src/components/StickyCta';
+import { Testimonials } from '../../src/components/Testimonials';
 import Image from 'next/image';
 
 export const dynamic = 'force-static';
@@ -10,8 +12,8 @@ export const dynamic = 'force-static';
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://{your-domain}';
 
 export const generateMetadata = (): Metadata => ({
-  title: 'ペット遺影の編集｜毛並み整え・背景無地化 – JIZAI',
-  description: 'ペット遺影の毛並み整え・背景無地化・色味補正。四つ切・A4・L判対応。自然な仕上がりで当日対応。',
+  title: 'ペット遺影 編集｜毛並み整え 背景無地化 当日対応 – JIZAI',
+  description: 'ペット遺影の編集・加工サービス。毛並み整え、背景無地化、色味補正を自然に仕上げ。四つ切・A4・L判対応、当日仕上げ可能。',
   alternates: { canonical: `${SITE}/memorial/pet` },
   openGraph: {
     title: 'ペット遺影の編集｜毛並み整え・背景無地化 – JIZAI',
@@ -75,6 +77,7 @@ export default function Page() {
         <p className="jz-text-body text-[color:var(--color-jz-text-secondary)]">毛並みの整え・背景無地化・色味補正。四つ切/A4/L判、当日対応。</p>
         <CtaButtons usecase="pet" />
       </section>
+      <Testimonials usecase="pet" />
       {/* 仕上がり例（折り目の上に露出を上げる） */}
       <section id="examples" className="mb-12 space-y-3">
         <h2 className="jz-font-display jz-text-display-small mb-2">仕上がり例</h2>
@@ -170,6 +173,7 @@ export default function Page() {
           <Link className="underline" href="/memorial/photo">メモリアルフォトの整えを見る</Link>
         </div>
       </aside>
+      <StickyCta usecase="pet" />
     </main>
   );
 }

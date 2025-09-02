@@ -3,6 +3,8 @@ import Script from 'next/script';
 import { ExampleGallery } from '../../src/components/ExampleGallery';
 import Link from 'next/link';
 import { CtaButtons } from '../../src/components/CtaButtons';
+import { StickyCta } from '../../src/components/StickyCta';
+import { Testimonials } from '../../src/components/Testimonials';
 import Image from 'next/image';
 
 export const dynamic = 'force-static';
@@ -10,8 +12,8 @@ export const dynamic = 'force-static';
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://{your-domain}';
 
 export const generateMetadata = (): Metadata => ({
-  title: 'メモリアルフォト編集｜法要・命日の最適化 – JIZAI',
-  description: '法要・命日の写真をA4・L判に最適化。色味補正・不要物軽減・断裁ガイド付き。やり直し2回無料。',
+  title: 'メモリアルフォト 編集｜法要 命日 写真最適化 – JIZAI',
+  description: 'メモリアルフォトの編集・加工サービス。法要・命日の写真をA4・L判に最適化。色味補正、不要物軽減、断裁ガイド付き。やり直し2回無料。',
   alternates: { canonical: `${SITE}/memorial/photo` },
   openGraph: {
     title: 'メモリアルフォト編集｜法要・命日の最適化 – JIZAI',
@@ -75,6 +77,7 @@ export default function Page() {
         <p className="jz-text-body text-[color:var(--color-jz-text-secondary)]">法要・命日の写真整えと印刷最適化。四つ切/A4/L判。</p>
         <CtaButtons usecase="photo" />
       </section>
+      <Testimonials usecase="photo" />
       {/* 仕上がり例（折り目の上に露出を上げる） */}
       <section id="examples" className="mb-12 space-y-3">
         <h2 className="jz-font-display jz-text-display-small mb-2">仕上がり例</h2>
@@ -170,6 +173,7 @@ export default function Page() {
           <Link className="underline" href="/memorial/seizen">生前撮影の整えを見る</Link>
         </div>
       </aside>
+      <StickyCta usecase="photo" />
     </main>
   );
 }

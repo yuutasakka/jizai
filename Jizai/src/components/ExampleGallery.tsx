@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
 import React from "react";
+import { TryEditButton } from "./TryEditButton";
 
 export function ExampleGallery({ usecase }: { usecase: "human" | "pet" | "seizen" | "photo" }) {
   const [items, setItems] = React.useState<any[]>([]);
@@ -52,6 +53,14 @@ export function ExampleGallery({ usecase }: { usecase: "human" | "pet" | "seizen
             >
               この例で試す
             </a>
+            <TryEditButton 
+              sampleImageUrl={ex.before} 
+              usecase={usecase} 
+              preset={ex.id}
+              className="px-3 py-2 text-sm border border-[color:var(--color-jz-border)] bg-[color:var(--color-jz-card)]"
+            >
+              試し編集
+            </TryEditButton>
             <span className="text-xs text-[color:var(--color-jz-text-tertiary)]">※編集画面に設定が反映されます</span>
           </div>
         </article>
