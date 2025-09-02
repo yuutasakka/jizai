@@ -6,12 +6,20 @@ import axios from 'axios';
 import rateLimit from 'express-rate-limit';
 import { readFile } from 'fs/promises';
 import store from './store.mjs';
+import { secureLogger } from './utils/secure-logger.mjs';
+import { getCorsConfig, initializeCors } from './utils/cors-config.mjs';
+import { initializeSecurityHeaders, initializeCSPReporting } from './utils/security-headers.mjs';
+import { responseSanitizer } from './middleware/response-sanitizer.mjs';
+import { cspReportHandler, cspStatsHandler } from './utils/csp-reporter.mjs';
 
 // 環境変数を読み込み
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Initialize CORS configuration
+initializeCors();
 
 // NGワード読み込み
 let banned = ['csam','child','terror','hate','beheading'];
@@ -42,38 +50,20 @@ const upload = multer({
 // ミドルウェア設定
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+// Sanitize JSON responses (strip codes, mask 5xx messages)
+app.use(responseSanitizer());
 
-// CORS設定（iOSアプリからのアクセス許可）
-const allowedOrigins = process.env.ORIGIN_ALLOWLIST?.split(',').map(origin => origin.trim()) || [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'capacitor://localhost',  // Capacitor
-    'ionic://localhost',      // Ionic
-    'http://localhost',       // iOS Simulator
-    'https://localhost'       // iOS実機HTTPS
-];
+// Apply environment-aware CORS configuration
+app.use(cors(getCorsConfig()));
 
-app.use(cors({
-    origin: (origin, callback) => {
-        // iOS アプリからのリクエスト（originなし）を許可
-        if (!origin) return callback(null, true);
-        
-        // 許可されたオリジンチェック
-        if (allowedOrigins.includes(origin)) {
-            return callback(null, true);
-        }
-        
-        // 開発環境では全てのlocalhostを許可
-        if (process.env.NODE_ENV === 'development' && origin.includes('localhost')) {
-            return callback(null, true);
-        }
-        
-        callback(new Error('Not allowed by CORS'));
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-device-id']
-}));
+// Apply security headers (including HSTS for production)
+app.use(initializeSecurityHeaders());
+
+// Apply CSP Report-Only mode for violation collection
+app.use(initializeCSPReporting({ reportOnly: true }));
+
+// CSP report collection endpoint
+app.use(cspReportHandler());
 
 // Rate Limiting設定
 const generalLimiter = rateLimit({
@@ -127,12 +117,25 @@ app.get('/v1/health', (req, res) => {
     res.json({ ok: true });
 });
 
+// CSP statistics endpoint (for security monitoring)
+app.get('/v1/security/csp-stats', cspStatsHandler());
+
+// ルートパス: ローカル確認用の案内
+app.get('/', (req, res) => {
+    res.status(200).json({
+        ok: true,
+        message: 'Jizai API server (legacy). Try GET /v1/health',
+        docs: '/v1/health'
+    });
+});
+
 // 画像編集エンドポイント
 app.post('/v1/edit', editLimiter, upload.single('image'), async (req, res) => {
     try {
         const { prompt } = req.body;
         const imageFile = req.file;
         const deviceId = req.headers['x-device-id'];
+        const profile = (req.body.engine_profile || 'standard').toString();
 
         // バリデーション
         if (!deviceId || typeof deviceId !== 'string' || deviceId.trim().length === 0) {
@@ -194,7 +197,14 @@ app.post('/v1/edit', editLimiter, upload.single('image'), async (req, res) => {
         const mimeType = imageFile.mimetype;
         const dataURL = `data:${mimeType};base64,${base64Data}`;
 
-        console.log(`📝 Edit request: prompt="${prompt}" size=${imageFile.size} bytes`);
+        // Use secure logger to sanitize PII from prompt logs
+        secureLogger.editRequest(deviceId, prompt, imageFile.size);
+
+        // 編集エンジン（プロファイル）に応じたパラメータ
+        const ENGINE = {
+            standard: { num_inference_steps: 35, true_cfg_scale: 4.0 },
+            high: { num_inference_steps: 60, true_cfg_scale: 4.6 }
+        }[profile] || { num_inference_steps: 35, true_cfg_scale: 4.0 };
 
         // Qwen-Image-Edit API呼び出し
         const qwenResponse = await axios.post(
@@ -206,7 +216,9 @@ app.post('/v1/edit', editLimiter, upload.single('image'), async (req, res) => {
                     prompt: prompt
                 },
                 parameters: {
-                    format: 'png'
+                    format: 'png',
+                    num_inference_steps: ENGINE.num_inference_steps,
+                    true_cfg_scale: ENGINE.true_cfg_scale
                 }
             },
             {
@@ -248,11 +260,21 @@ app.post('/v1/edit', editLimiter, upload.single('image'), async (req, res) => {
             throw new Error('No valid image URL in response');
         }
 
-        // URL形式の基本検証
+        // URL形式とホストの検証（SSRF対策）
+        let parsedUrl;
         try {
-            new URL(imageUrl);
+            parsedUrl = new URL(imageUrl);
         } catch {
             throw new Error('Invalid image URL format');
+        }
+
+        if (parsedUrl.protocol !== 'https:') {
+            throw new Error('Untrusted image URL protocol');
+        }
+
+        // DashScope の生成画像は aliyuncs.com 配下を想定。必要に応じて調整。
+        if (!parsedUrl.hostname.endsWith('aliyuncs.com')) {
+            throw new Error('Untrusted image host');
         }
 
         console.log(`📸 Generated image URL: ${imageUrl}`);
@@ -264,6 +286,7 @@ app.post('/v1/edit', editLimiter, upload.single('image'), async (req, res) => {
                 responseType: 'arraybuffer',
                 timeout: 30000, // 30秒タイムアウト
                 maxContentLength: 50 * 1024 * 1024, // 50MB制限
+                maxRedirects: 0, // リダイレクト無効化（SSRF対策）
                 validateStatus: (status) => status === 200
             });
         } catch (downloadError) {

@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { track } from './lib/analytics';
+import { setupGlobalErrorHandling, setupPerformanceMonitoring, errorTracker } from './lib/error-tracking';
 import { JizaiOnboardingScreen } from './components/screens/jizai-onboarding-screen';
 import { JizaiHomeScreen } from './components/screens/jizai-home-screen';
 import { JizaiProgressScreen } from './components/screens/jizai-progress-screen';
@@ -28,6 +30,50 @@ export default function App() {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [selectedExample, setSelectedExample] = useState<ExampleData | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // Type-safe navigation function
+  const navigate = (screen: string) => {
+    if (isValidScreen(screen)) {
+      setCurrentScreen(screen);
+    } else {
+      console.warn(`Invalid screen: ${screen}`);
+    }
+  };
+
+  // Screen validation helper
+  const isValidScreen = (screen: string): screen is Screen => {
+    const validScreens: Screen[] = ['onboarding', 'home', 'progress', 'results', 'purchase', 'settings', 'tutorial-examples', 'screenshots', 'design-tokens', 'user-gallery'];
+    return validScreens.includes(screen as Screen);
+  };
+
+  // エラートラッキングとモニタリングの初期化
+  useEffect(() => {
+    setupGlobalErrorHandling();
+    setupPerformanceMonitoring();
+    
+    errorTracker.log('info', 'App initialized', {
+      userAgent: navigator.userAgent,
+      viewport: {
+        width: window.innerWidth,
+        height: window.innerHeight
+      }
+    });
+  }, []);
+
+  // Detect preset complete from URL (/?usecase=&preset=) and fire event once per session
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      const usecase = url.searchParams.get('usecase');
+      if (usecase) {
+        const preset = url.searchParams.get('preset') || '';
+        if (!sessionStorage.getItem('ga_preset_complete')) {
+          track('preset_complete', { usecase, preset });
+          sessionStorage.setItem('ga_preset_complete', '1');
+        }
+      }
+    } catch {}
+  }, []);
 
   const handleOnboardingComplete = () => {
     setHasCompletedOnboarding(true);
@@ -75,25 +121,25 @@ export default function App() {
           />
         );
       case 'home':
-        return <JizaiHomeScreen onNavigate={setCurrentScreen} selectedExample={selectedExample} onClearExample={handleClearExample} />;
+        return <JizaiHomeScreen onNavigate={navigate} selectedExample={selectedExample} onClearExample={handleClearExample} />;
       case 'progress':
-        return <JizaiProgressScreen onNavigate={setCurrentScreen} />;
+        return <JizaiProgressScreen onNavigate={navigate} />;
       case 'results':
-        return <ResultsScreen onNavigate={setCurrentScreen} />;
+        return <ResultsScreen onNavigate={navigate} />;
       case 'purchase':
-        return <PurchaseScreen onNavigate={setCurrentScreen} />;
+        return <PurchaseScreen onNavigate={navigate} />;
       case 'settings':
-        return <SettingsScreen onNavigate={setCurrentScreen} />;
+        return <SettingsScreen onNavigate={navigate} />;
       case 'tutorial-examples':
-        return <TutorialExamplesScreen onNavigate={setCurrentScreen} onExampleSelected={handleExampleSelected} />;
+        return <TutorialExamplesScreen onNavigate={navigate} onExampleSelected={handleExampleSelected} />;
       case 'user-gallery':
-        return <UserGalleryScreen onNavigate={setCurrentScreen} />;
+        return <UserGalleryScreen onNavigate={navigate} />;
       case 'design-tokens':
         return <DesignSystemReference />;
       case 'screenshots':
-        return <ScreenshotGallery onNavigate={setCurrentScreen} />;
+        return <ScreenshotGallery onNavigate={navigate} />;
       default:
-        return <JizaiHomeScreen onNavigate={setCurrentScreen} />;
+        return <JizaiHomeScreen onNavigate={navigate} selectedExample={selectedExample} onClearExample={handleClearExample} />;
     }
   };
 

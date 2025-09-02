@@ -3,20 +3,24 @@ import { JZButton } from '../design-system/jizai-button';
 import { JZCard, JZCardHeader, JZCardContent } from '../design-system/jizai-card';
 import { JZChevronRightIcon, JZCheckIcon, JZBoltIcon } from '../design-system/jizai-icons';
 import { cn } from '../ui/utils';
-import { apiClient, PRODUCTS } from '../../api/client';
+import { apiClient } from '../../api/client';
+import { getPlans, percentOff, SALE_ENABLED, formatYen } from '../../config/pricing';
+import { pickBarClass, toPercent } from '../../config/storage';
 
 export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) => void }) => {
   const [selectedPlan, setSelectedPlan] = useState('50');
-  const [currentCredits, setCurrentCredits] = useState(0);
-  const [isPurchasing, setIsPurchasing] = useState(false);
+  const [tier, setTier] = useState('free');
+  const [storage, setStorage] = useState<{quota: number; used: number}>({ quota: 0, used: 0 });
+  // Web版: 購入操作は提供しない
   const [error, setError] = useState<string | null>(null);
 
-  // 現在のクレジット残高を取得
+  // 現在のプラン・保存容量を取得
   useEffect(() => {
     const loadBalance = async () => {
       try {
         const balance = await apiClient.getBalance();
-        setCurrentCredits(balance.credits);
+        if (balance.subscription?.tier) setTier(balance.subscription.tier);
+        if (balance.storage) setStorage(balance.storage);
       } catch (error) {
         console.error('Failed to load balance:', error);
       }
@@ -25,102 +29,39 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
     loadBalance();
   }, []);
 
-  const plans = [
-    {
-      id: '2',
-      credits: 2,
-      price: '¥120',
-      originalPrice: null,
-      isRecommended: false,
-      pricePerCredit: '¥60'
-    },
-    {
-      id: '10',
-      credits: 10,
-      price: '¥600',
-      originalPrice: null,
-      isRecommended: false,
-      pricePerCredit: '¥60'
-    },
-    {
-      id: '20',
-      credits: 20,
-      price: '¥1,200',
-      originalPrice: null,
-      isRecommended: false,
-      pricePerCredit: '¥60'
-    },
-    {
-      id: '50',
-      credits: 50,
-      price: '¥2,750',
-      originalPrice: '¥3,000',
-      isRecommended: true,
-      savings: '¥250お得',
-      badge: '人気 No.1',
-      pricePerCredit: '¥55'
-    },
-    {
-      id: '100',
-      credits: 100,
-      price: '¥5,000',
-      originalPrice: '¥6,000',
-      isRecommended: false,
-      savings: '¥1,000お得',
-      pricePerCredit: '¥50'
-    }
-  ];
+  const planData = getPlans();
 
   const benefits = [
     {
       icon: <JZCheckIcon size={16} className="text-[color:var(--color-jz-success)]" />,
-      text: "生成時に消費"
+      text: "日本語で指示OK"
     },
     {
       icon: <JZCheckIcon size={16} className="text-[color:var(--color-jz-success)]" />,
-      text: "やり直し2回無料"
+      text: "保存は自動。あとからダウンロード"
     },
     {
       icon: <JZCheckIcon size={16} className="text-[color:var(--color-jz-success)]" />,
-      text: "有効期限3ヶ月"
+      text: "プランで容量アップ"
     }
   ];
 
-  const handlePurchase = async () => {
-    if (isPurchasing) return;
-    
-    setIsPurchasing(true);
-    setError(null);
-    
-    try {
-      // Web版では実際のStoreKit統合が必要ないため、
-      // デモ用のトランザクションIDを生成
-      const transactionId = `web-demo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
-      // バックエンドAPIに課金処理を送信
-      const result = await apiClient.purchase(selectedPlan, transactionId);
-      
-      if (result.success) {
-        alert(`${result.added}クレジットを追加しました！\n残高: ${result.credits}クレジット`);
-        onNavigate('home');
-      } else {
-        throw new Error('Purchase failed');
-      }
-      
-    } catch (error: any) {
-      console.error('Purchase failed:', error);
-      
-      if (error.message.includes('DUPLICATE_TRANSACTION')) {
-        setError('この取引は既に処理されています。');
-      } else if (error.message.includes('INVALID_PRODUCT')) {
-        setError('無効な製品IDです。');
-      } else {
-        setError('購入処理に失敗しました。もう一度お試しください。');
-      }
-    } finally {
-      setIsPurchasing(false);
+  const staffBenefits = [
+    {
+      icon: <JZCheckIcon size={16} className="text-[color:var(--color-jz-success)]" />,
+      text: "日本語OK"
+    },
+    {
+      icon: <JZCheckIcon size={16} className="text-[color:var(--color-jz-success)]" />,
+      text: "保存は手動。"
+    },
+    {
+      icon: <JZCheckIcon size={16} className="text-[color:var(--color-jz-success)]" />,
+      text: "作成データをチャットで送信"
     }
-  };
+  ];
+
+  // Web版: 購入操作は提供しない
 
   return (
     <div className="min-h-screen bg-[color:var(--color-jz-surface)]">
@@ -137,7 +78,7 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
               ←
             </JZButton>
             <h1 className="jz-font-display jz-text-display-medium text-[color:var(--color-jz-text-primary)]">
-              回数券を買う
+              マイプラン
             </h1>
           </div>
         </div>
@@ -145,6 +86,13 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
 
       {/* Content */}
       <div className="pt-[140px] pb-[var(--space-24)] px-[var(--space-16)] jz-grid-8pt jz-spacing-20">
+        {SALE_ENABLED && (
+          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-yellow-800 text-sm text-center">
+              通常価格は 1枚あたり<strong>100円</strong>。いまだけ<strong>期間限定セール</strong>で下記の価格です。
+            </p>
+          </div>
+        )}
         
         {/* Error Display */}
         {error && (
@@ -153,23 +101,34 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
           </div>
         )}
 
-        {/* Current Balance */}
+        {/* Current Plan */}
         <JZCard>
           <JZCardContent>
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="jz-font-display jz-text-body-large text-[color:var(--color-jz-text-primary)]">
-                  現在の残高
+                  あなたのプラン
                 </h3>
                 <p className="jz-text-body text-[color:var(--color-jz-text-secondary)]">
-                  利用可能なクレジット
+                  保存できる容量
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 <JZBoltIcon size={20} className="text-[color:var(--color-jz-accent)]" />
-                <span className="jz-font-display jz-text-display-small text-[color:var(--color-jz-accent)]">
-                  {currentCredits}
+                <span className="jz-font-display jz-text-display-small text-[color:var(--color-jz-accent)] uppercase">
+                  {tier}
                 </span>
+              </div>
+            </div>
+            <div className="mt-3 text-[color:var(--color-jz-text-secondary)]">
+              保存: {formatStorage(storage.used)} / {formatStorage(storage.quota)}
+            </div>
+            <div className="mt-2">
+              <div className="w-full h-2 rounded-full bg-[color:var(--color-jz-border)] overflow-hidden">
+                <div
+                  className={pickBarClass(storage.used, storage.quota)}
+                  style={{ width: `${toPercent(storage.used, storage.quota)}%`, height: '100%' }}
+                />
               </div>
             </div>
           </JZCardContent>
@@ -200,24 +159,38 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
         {/* Pricing Plans */}
         <div className="space-y-[var(--space-12)]">
           <h2 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)] text-center mb-[var(--space-20)]">
-            どれにしますか？
+            クレジット（枚）プラン
           </h2>
           
-          {plans.map((plan) => (
-            <div key={plan.id} className="relative">
-              {/* バッジ - JZSecondaryのピル */}
-              {plan.badge && (
+          {planData.map((p) => {
+            const sale = p.salePrice;
+            const regular = p.regularPrice;
+            const isTwoPack = p.id === '2';
+            const off = isTwoPack ? percentOff(regular, sale) : 0;
+            const pricePer = p.isStaff || p.units === 0 ? 0 : Math.round(sale / p.units);
+            const isRecommended = !!p.recommended;
+            const isStaff = !!p.isStaff;
+            return (
+            <div key={p.id} className="relative">
+              {/* バッジ */}
+              {isStaff ? (
+                <div className="absolute -top-[8px] right-[var(--space-16)] z-10">
+                  <div className="bg-gradient-to-r from-[color:var(--color-jz-warning)] to-[color:var(--color-jz-secondary)] text-white px-[var(--space-12)] py-[var(--space-8)] rounded-[10px] jz-text-caption font-semibold">
+                    スタッフおまかせ
+                  </div>
+                </div>
+              ) : isTwoPack && off > 0 && (
                 <div className="absolute -top-[8px] right-[var(--space-16)] z-10">
                   <div className="bg-[color:var(--color-jz-secondary)] text-[color:var(--color-jz-surface)] px-[var(--space-12)] py-[var(--space-8)] rounded-[10px] jz-text-caption font-semibold">
-                    {plan.badge}
+                    今だけ
                   </div>
                 </div>
               )}
               
               <JZCard 
-                variant={selectedPlan === plan.id ? 'selected' : 'default'}
+                variant={selectedPlan === p.id ? 'selected' : 'default'}
                 className="cursor-pointer transition-all duration-200"
-                onClick={() => setSelectedPlan(plan.id)}
+                onClick={() => setSelectedPlan(p.id)}
               >
                 <JZCardContent className="p-[var(--space-16)] space-y-[var(--space-12)]">
                   <div className="flex items-center justify-between">
@@ -225,18 +198,18 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
                       {/* タイトル */}
                       <div className="mb-[var(--space-8)]">
                         <span className="jz-font-display text-[22px] font-semibold text-[color:var(--color-jz-text-primary)]">
-                          {plan.credits}クレジット
+                          {isStaff ? 'スタッフにおまかせ' : `${p.units}枚（回数の目安）`}
                         </span>
                       </div>
                       
                       {/* 価格 */}
                       <div className="flex items-baseline gap-[var(--space-8)] mb-[var(--space-4)]">
                         <span className="jz-font-display text-[22px] font-semibold text-[color:var(--color-jz-text-primary)]">
-                          {plan.price}
+                          {formatYen(sale)}
                         </span>
-                        {plan.originalPrice && (
+                        {isTwoPack && off > 0 && (
                           <span className="jz-text-caption text-[color:var(--color-jz-text-tertiary)] line-through">
-                            {plan.originalPrice}
+                            {formatYen(regular)}
                           </span>
                         )}
                       </div>
@@ -244,22 +217,22 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
                       {/* 小ラベル */}
                       <div className="mb-[var(--space-12)]">
                         <span className="text-[14px] text-[color:var(--color-jz-text-secondary)]">
-                          1枚={plan.pricePerCredit}
+                          {isStaff ? '有人仕上げ / 1件' : (p.unitLabel || `1枚=¥${pricePer}`)}
                         </span>
                       </div>
                       
                       {/* お得感 */}
-                      {plan.savings && (
+                      {isTwoPack && off > 0 && (
                         <div className="mb-[var(--space-12)]">
                           <span className="jz-text-caption text-[color:var(--color-jz-success)] font-medium">
-                            {plan.savings}
+                            期間限定セール / {p.compareAtLabel}
                           </span>
                         </div>
                       )}
                       
                       {/* ベネフィット */}
                       <div className="space-y-[var(--space-8)]">
-                        {benefits.map((benefit, index) => (
+                        {(isStaff ? staffBenefits : benefits).map((benefit, index) => (
                           <div key={index} className="flex items-center gap-[var(--space-8)]">
                             <JZCheckIcon size={14} className="text-[color:var(--color-jz-success)] flex-shrink-0" />
                             <span className="text-[15px] text-[color:var(--color-jz-text-secondary)]">
@@ -273,11 +246,11 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
                     <div className="flex items-center ml-[var(--space-16)]">
                       <div className={cn(
                         "w-[24px] h-[24px] rounded-full border-2 flex items-center justify-center",
-                        selectedPlan === plan.id 
+                        selectedPlan === p.id 
                           ? "border-[color:var(--color-jz-accent)] bg-[color:var(--color-jz-accent)]"
                           : "border-[color:var(--color-jz-border)]"
                       )}>
-                        {selectedPlan === plan.id && (
+                        {selectedPlan === p.id && (
                           <JZCheckIcon size={12} className="text-white" />
                         )}
                       </div>
@@ -286,35 +259,72 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
                 </JZCardContent>
               </JZCard>
             </div>
-          ))}
+          );})}
         </div>
+
+        {/* お急ぎ便オプション */}
+        <JZCard>
+          <JZCardHeader>
+            <h2 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)]">
+              お急ぎ便オプション
+            </h2>
+          </JZCardHeader>
+          <JZCardContent>
+            <div className="bg-gradient-to-r from-[color:var(--color-jz-warning)] to-[color:var(--color-jz-secondary)] rounded-[--radius-jz-button] p-[var(--space-16)] text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold mb-[var(--space-4)]">特急1,980円</h3>
+                  <p className="text-sm opacity-90 mb-[var(--space-8)]">60分以内に返信</p>
+                  <div className="space-y-[var(--space-4)]">
+                    <div className="flex items-center gap-[var(--space-8)]">
+                      <JZCheckIcon size={14} className="text-white flex-shrink-0" />
+                      <span className="text-sm">チャットサポート</span>
+                    </div>
+                    <div className="flex items-center gap-[var(--space-8)]">
+                      <JZCheckIcon size={14} className="text-white flex-shrink-0" />
+                      <span className="text-sm">優先対応</span>
+                    </div>
+                    <div className="flex items-center gap-[var(--space-8)]">
+                      <JZCheckIcon size={14} className="text-white flex-shrink-0" />
+                      <span className="text-sm">品質保証</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl mb-[var(--space-8)]">⚡</div>
+                  <JZButton
+                    tone="secondary"
+                    size="md"
+                    className="bg-white/20 border-white/30 text-white hover:bg-white/30"
+                  >
+                    チャット開始
+                  </JZButton>
+                </div>
+              </div>
+            </div>
+          </JZCardContent>
+        </JZCard>
 
         {/* Purchase Button */}
         <JZCard>
           <JZCardContent className="p-[var(--space-16)]">
-            <JZButton
-              tone="primary"
-              size="lg"
-              fullWidth
-              onClick={handlePurchase}
-              disabled={isPurchasing}
-            >
-              {isPurchasing ? (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  購入中...
-                </div>
-              ) : (
-                `${plans.find(p => p.id === selectedPlan)?.price} で買う`
-              )}
-            </JZButton>
-            
-            <p className="jz-text-caption text-[color:var(--color-jz-text-tertiary)] text-center mt-[var(--space-12)]">
-              買ったらすぐに使えます
-            </p>
+            <div className="text-center text-[color:var(--color-jz-text-secondary)]">
+              プランの変更はアプリ内課金またはApp Storeで行えます。
+            </div>
           </JZCardContent>
         </JZCard>
       </div>
     </div>
   );
 };
+
+function formatStorage(bytes: number) {
+  if (!bytes || bytes <= 0) return '0B';
+  const k = 1024;
+  const sizes = ['B','KB','MB','GB','TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  const value = (bytes / Math.pow(k, i)).toFixed(1);
+  return `${value}${sizes[i]}`;
+}
+
+// バーの色と割合は src/config/storage.ts の設定値を使用

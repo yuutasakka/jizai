@@ -1,0 +1,13 @@
+[
+  {
+    "id": "photo_remove_objects",
+    "title": "不要物を軽減",
+    "desc": "色味補正と断裁を想定したレイアウト",
+    "before": "/examples/photo_01_before.png",
+    "after": "/examples/photo_01_after.png",
+    "prompt_ja": "不要な写り込みを自然に軽減してください。全体の色味を印刷に適した明るさに調整し、断裁を想定した安全な構図にしてください。",
+    "preset": { "cleanup": true, "tone": "print-safe" },
+    "engine_profile": "standard",
+    "export": { "size_key": "a4", "dpi": 350, "bleed_mm": 3, "mode": "fit" }
+  }
+]

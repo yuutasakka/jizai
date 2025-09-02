@@ -45,28 +45,31 @@ struct ReportResponse: Codable {
 
 // MARK: - Product Definitions
 enum JizaiProduct: String, CaseIterable {
-    case coins20 = "com.example.jizai.coins20"
-    case coins100 = "com.example.jizai.coins100"
-    case coins300 = "com.example.jizai.coins300"
+    case coins2   = "com.jizai.coins2"
+    case coins10  = "com.jizai.coins10"
+    case coins20  = "com.jizai.coins20"
+    case coins50  = "com.jizai.coins50"
+    case coins100 = "com.jizai.coins100"
+    case staffService = "com.jizai.staff.service"
     
     var credits: Int {
         switch self {
+        case .coins2: return 2
+        case .coins10: return 10
         case .coins20: return 20
+        case .coins50: return 50
         case .coins100: return 100
-        case .coins300: return 300
+        case .staffService: return 0
         }
     }
-    
-    var price: String {
-        switch self {
-        case .coins20: return "¥320"
-        case .coins100: return "¥1,200"
-        case .coins300: return "¥2,800"
-        }
-    }
-    
+
     var displayName: String {
-        return "\(credits)クレジット"
+        switch self {
+        case .staffService:
+            return "スタッフにおまかせ（1件）"
+        default:
+            return "\(credits)クレジット"
+        }
     }
 }
 
