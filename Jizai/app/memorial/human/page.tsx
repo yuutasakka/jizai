@@ -79,6 +79,12 @@ export default function Page() {
           <a href="/" className="inline-block px-5 py-3 rounded-md bg-[color:var(--color-jz-accent)] text-white">この用途で作成する</a>
         </div>
       </section>
+      {/* 仕上がり例（折り目の上に露出を上げる） */}
+      <section id="examples" className="mb-12 space-y-3">
+        <h2 className="jz-font-display jz-text-display-small mb-2">仕上がり例</h2>
+        <ExampleGallery usecase="human" />
+        <p className="text-xs text-[color:var(--color-jz-text-tertiary)]">※プレビューは英語表記です。画像に日本語の文字を入れる場合は、その部分を日本語に置き換えてから生成してください。</p>
+      </section>
 
       {/* 目次（TOC） */}
       <nav aria-label="目次" className="mb-6">
@@ -145,11 +151,7 @@ export default function Page() {
       </section>
 
       {/* 仕上がり例（Before/After） */}
-      <section id="examples" className="mb-12 space-y-3">
-        <h2 className="jz-font-display jz-text-display-small mb-2">仕上がり例</h2>
-        <ExampleGallery usecase="human" />
-        <p className="text-xs text-[color:var(--color-jz-text-tertiary)]">※プレビューは英語表記です。画像に日本語の文字を入れる場合は、その部分を日本語に置き換えてから生成してください。</p>
-      </section>
+      {/* examples section moved above */}
 
       {/* 料金 */}
       <section id="pricing" className="mb-12">

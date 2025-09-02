@@ -13,6 +13,7 @@ import { secureLogger } from './secure-logger.mjs';
 function validateOrigin(origin, callback) {
     // Get allowed origins from environment or use secure defaults
     const envOrigins = process.env.ORIGIN_ALLOWLIST?.split(',').map(origin => origin.trim()) || [];
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
     
     // Production origins (strict allowlist only)
     const productionOrigins = [
@@ -38,8 +39,12 @@ function validateOrigin(origin, callback) {
     let allowedOrigins = [];
     
     if (process.env.NODE_ENV === 'production') {
-        // Production: Use only environment-specified origins + known production origins
-        allowedOrigins = [...envOrigins, ...productionOrigins];
+        // Production: Restrict to NEXT_PUBLIC_SITE_URL only (if set), otherwise ORIGIN_ALLOWLIST
+        if (siteUrl) {
+            allowedOrigins = [siteUrl];
+        } else {
+            allowedOrigins = [...envOrigins, ...productionOrigins];
+        }
         
         // Log security warning if using permissive origins in production
         if (envOrigins.some(origin => origin.includes('localhost') || origin.includes('127.0.0.1'))) {

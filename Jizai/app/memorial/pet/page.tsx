@@ -74,6 +74,12 @@ export default function Page() {
         <p className="jz-text-body text-[color:var(--color-jz-text-secondary)]">毛並みの整え・背景無地化・色味補正。四つ切/A4/L判、当日対応。</p>
         <div className="mt-4"><a href="/" className="inline-block px-5 py-3 rounded-md bg-[color:var(--color-jz-accent)] text-white">この用途で作成する</a></div>
       </section>
+      {/* 仕上がり例（折り目の上に露出を上げる） */}
+      <section id="examples" className="mb-12 space-y-3">
+        <h2 className="jz-font-display jz-text-display-small mb-2">仕上がり例</h2>
+        <ExampleGallery usecase="pet" />
+        <p className="text-xs text-[color:var(--color-jz-text-tertiary)]">※プレビューは英語表記です。画像に日本語の文字を入れる場合は、その部分を日本語に置き換えてから生成してください。</p>
+      </section>
       <section id="howto" className="mb-12">
         <h2 className="jz-font-display jz-text-display-small mb-4">使い方（3ステップ）</h2>
         <div className="grid gap-4 md:grid-cols-3">
@@ -100,11 +106,7 @@ export default function Page() {
           <li>・リサイズ：<strong>フィット（余白）</strong> / <strong>フィル（トリミング）</strong></li>
         </ul>
       </section>
-      <section id="examples" className="mb-12 space-y-3">
-        <h2 className="jz-font-display jz-text-display-small mb-2">仕上がり例</h2>
-        <ExampleGallery usecase="pet" />
-        <p className="text-xs text-[color:var(--color-jz-text-tertiary)]">※プレビューは英語表記です。画像に日本語の文字を入れる場合は、その部分を日本語に置き換えてから生成してください。</p>
-      </section>
+      {/* examples section moved above */}
       <section id="pricing" className="mb-12">
         <h2 className="jz-font-display jz-text-display-small mb-4">料金</h2>
         {/* 新・クレジットプラン */}

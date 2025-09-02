@@ -181,10 +181,12 @@ export const secureLogger = {
      * @param {string} jobId - Optional job ID for tracking
      */
     editRequest(deviceId, prompt, fileSize, jobId = null) {
-        const sanitizedPrompt = sanitizeText(prompt, { maxLength: 60 });
+        // Do not log prompt content; only store metadata
+        const sanitizedPrompt = '[REDACTED]';
         const logData = {
             deviceId: deviceId.substring(0, 8) + '***', // Partial masking for debugging
             prompt: sanitizedPrompt,
+            prompt_length: typeof prompt === 'string' ? prompt.length : 0,
             fileSize,
             timestamp: new Date().toISOString()
         };

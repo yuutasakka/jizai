@@ -7,6 +7,7 @@ import { JZPhotographIcon, JZPlusIcon, JZMagicWandIcon, JZBoltIcon } from '../de
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { cn } from '../ui/utils';
 import { apiClient } from '../../api/client';
+import { track } from '../../lib/analytics';
 import { Progress } from '../ui/progress';
 import { pickBarClass, toPercent } from '../../config/storage';
 
@@ -54,15 +55,37 @@ export const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => voi
   // URLクエリから事前設定（/?usecase=&preset=&engine=）
   useEffect(() => {
     try {
+      track('begin_edit');
       const params = new URLSearchParams(window.location.search);
+      const usecase = params.get('usecase') || '';
       const presetId = params.get('preset') || '';
       const engine = (params.get('engine') as EngineProfile) || 'standard';
-      // 例IDが来た場合はexamples.jsonから日本語プロンプトを注入
+      
+      // 例IDが来た場合は用途別JSONまたは全量JSONから日本語プロンプトを注入
       if (presetId) {
-        fetch('/examples/examples.json')
-          .then((r) => r.json())
-          .then((list) => {
-            const ex = (list as any[]).find((x) => x.id === presetId);
+        const fetchExamples = async () => {
+          try {
+            let examples: any[] = [];
+            if (usecase) {
+              // 用途別JSONを試す
+              try {
+                const response = await fetch(`/examples/${usecase}.json`);
+                if (response.ok) {
+                  examples = await response.json();
+                }
+              } catch {
+                // フォールバック: 全量JSONから該当用途をフィルタ
+                const fallbackResponse = await fetch('/examples/examples.json');
+                const allExamples = await fallbackResponse.json();
+                examples = (allExamples as any[]).filter((x) => x.usecase === usecase);
+              }
+            } else {
+              // usecaseがない場合は全量JSONを使用
+              const response = await fetch('/examples/examples.json');
+              examples = await response.json();
+            }
+            
+            const ex = examples.find((x) => x.id === presetId);
             if (ex?.prompt_ja) {
               setCustomPrompt(ex.prompt_ja);
               setSelectedPreset('');
@@ -70,10 +93,12 @@ export const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => voi
               // 既存プリセットIDの場合は選択状態にする
               setSelectedPreset(presetId);
             }
-          })
-          .catch(() => {
+          } catch {
             setSelectedPreset(presetId);
-          });
+          }
+        };
+        
+        fetchExamples();
       }
       setEngineProfile(engine);
     } catch {}

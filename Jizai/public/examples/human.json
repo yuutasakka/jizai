@@ -1,0 +1,13 @@
+[
+  {
+    "id": "human_bg_solid",
+    "title": "背景を無地に",
+    "desc": "髪の毛先を自然に、輪郭はやわらかく",
+    "before": "/examples/human_01_before.png",
+    "after": "/examples/human_01_after.png",
+    "prompt_ja": "背景を無地の薄いグレーにしてください。人物の輪郭を自然に保ち、髪の毛先は残してください。服装や位置は変えないでください。",
+    "preset": { "bg": "solid-lightgray", "hair": true },
+    "engine_profile": "standard",
+    "export": { "size_key": "yotsugiri", "dpi": 350, "bleed_mm": 3, "mode": "fill" }
+  }
+]
