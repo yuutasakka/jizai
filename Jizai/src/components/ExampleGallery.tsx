@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
 import React from "react";
+import { track } from "../lib/analytics";
 import { TryEditButton } from "./TryEditButton";
 
 export function ExampleGallery({ usecase }: { usecase: "human" | "pet" | "seizen" | "photo" }) {
@@ -48,7 +49,8 @@ export function ExampleGallery({ usecase }: { usecase: "human" | "pet" | "seizen
           {/* この例で試す */}
           <div className="mt-4 flex gap-3 items-center">
             <a
-              href={`/?usecase=${usecase}&preset=${encodeURIComponent(ex.id)}&engine=${ex.engine_profile}${typeof window !== 'undefined' ? `&ab=${new URL(window.location.href).searchParams.get('ab') ?? ''}` : ''}`}
+              onClick={() => track('try_edit_sample', { usecase, exampleId: ex.id })}
+              href={`/?usecase=${usecase}&preset=${encodeURIComponent(ex.id)}&engine=${ex.engine_profile}&demo=true${typeof window !== 'undefined' ? `&ab=${new URL(window.location.href).searchParams.get('ab') ?? ''}` : ''}`}
               className="inline-flex items-center rounded-md bg-[color:var(--color-jz-accent)] px-4 py-2 text-sm font-semibold text-white"
             >
               この例で試す

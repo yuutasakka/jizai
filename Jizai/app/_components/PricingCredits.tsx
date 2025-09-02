@@ -62,7 +62,17 @@ export default function PricingCredits() {
                 )}
               </div>
               <div className="text-sm text-[color:var(--color-jz-text-secondary)] mb-3">{p.unitLabel || ''}</div>
-              <button className="text-sm underline">{p.isStaff ? '購入' : 'このプランを選ぶ'}</button>
+              <button
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    const { track } = require('../../src/lib/analytics');
+                    track('pricing_select', { planId: p.id, units: p.units, price: p.salePrice, ab });
+                  }
+                }}
+                className="text-sm underline"
+              >
+                {p.isStaff ? '購入' : 'このプランを選ぶ'}
+              </button>
             </div>
           );
         })}
