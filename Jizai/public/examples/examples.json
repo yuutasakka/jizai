@@ -25,6 +25,19 @@
   }
   ,
   {
+    "id": "human_hair_cleanup",
+    "usecase": "human",
+    "title": "髪の乱れを自然に整える",
+    "desc": "輪郭はやわらかく、毛先を残す",
+    "before": "/examples/human_03_before.png",
+    "after": "/examples/human_03_after.png",
+    "prompt_ja": "髪の乱れを自然に整えてください。輪郭はやわらかく、毛先を残してください。背景や服装は変えないでください。",
+    "preset": { "hair": "cleanup-soft" },
+    "engine_profile": "high",
+    "export": { "size_key": "yotsugiri", "dpi": 350, "bleed_mm": 3, "mode": "fill" }
+  }
+  ,
+  {
     "id": "pet_fur_cleanup",
     "usecase": "pet",
     "title": "毛並みを自然に整える",
