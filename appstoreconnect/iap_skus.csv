@@ -1,0 +1,7 @@
+product_id,type,display_name,price_jpy,credits,description
+com.jizai.coins2,consumable,2枚,160,2,1枚=¥80（通常¥100）/ 通常価格 ¥200
+com.jizai.coins10,consumable,10枚,700,10,1枚=¥70
+com.jizai.coins20,consumable,20枚,1400,20,1枚=¥70
+com.jizai.coins50,consumable,50枚,3250,50,1枚=¥65
+com.jizai.coins100,consumable,100枚,6000,100,1枚=¥60
+com.jizai.staff.service,consumable,スタッフにおまかせ（1件）,5980,0,有人仕上げ/1件

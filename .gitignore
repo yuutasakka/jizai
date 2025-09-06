@@ -1,0 +1,22 @@
+# OS
+.DS_Store
+
+# Node
+node_modules/
+build/
+dist/
+.next/
+.vercel/
+
+# Editor / tools caches
+.serena/
+.codex/
+
+# Env files
+.env
+.env.*
+!.env.production.example
+
+# Backups
+*.bak
+*.backup

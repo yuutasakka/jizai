@@ -1,0 +1,295 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap');
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* JIZAI Brand - 8pt Grid System */
+  --base-unit: 8px;
+  --spacing-8: calc(var(--base-unit) * 1);   /* 8px */
+  --spacing-12: calc(var(--base-unit) * 1.5); /* 12px */
+  --spacing-16: calc(var(--base-unit) * 2);   /* 16px */
+  --spacing-20: calc(var(--base-unit) * 2.5); /* 20px */
+  --spacing-24: calc(var(--base-unit) * 3);   /* 24px */
+  --spacing-32: calc(var(--base-unit) * 4);   /* 32px */
+  --spacing-48: calc(var(--base-unit) * 6);   /* 48px */
+  
+  /* JIZAI Brand Colors */
+  --jz-accent: #0A84FF;
+  --jz-secondary: #7D5CFF;
+  --jz-surface: #0B0B0C;
+  --jz-card: #111114;
+  --jz-border: #2A2A2E;
+  --jz-text-primary: #ECECEC;
+  --jz-text-secondary: #A1A1AA;
+  --jz-text-tertiary: #6B7280;
+  --jz-text-disabled: #4B5563;
+  --jz-destructive: #FF453A;
+  --jz-success: #30D158;
+  --jz-warning: #FF9500;
+  
+  /* JIZAI Gradients */
+  --jz-gradient-primary: linear-gradient(135deg, var(--jz-accent), var(--jz-secondary));
+  --jz-gradient-surface: linear-gradient(180deg, var(--jz-surface), #0F0F10);
+  
+  /* JIZAI Border Radius */
+  --jz-radius-button: 12px;
+  --jz-radius-card: 12px;
+  --jz-radius-preview: 20px;
+  --jz-radius-chip: 20px;
+  
+  /* JIZAI Typography Scale */
+  --jz-text-display-large: 28px;
+  --jz-text-display-medium: 24px;
+  --jz-text-display-small: 22px;
+  --jz-text-body: 15px;
+  --jz-text-button: 17px;
+  --jz-text-caption: 13px;
+  
+  /* JIZAI Shadows */
+  --jz-shadow-card: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --jz-shadow-button: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --jz-shadow-tooltip: 0 2px 8px rgba(0, 0, 0, 0.15);
+  
+  /* Glass Effects */
+  --jz-glass-blur: 16px;
+  --jz-glass-overlay: rgba(11, 11, 12, 0.8);
+  
+  /* Legacy compatibility */
+  --background: var(--jz-surface);
+  --foreground: var(--jz-text-primary);
+  --card: var(--jz-card);
+  --card-foreground: var(--jz-text-primary);
+  --primary: var(--jz-accent);
+  --primary-foreground: #FFFFFF;
+  --secondary: var(--jz-card);
+  --secondary-foreground: var(--jz-text-secondary);
+  --muted: var(--jz-border);
+  --muted-foreground: var(--jz-text-tertiary);
+  --accent: var(--jz-accent);
+  --accent-foreground: #FFFFFF;
+  --destructive: var(--jz-destructive);
+  --destructive-foreground: #FFFFFF;
+  --border: var(--jz-border);
+  --input: var(--jz-card);
+  --ring: var(--jz-accent);
+}
+
+@theme inline {
+  /* JIZAI Color Variables */
+  --color-jz-accent: var(--jz-accent);
+  --color-jz-secondary: var(--jz-secondary);
+  --color-jz-surface: var(--jz-surface);
+  --color-jz-card: var(--jz-card);
+  --color-jz-border: var(--jz-border);
+  --color-jz-text-primary: var(--jz-text-primary);
+  --color-jz-text-secondary: var(--jz-text-secondary);
+  --color-jz-text-tertiary: var(--jz-text-tertiary);
+  --color-jz-text-disabled: var(--jz-text-disabled);
+  --color-jz-destructive: var(--jz-destructive);
+  --color-jz-success: var(--jz-success);
+  --color-jz-warning: var(--jz-warning);
+  
+  /* JIZAI Spacing */
+  --space-8: var(--spacing-8);
+  --space-12: var(--spacing-12);
+  --space-16: var(--spacing-16);
+  --space-20: var(--spacing-20);
+  --space-24: var(--spacing-24);
+  --space-32: var(--spacing-32);
+  --space-48: var(--spacing-48);
+  
+  /* JIZAI Radius */
+  --radius-jz-button: var(--jz-radius-button);
+  --radius-jz-card: var(--jz-radius-card);
+  --radius-jz-preview: var(--jz-radius-preview);
+  --radius-jz-chip: var(--jz-radius-chip);
+  
+  /* Legacy compatibility */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+@layer base {
+  * {
+    @apply border-[color:var(--color-jz-border)] outline-[color:var(--color-jz-accent)]/50;
+  }
+
+  body {
+    @apply bg-[color:var(--color-jz-surface)] text-[color:var(--color-jz-text-primary)];
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+}
+
+/* JIZAI Typography System */
+@layer base {
+  .jz-font-display {
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 600;
+  }
+  
+  .jz-font-body {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 400;
+  }
+  
+  .jz-text-display-large {
+    font-size: var(--jz-text-display-large);
+    line-height: 1.2;
+  }
+  
+  .jz-text-display-medium {
+    font-size: var(--jz-text-display-medium);
+    line-height: 1.25;
+  }
+  
+  .jz-text-display-small {
+    font-size: var(--jz-text-display-small);
+    line-height: 1.3;
+  }
+  
+  .jz-text-body {
+    font-size: var(--jz-text-body);
+    line-height: 1.4;
+  }
+  
+  .jz-text-button {
+    font-size: var(--jz-text-button);
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  
+  .jz-text-caption {
+    font-size: var(--jz-text-caption);
+    line-height: 1.3;
+  }
+}
+
+/* JIZAI Utility Classes */
+@layer utilities {
+  .jz-glass-effect {
+    backdrop-filter: blur(var(--jz-glass-blur));
+    -webkit-backdrop-filter: blur(var(--jz-glass-blur));
+    background: var(--jz-glass-overlay);
+  }
+  
+  .jz-gradient-primary {
+    background: var(--jz-gradient-primary);
+  }
+  
+  .jz-gradient-surface {
+    background: var(--jz-gradient-surface);
+  }
+  
+  .jz-shadow-card {
+    box-shadow: var(--jz-shadow-card);
+  }
+  
+  .jz-shadow-button {
+    box-shadow: var(--jz-shadow-button);
+  }
+  
+  .jz-grid-8pt {
+    display: grid;
+    gap: var(--space-16);
+  }
+  
+  .jz-spacing-8 { gap: var(--space-8); }
+  .jz-spacing-12 { gap: var(--space-12); }
+  .jz-spacing-16 { gap: var(--space-16); }
+  .jz-spacing-20 { gap: var(--space-20); }
+  .jz-spacing-24 { gap: var(--space-24); }
+  
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-in-out;
+  }
+  
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* JIZAI Brand Typography Defaults */
+@layer base {
+  :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) {
+    h1 {
+      font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: var(--jz-text-display-large);
+      font-weight: 600;
+      line-height: 1.2;
+      color: var(--jz-text-primary);
+    }
+
+    h2 {
+      font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: var(--jz-text-display-medium);
+      font-weight: 600;
+      line-height: 1.25;
+      color: var(--jz-text-primary);
+    }
+
+    h3 {
+      font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: var(--jz-text-display-small);
+      font-weight: 600;
+      line-height: 1.3;
+      color: var(--jz-text-primary);
+    }
+
+    p {
+      font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: var(--jz-text-body);
+      font-weight: 400;
+      line-height: 1.4;
+      color: var(--jz-text-secondary);
+    }
+
+    label {
+      font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: var(--jz-text-body);
+      font-weight: 500;
+      line-height: 1.4;
+      color: var(--jz-text-primary);
+    }
+
+    button {
+      font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: var(--jz-text-button);
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    input, textarea {
+      font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: var(--jz-text-body);
+      font-weight: 400;
+      line-height: 1.4;
+      color: var(--jz-text-primary);
+    }
+  }
+}
+
+html {
+  font-size: 15px;
+}
