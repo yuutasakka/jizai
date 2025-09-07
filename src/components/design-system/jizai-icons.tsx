@@ -212,3 +212,81 @@ export const JZCalendarIcon = ({ className, size = 24 }: JZIconProps) => (
     <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" strokeWidth="2"/>
   </svg>
 );
+
+// Memorial photo specific icons
+// Sparkles icon for magical processing (SF Symbol: sparkles)
+export const JZSparklesIcon = ({ className, size = 24 }: JZIconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+    <path d="M9 12l2-2 2 2-2 2-2-2z" fill="currentColor"/>
+    <path d="M21 12l-2-2 2-2 2 2-2 2z" fill="currentColor"/>
+    <path d="M3 12l2-2-2-2-2 2 2 2z" fill="currentColor"/>
+    <path d="M12 21l2-2-2-2-2 2 2 2z" fill="currentColor"/>
+    <path d="M12 3l-2 2 2 2 2-2-2-2z" fill="currentColor"/>
+    <path d="M18 6l-1-1 1-1 1 1-1 1z" fill="currentColor"/>
+    <path d="M6 18l1-1-1-1-1 1 1 1z" fill="currentColor"/>
+    <path d="M18 18l1-1-1-1-1 1 1 1z" fill="currentColor"/>
+    <path d="M6 6l-1 1 1 1 1-1-1-1z" fill="currentColor"/>
+  </svg>
+);
+
+// Heart icon for memorial photos (SF Symbol: heart.fill)
+export const JZHeartIcon = ({ className, size = 24 }: JZIconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="currentColor" strokeWidth="2" fill="currentColor"/>
+  </svg>
+);
+
+// Memorial photo icon (custom design combining photo + memorial elements)
+export const JZMemorialPhotoIcon = ({ className, size = 24 }: JZIconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+    <rect x="3" y="4" width="18" height="15" rx="2" ry="2" stroke="currentColor" strokeWidth="2"/>
+    <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
+    <polyline points="21,15 16,10 5,21" stroke="currentColor" strokeWidth="2"/>
+    {/* Memorial frame decoration */}
+    <path d="M7 2v2M17 2v2M7 20v2M17 20v2" stroke="currentColor" strokeWidth="1.5"/>
+    <path d="M2 7h2M2 17h2M20 7h2M20 17h2" stroke="currentColor" strokeWidth="1.5"/>
+  </svg>
+);
+
+// Lotus icon for peaceful/serene style (custom memorial symbol)
+export const JZLotusIcon = ({ className, size = 24 }: JZIconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+    <path d="M12 20c-4 0-8-2-8-6s2-4 4-4 4 2 4 6" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+    <path d="M12 20c4 0 8-2 8-6s-2-4-4-4-4 2-4 6" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+    <path d="M12 14c0-4-2-8-6-8s-4 2-4 4 2 4 6 4" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+    <path d="M12 14c0-4 2-8 6-8s4 2 4 4-2 4-6 4" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+    <circle cx="12" cy="14" r="2" stroke="currentColor" strokeWidth="1.5" fill="currentColor"/>
+  </svg>
+);
+
+// Users icon (SF Symbol: person.2)
+export const JZUsersIcon = ({ className, size = 24 }: JZIconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2"/>
+    <circle cx="8.5" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
+    <path d="M20 8v6M23 11h-6" stroke="currentColor" strokeWidth="2"/>
+  </svg>
+);
+
+// Trending up icon (SF Symbol: chart.line.uptrend.xyaxis)
+export const JZTrendingUpIcon = ({ className, size = 24 }: JZIconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" stroke="currentColor" strokeWidth="2"/>
+    <polyline points="17 6 23 6 23 12" stroke="currentColor" strokeWidth="2"/>
+  </svg>
+);
+
+// Star icon (SF Symbol: star)
+export const JZStarIcon = ({ className, size = 24 }: JZIconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+    <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" stroke="currentColor" strokeWidth="2"/>
+  </svg>
+);
+
+// Award icon (SF Symbol: rosette)
+export const JZAwardIcon = ({ className, size = 24 }: JZIconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+    <circle cx="12" cy="8" r="7" stroke="currentColor" strokeWidth="2"/>
+    <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" stroke="currentColor" strokeWidth="2"/>
+  </svg>
+);

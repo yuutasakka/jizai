@@ -208,7 +208,25 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
                   用途別 ▾
                 </button>
                 {navOpen && (
-                  <div className="absolute right-0 mt-[var(--space-8)] w-[240px] bg-[color:var(--color-jz-card)] border border-[color:var(--color-jz-border)] rounded-[--radius-jz-card] shadow-lg z-50">
+                  <div className="absolute right-0 mt-[var(--space-8)] w-[280px] bg-[color:var(--color-jz-card)] border border-[color:var(--color-jz-border)] rounded-[--radius-jz-card] shadow-lg z-50">
+                    <button 
+                      onClick={() => {
+                        onNavigate('memorial-photo');
+                        setNavOpen(false);
+                      }} 
+                      className="block w-full text-left px-[12px] py-[10px] hover:bg-[color:var(--color-jz-surface)] border-b border-[color:var(--color-jz-border)] font-semibold text-[color:var(--color-jz-accent)]"
+                    >
+                      ✨ 魔法的遺影作成（NEW）
+                    </button>
+                    <button 
+                      onClick={() => {
+                        onNavigate('long-term-engagement');
+                        setNavOpen(false);
+                      }} 
+                      className="block w-full text-left px-[12px] py-[10px] hover:bg-[color:var(--color-jz-surface)] border-b border-[color:var(--color-jz-border)] font-semibold text-purple-600"
+                    >
+                      💖 愛用者システム（愛用特典）
+                    </button>
                     <button onClick={() => onNavigate('memorial/human')} className="block w-full text-left px-[12px] py-[10px] hover:bg-[color:var(--color-jz-surface)]">遺影写真（人）</button>
                     <button onClick={() => onNavigate('memorial/pet')} className="block w-full text-left px-[12px] py-[10px] hover:bg-[color:var(--color-jz-surface)]">ペット遺影</button>
                     <button onClick={() => onNavigate('memorial/seizen')} className="block w-full text-left px-[12px] py-[10px] hover:bg-[color:var(--color-jz-surface)]">生前撮影</button>
@@ -267,6 +285,34 @@ export const JizaiHomeScreen = ({ onNavigate, selectedExample, onClearExample }:
         <div className="mb-[var(--space-24)]">
           <h2 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)] text-center mb-[var(--space-16)]">用途別で選ぶ</h2>
           <div className="grid gap-[var(--space-16)] grid-cols-1 md:grid-cols-2">
+            {/* 新しい魔法的体験カード */}
+            <JZCard className="border-2 border-[color:var(--color-jz-accent)]/30 bg-gradient-to-br from-[color:var(--color-jz-accent)]/10 to-[color:var(--color-jz-secondary)]/10 relative overflow-hidden">
+              <div className="absolute top-2 right-2 bg-[color:var(--color-jz-accent)] text-white text-xs px-2 py-1 rounded-full font-bold">NEW</div>
+              <JZCardHeader>
+                <h3 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)] flex items-center gap-2">
+                  ✨ 魔法的遺影作成
+                </h3>
+              </JZCardHeader>
+              <JZCardContent>
+                <p className="jz-text-body text-[color:var(--color-jz-text-secondary)] mb-[var(--space-12)]">ワンタップで自動処理。3秒で3つの美しい候補を表示。呼吸リズム同期で心地よい体験。</p>
+                <JZButton tone="primary" onClick={() => onNavigate('memorial-photo')} className="w-full">魔法をかける ✨</JZButton>
+              </JZCardContent>
+            </JZCard>
+            
+            {/* Long-term Engagement System Card */}
+            <JZCard className="border-2 border-purple-300/30 bg-gradient-to-br from-purple-100/50 to-indigo-100/50 relative overflow-hidden">
+              <div className="absolute top-2 right-2 bg-purple-500 text-white text-xs px-2 py-1 rounded-full font-bold">愛用</div>
+              <JZCardHeader>
+                <h3 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)] flex items-center gap-2">
+                  💖 愛用者システム
+                </h3>
+              </JZCardHeader>
+              <JZCardContent>
+                <p className="jz-text-body text-[color:var(--color-jz-text-secondary)] mb-[var(--space-12)]">成長追跡・家族絆・記念日インテリジェンス。使うほど「あなたらしく」進化します。</p>
+                <JZButton tone="primary" onClick={() => onNavigate('long-term-engagement')} className="w-full">愛用者特典を見る 💖</JZButton>
+              </JZCardContent>
+            </JZCard>
+            
             <JZCard>
               <JZCardHeader>
                 <h3 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)]">遺影写真（人）</h3>
