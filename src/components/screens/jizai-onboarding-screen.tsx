@@ -8,12 +8,45 @@ interface OnboardingScreenProps {
 export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [animationPhase, setAnimationPhase] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [progress, setProgress] = useState(0);
+  
+  // スワイプ関連の状態
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  // 各スライドの表示時間（ミリ秒）
+  const SLIDE_DURATION = 4000; // 4秒
 
   useEffect(() => {
     setAnimationPhase(0);
     const timer = setTimeout(() => setAnimationPhase(1), 500);
     return () => clearTimeout(timer);
   }, [currentSlide]);
+
+  // 自動進行とプログレスバー
+  useEffect(() => {
+    if (isPaused) return;
+
+    setProgress(0);
+    const progressInterval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 100) {
+          return 100;
+        }
+        return prev + (100 / (SLIDE_DURATION / 50)); // 50msごとに更新
+      });
+    }, 50);
+
+    const autoAdvanceTimer = setTimeout(() => {
+      handleNext();
+    }, SLIDE_DURATION);
+
+    return () => {
+      clearInterval(progressInterval);
+      clearTimeout(autoAdvanceTimer);
+    };
+  }, [currentSlide, isPaused]);
 
   const slides = [
     {
@@ -96,60 +129,6 @@ export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenPr
       )
     },
     {
-      id: 'example1',
-      content: (
-        <div className="flex flex-col items-center justify-center h-full">
-          <h1 className="text-3xl font-light text-white text-center mb-12">
-            こんなこともできます
-          </h1>
-
-          <div 
-            className="transition-all duration-1000"
-            style={{
-              opacity: animationPhase >= 1 ? 1 : 0,
-              transform: animationPhase >= 1 ? 'translateY(0)' : 'translateY(30px)'
-            }}
-          >
-            <div className="bg-purple-500 text-white p-4 rounded-2xl mb-6 shadow-lg">
-              <div className="text-xl text-center">
-                夕日の背景にして
-              </div>
-            </div>
-            <div className="w-72 h-40 bg-gradient-to-r from-orange-300 via-red-400 to-purple-500 rounded-xl shadow-xl flex items-center justify-center">
-              <span className="text-white text-lg font-medium">美しい夕日</span>
-            </div>
-          </div>
-        </div>
-      )
-    },
-    {
-      id: 'example2',
-      content: (
-        <div className="flex flex-col items-center justify-center h-full">
-          <h1 className="text-3xl font-light text-white text-center mb-12">
-            日本語で自由に
-          </h1>
-
-          <div 
-            className="transition-all duration-1000"
-            style={{
-              opacity: animationPhase >= 1 ? 1 : 0,
-              transform: animationPhase >= 1 ? 'translateY(0)' : 'translateY(30px)'
-            }}
-          >
-            <div className="bg-green-500 text-white p-4 rounded-2xl mb-6 shadow-lg">
-              <div className="text-xl text-center">
-                もっと明るい笑顔に
-              </div>
-            </div>
-            <div className="w-72 h-40 bg-gradient-to-br from-yellow-200 to-yellow-400 rounded-xl shadow-xl flex items-center justify-center">
-              <span className="text-gray-800 text-lg font-medium">明るい笑顔</span>
-            </div>
-          </div>
-        </div>
-      )
-    },
-    {
       id: 'pricing',
       content: (
         <div className="flex flex-col items-center justify-center h-full">
@@ -178,6 +157,9 @@ export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenPr
     }
   ];
 
+  // スワイプの最小距離（ピクセル）
+  const minSwipeDistance = 50;
+
   const handleNext = () => {
     if (currentSlide < slides.length - 1) {
       setCurrentSlide(currentSlide + 1);
@@ -186,8 +168,49 @@ export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenPr
     }
   };
 
+  const handlePrev = () => {
+    if (currentSlide > 0) {
+      setCurrentSlide(currentSlide - 1);
+    }
+  };
+
+  const handlePause = () => {
+    setIsPaused(!isPaused);
+  };
+
+  // タッチイベントハンドラー
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      // 左スワイプ = 次へ
+      handleNext();
+    } else if (isRightSwipe) {
+      // 右スワイプ = 前へ
+      handlePrev();
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col relative overflow-hidden">
+    <div 
+      className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col relative overflow-hidden"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
       
       {/* Skip */}
       <div className="absolute top-12 right-6 z-50">
@@ -204,12 +227,17 @@ export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenPr
         {slides.map((_, index) => (
           <div
             key={index}
-            className={`h-1 rounded-full transition-all duration-500 ${
-              index === currentSlide
-                ? 'w-8 bg-white'
-                : 'w-4 bg-white/20'
-            }`}
-          />
+            className="relative h-1 w-8 bg-white/20 rounded-full overflow-hidden"
+          >
+            <div
+              className={`h-full bg-white rounded-full transition-all duration-100 ${
+                index === currentSlide ? '' : index < currentSlide ? 'w-full' : 'w-0'
+              }`}
+              style={{
+                width: index === currentSlide ? `${progress}%` : index < currentSlide ? '100%' : '0%'
+              }}
+            />
+          </div>
         ))}
       </div>
 
@@ -248,7 +276,7 @@ export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenPr
         {currentSlide > 0 && (
           <div className="px-6 pb-4">
             <button
-              onClick={() => setCurrentSlide(currentSlide - 1)}
+              onClick={handlePrev}
               className="w-full text-white/50 hover:text-white/70 transition-colors text-sm py-2"
             >
               戻る
@@ -256,13 +284,6 @@ export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenPr
           </div>
         )}
       </div>
-
-      <style jsx>{`
-        @keyframes progress {
-          from { width: 0%; }
-          to { width: 100%; }
-        }
-      `}</style>
     </div>
   );
 };
