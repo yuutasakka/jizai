@@ -319,203 +319,204 @@ export const MemorialPhotoScreen: React.FC<MemorialPhotoScreenProps> = ({ onNavi
           </div>
         )}
 
-      {/* メインコンテンツ */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-8">
-        {/* ヘッダー */}
-        <div className="absolute top-8 left-8">
-          <JZButton
-            tone="tertiary"
-            onClick={() => onNavigate('home')}
-            className="text-[color:var(--color-jz-text-secondary)]"
-          >
-            ← 戻る
-          </JZButton>
-        </div>
-
-        {!selectedImage && processingStage === 'idle' && (
-          <>
-            {/* メインボタン - 画面中央の大きな1つのボタン */}
-            <div className="text-center mb-16">
-              {/* 季節とパーソナライズドメッセージ */}
-              <div className="mb-8">
-                {getTodaysCulturalEvent() && (
-                  <div className="mb-4 p-4 bg-[color:var(--jz-seasonal-surface)] border border-[color:var(--jz-seasonal-accent)]/30 rounded-lg">
-                    <div className="flex items-center justify-center gap-2 mb-2">
-                      <span className="text-xl">{getTodaysCulturalEvent()?.symbolEmoji}</span>
-                      <span className="font-semibold text-[color:var(--jz-seasonal-accent)]">{getTodaysCulturalEvent()?.name}</span>
-                    </div>
-                    <p className="text-sm text-[color:var(--jz-seasonal-text-secondary)]">
-                      {getTodaysCulturalEvent()?.description}
-                    </p>
-                  </div>
-                )}
-                <p className="text-sm text-[color:var(--jz-seasonal-text-secondary)] italic">
-                  {getSeasonalGreeting()}
-                </p>
-              </div>
-              
-              <h1 className="jz-font-display jz-text-display-large text-[color:var(--jz-seasonal-text-primary)] mb-6">
-                美しい遺影を作成
-              </h1>
-              <p className="jz-text-body text-[color:var(--jz-seasonal-text-secondary)] mb-8">
-                {getPersonalizedMessage()}
-              </p>
-              <p className="jz-text-body text-[color:var(--jz-seasonal-text-secondary)] mb-12">
-                写真を選ぶだけで、AIが自動で美しく調整します
-              </p>
-            </div>
-
-            <div className="relative">
-              <input
-                type="file"
-                ref={fileInputRef}
-                accept="image/*"
-                onChange={handleImageSelect}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-              />
-              <div className="w-80 h-80 bg-gradient-to-br from-[color:var(--color-jz-accent)]/20 to-[color:var(--color-jz-secondary)]/20 rounded-full flex flex-col items-center justify-center border-2 border-dashed border-[color:var(--color-jz-accent)]/30 hover:border-[color:var(--color-jz-accent)]/60 transition-all duration-300 hover:scale-105 cursor-pointer">
-                <JZPhotoIcon size={80} className="text-[color:var(--color-jz-accent)] mb-6" />
-                <div className="text-center">
-                  <div className="jz-text-display-medium text-[color:var(--color-jz-text-primary)] mb-2">
-                    写真を選択
-                  </div>
-                  <div className="jz-text-body text-[color:var(--color-jz-text-secondary)]">
-                    タップして開始
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-12 text-center">
-              <p className="jz-text-caption text-[color:var(--color-jz-text-tertiary)]">
-                JPEGまたはPNG形式、10MB以下
-              </p>
-            </div>
-          </>
-        )}
-
-        {/* 処理中画面 */}
-        {selectedImage && processingStage !== 'idle' && processingStage !== 'complete' && (
-          <div className="text-center">
-            <div className="w-60 h-60 rounded-lg overflow-hidden mb-8 shadow-lg">
-              {imagePreview && (
-                <img 
-                  src={imagePreview} 
-                  alt="選択された画像" 
-                  className="w-full h-full object-cover"
-                />
-              )}
-            </div>
-            
-            <div className="mb-8">
-              <div className="jz-text-display-medium text-[color:var(--color-jz-text-primary)] mb-4">
-                {getProcessingMessage()}
-              </div>
-              
-              {/* プログレスバー */}
-              <div className="w-80 h-2 bg-[color:var(--color-jz-border)] rounded-full overflow-hidden mb-4">
-                <div 
-                  className="h-full bg-gradient-to-r from-[color:var(--color-jz-accent)] to-[color:var(--color-jz-secondary)] transition-all duration-500"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-              
-              <div className="jz-text-body text-[color:var(--color-jz-text-secondary)]">
-                少しお待ちください...
-              </div>
-            </div>
+        {/* メインコンテンツ */}
+        <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-8">
+          {/* ヘッダー */}
+          <div className="absolute top-8 left-8">
+            <JZButton
+              tone="tertiary"
+              onClick={() => onNavigate('home')}
+              className="text-[color:var(--color-jz-text-secondary)]"
+            >
+              ← 戻る
+            </JZButton>
           </div>
-        )}
 
-        {/* 完成画面 */}
-        {processingStage === 'complete' && candidates.length > 0 && (
-          <div className="text-center max-w-4xl">
-            <div className="mb-8">
-              <JZSparklesIcon size={48} className="text-[color:var(--color-jz-accent)] mx-auto mb-4" />
-              <h2 className="jz-text-display-large text-[color:var(--color-jz-text-primary)] mb-2">
-                美しく完成しました
-              </h2>
-              <p className="jz-text-body text-[color:var(--color-jz-text-secondary)]">
-                3つのスタイルからお選びください
-              </p>
-            </div>
-
-            {/* 3つの候補 */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              {candidates.map((candidate) => (
-                <div
-                  key={candidate.id}
-                  className={`relative cursor-pointer transition-all duration-300 ${
-                    selectedCandidate === candidate.id 
-                      ? 'scale-105 ring-4 ring-[color:var(--color-jz-accent)]' 
-                      : 'hover:scale-105'
-                  }`}
-                  onClick={() => {
-                    setSelectedCandidate(candidate.id);
-                    triggerHapticFeedback(5);
-                    playWarmTone();
-                  }}
-                >
-                  <div className="bg-[color:var(--color-jz-card)] rounded-lg p-4 shadow-lg">
-                    <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-4 flex items-center justify-center">
-                      <JZHeartIcon size={32} className="text-[color:var(--color-jz-text-tertiary)]" />
-                    </div>
-                    <div className="text-center">
-                      <div className="jz-text-display-small text-[color:var(--color-jz-text-primary)] mb-1">
-                        {candidate.description}
+          {!selectedImage && processingStage === 'idle' && (
+            <>
+              {/* メインボタン - 画面中央の大きな1つのボタン */}
+              <div className="text-center mb-16">
+                {/* 季節とパーソナライズドメッセージ */}
+                <div className="mb-8">
+                  {getTodaysCulturalEvent() && (
+                    <div className="mb-4 p-4 bg-[color:var(--jz-seasonal-surface)] border border-[color:var(--jz-seasonal-accent)]/30 rounded-lg">
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        <span className="text-xl">{getTodaysCulturalEvent()?.symbolEmoji}</span>
+                        <span className="font-semibold text-[color:var(--jz-seasonal-accent)]">{getTodaysCulturalEvent()?.name}</span>
                       </div>
-                      <div className="jz-text-caption text-[color:var(--color-jz-text-secondary)] capitalize">
-                        {candidate.style}スタイル
-                      </div>
-                    </div>
-                  </div>
-                  {selectedCandidate === candidate.id && (
-                    <div className="absolute top-2 right-2 w-6 h-6 bg-[color:var(--color-jz-accent)] rounded-full flex items-center justify-center">
-                      <span className="text-white text-sm">✓</span>
+                      <p className="text-sm text-[color:var(--jz-seasonal-text-secondary)]">
+                        {getTodaysCulturalEvent()?.description}
+                      </p>
                     </div>
                   )}
+                  <p className="text-sm text-[color:var(--jz-seasonal-text-secondary)] italic">
+                    {getSeasonalGreeting()}
+                  </p>
                 </div>
-              ))}
-            </div>
+                
+                <h1 className="jz-font-display jz-text-display-large text-[color:var(--jz-seasonal-text-primary)] mb-6">
+                  美しい遺影を作成
+                </h1>
+                <p className="jz-text-body text-[color:var(--jz-seasonal-text-secondary)] mb-8">
+                  {getPersonalizedMessage()}
+                </p>
+                <p className="jz-text-body text-[color:var(--jz-seasonal-text-secondary)] mb-12">
+                  写真を選ぶだけで、AIが自動で美しく調整します
+                </p>
+              </div>
 
-            {/* アクションボタン */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              {showRetryButton && (
-                <JZButton
-                  tone="secondary"
-                  onClick={handleRetryMagic}
-                  className="px-8 py-3"
-                >
-                  ✨ もう一度魔法をかける
-                </JZButton>
-              )}
+              <div className="relative">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  onChange={handleImageSelect}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                />
+                <div className="w-80 h-80 bg-gradient-to-br from-[color:var(--color-jz-accent)]/20 to-[color:var(--color-jz-secondary)]/20 rounded-full flex flex-col items-center justify-center border-2 border-dashed border-[color:var(--color-jz-accent)]/30 hover:border-[color:var(--color-jz-accent)]/60 transition-all duration-300 hover:scale-105 cursor-pointer">
+                  <JZPhotoIcon size={80} className="text-[color:var(--color-jz-accent)] mb-6" />
+                  <div className="text-center">
+                    <div className="jz-text-display-medium text-[color:var(--color-jz-text-primary)] mb-2">
+                      写真を選択
+                    </div>
+                    <div className="jz-text-body text-[color:var(--color-jz-text-secondary)]">
+                      タップして開始
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-12 text-center">
+                <p className="jz-text-caption text-[color:var(--color-jz-text-tertiary)]">
+                  JPEGまたはPNG形式、10MB以下
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* 処理中画面 */}
+          {selectedImage && processingStage !== 'idle' && processingStage !== 'complete' && (
+            <div className="text-center">
+              <div className="w-60 h-60 rounded-lg overflow-hidden mb-8 shadow-lg">
+                {imagePreview && (
+                  <img 
+                    src={imagePreview} 
+                    alt="選択された画像" 
+                    className="w-full h-full object-cover"
+                  />
+                )}
+              </div>
               
-              {selectedCandidate && (
-                <JZButton
-                  tone="primary"
-                  onClick={() => {
-                    triggerHapticFeedback(10);
-                    playCompletionTone();
-                    track('memorial_photo_selected', { style: selectedCandidate });
-                    // 保存処理へ
-                  }}
-                  className="px-8 py-3"
-                >
-                  この写真で決定
-                </JZButton>
-              )}
+              <div className="mb-8">
+                <div className="jz-text-display-medium text-[color:var(--color-jz-text-primary)] mb-4">
+                  {getProcessingMessage()}
+                </div>
+                
+                {/* プログレスバー */}
+                <div className="w-80 h-2 bg-[color:var(--color-jz-border)] rounded-full overflow-hidden mb-4">
+                  <div 
+                    className="h-full bg-gradient-to-r from-[color:var(--color-jz-accent)] to-[color:var(--color-jz-secondary)] transition-all duration-500"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                
+                <div className="jz-text-body text-[color:var(--jz-text-secondary)]">
+                  少しお待ちください...
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* 優しいメッセージ */}
-        {processingStage === 'idle' && (
-          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
-            <p className="jz-text-caption text-[color:var(--color-jz-text-tertiary)] text-center">
-              大切な思い出を、美しい形で残しましょう
-            </p>
-          </div>
-        )}
+          {/* 完成画面 */}
+          {processingStage === 'complete' && candidates.length > 0 && (
+            <div className="text-center max-w-4xl">
+              <div className="mb-8">
+                <JZSparklesIcon size={48} className="text-[color:var(--color-jz-accent)] mx-auto mb-4" />
+                <h2 className="jz-text-display-large text-[color:var(--color-jz-text-primary)] mb-2">
+                  美しく完成しました
+                </h2>
+                <p className="jz-text-body text-[color:var(--color-jz-text-secondary)]">
+                  3つのスタイルからお選びください
+                </p>
+              </div>
+
+              {/* 3つの候補 */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                {candidates.map((candidate) => (
+                  <div
+                    key={candidate.id}
+                    className={`relative cursor-pointer transition-all duration-300 ${
+                      selectedCandidate === candidate.id 
+                        ? 'scale-105 ring-4 ring-[color:var(--color-jz-accent)]' 
+                        : 'hover:scale-105'
+                    }`}
+                    onClick={() => {
+                      setSelectedCandidate(candidate.id);
+                      triggerHapticFeedback(5);
+                      playWarmTone();
+                    }}
+                  >
+                    <div className="bg-[color:var(--color-jz-card)] rounded-lg p-4 shadow-lg">
+                      <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-4 flex items-center justify-center">
+                        <JZHeartIcon size={32} className="text-[color:var(--color-jz-text-tertiary)]" />
+                      </div>
+                      <div className="text-center">
+                        <div className="jz-text-display-small text-[color:var(--color-jz-text-primary)] mb-1">
+                          {candidate.description}
+                        </div>
+                        <div className="jz-text-caption text-[color:var(--color-jz-text-secondary)] capitalize">
+                          {candidate.style}スタイル
+                        </div>
+                      </div>
+                    </div>
+                    {selectedCandidate === candidate.id && (
+                      <div className="absolute top-2 right-2 w-6 h-6 bg-[color:var(--color-jz-accent)] rounded-full flex items-center justify-center">
+                        <span className="text-white text-sm">✓</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* アクションボタン */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                {showRetryButton && (
+                  <JZButton
+                    tone="secondary"
+                    onClick={handleRetryMagic}
+                    className="px-8 py-3"
+                  >
+                    ✨ もう一度魔法をかける
+                  </JZButton>
+                )}
+                
+                {selectedCandidate && (
+                  <JZButton
+                    tone="primary"
+                    onClick={() => {
+                      triggerHapticFeedback(10);
+                      playCompletionTone();
+                      track('memorial_photo_selected', { style: selectedCandidate });
+                      // 保存処理へ
+                    }}
+                    className="px-8 py-3"
+                  >
+                    この写真で決定
+                  </JZButton>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 優しいメッセージ */}
+          {processingStage === 'idle' && (
+            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
+              <p className="jz-text-caption text-[color:var(--color-jz-text-tertiary)] text-center">
+                大切な思い出を、美しい形で残しましょう
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </SeasonalTheme>
   );

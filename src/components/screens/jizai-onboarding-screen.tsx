@@ -1,6 +1,4 @@
-import React, { useState } from 'react';
-import { JZButton } from '../design-system/jizai-button';
-import { JZPhotoIcon, JZMagicWandIcon, JZBoltIcon } from '../design-system/jizai-icons';
+import React, { useState, useEffect } from 'react';
 
 interface OnboardingScreenProps {
   onComplete: () => void;
@@ -9,109 +7,174 @@ interface OnboardingScreenProps {
 
 export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [animationPhase, setAnimationPhase] = useState(0);
+
+  useEffect(() => {
+    setAnimationPhase(0);
+    const timer = setTimeout(() => setAnimationPhase(1), 500);
+    return () => clearTimeout(timer);
+  }, [currentSlide]);
 
   const slides = [
     {
-      id: 'hero',
-      title: '写真、思いのままに。',
-      subtitle: '通常100円/枚。今だけセール中。',
-      content: null,
-      ctaText: 'チュートリアルを見る',
-      icon: <JZPhotoIcon size={80} className="text-[color:var(--color-jz-accent)] mx-auto mb-[var(--space-32)]" />
-    },
-    {
-      id: 'steps',
-      title: 'やることは3つだけ',
-      subtitle: null,
+      id: 'step1',
       content: (
-        <div className="space-y-[var(--space-24)]">
-          <div className="flex items-start gap-[var(--space-16)]">
-            <div className="w-[32px] h-[32px] rounded-full bg-[color:var(--color-jz-accent)] flex items-center justify-center text-white font-semibold shrink-0">
-              1
-            </div>
-            <div>
-              <h4 className="jz-text-body font-medium text-[color:var(--color-jz-text-primary)] mb-[var(--space-8)]">
-                写真を選ぶ
-              </h4>
-              <p className="jz-text-caption text-[color:var(--color-jz-text-secondary)]">
-                編集したい写真をアップロード
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex items-start gap-[var(--space-16)]">
-            <div className="w-[32px] h-[32px] rounded-full bg-[color:var(--color-jz-accent)] flex items-center justify-center text-white font-semibold shrink-0">
-              2
-            </div>
-            <div>
-              <h4 className="jz-text-body font-medium text-[color:var(--color-jz-text-primary)] mb-[var(--space-8)]">
-                指示を書く（日本語OK）
-              </h4>
-              <p className="jz-text-caption text-[color:var(--color-jz-text-secondary)]">
-                変更したい内容を自然な言葉で
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex items-start gap-[var(--space-16)]">
-            <div className="w-[32px] h-[32px] rounded-full bg-[color:var(--color-jz-accent)] flex items-center justify-center text-white font-semibold shrink-0">
-              3
-            </div>
-            <div>
-              <h4 className="jz-text-body font-medium text-[color:var(--color-jz-text-primary)] mb-[var(--space-8)]">
-                生成
-              </h4>
-              <p className="jz-text-caption text-[color:var(--color-jz-text-secondary)]">
-                思い通りに写真を編集
-              </p>
-            </div>
-          </div>
-          
-          <div className="p-[var(--space-16)] bg-[color:var(--color-jz-card)] rounded-[var(--radius-jz-card)] border border-[color:var(--color-jz-border)] mt-[var(--space-24)]">
-            <p className="jz-text-caption text-[color:var(--color-jz-text-tertiary)] text-center">
-              写真は自動で保存されます（あとからダウンロードOK）
-            </p>
-          </div>
-        </div>
-      ),
-      ctaText: '次へ',
-      icon: <JZMagicWandIcon size={64} className="text-[color:var(--color-jz-secondary)] mx-auto mb-[var(--space-24)]" />
-    },
-    {
-      id: 'preview',
-      title: 'プレビューで高精度',
-      subtitle: null,
-      content: (
-        <div className="space-y-[var(--space-20)]">
-          <p className="jz-text-body text-[color:var(--color-jz-text-secondary)] leading-relaxed">
-            画像に日本語の文字を入れる場合は、その部分を日本語に置き換えてから生成してください。
-          </p>
-          
-          <div className="p-[var(--space-16)] bg-[color:var(--color-jz-card)] rounded-[var(--radius-jz-card)] border border-[color:var(--color-jz-border)]">
-            <div className="space-y-[var(--space-12)]">
-              <div>
-                <p className="jz-text-caption text-[color:var(--color-jz-text-primary)] font-medium mb-[var(--space-8)]">
-                  例：日本語入力
-                </p>
-                <p className="jz-text-caption text-[color:var(--color-jz-text-secondary)] font-mono bg-[color:var(--color-jz-surface)] p-[var(--space-12)] rounded-[var(--radius-jz-button)]">
-                  看板の「営業中」を「準備中」に変えて
-                </p>
-              </div>
-              
-              <div>
-                <p className="jz-text-caption text-[color:var(--color-jz-text-primary)] font-medium mb-[var(--space-8)]">
-                  プレビュー
-                </p>
-                <p className="jz-text-caption text-[color:var(--color-jz-accent)] font-mono bg-[color:var(--color-jz-surface)] p-[var(--space-12)] rounded-[var(--radius-jz-button)]">
-                  Change "営業中" to "準備中" on the sign
-                </p>
+        <div className="flex flex-col items-center justify-center h-full">
+          <h1 className="text-3xl font-light text-white text-center mb-16">
+            写真を選びます
+          </h1>
+
+          <div 
+            className="transition-all duration-1000"
+            style={{
+              opacity: animationPhase >= 1 ? 1 : 0,
+              transform: animationPhase >= 1 ? 'scale(1)' : 'scale(0.9)'
+            }}
+          >
+            <div className="w-72 h-48 bg-gray-500 rounded-xl shadow-xl relative">
+              <div className="absolute inset-6 bg-gray-400 rounded-lg"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-white text-lg bg-black/40 px-4 py-2 rounded">
+                  あなたの写真
+                </div>
               </div>
             </div>
           </div>
         </div>
-      ),
-      ctaText: 'はじめる',
-      icon: <JZBoltIcon size={64} className="text-[color:var(--color-jz-warning)] mx-auto mb-[var(--space-24)]" />
+      )
+    },
+    {
+      id: 'step2',
+      content: (
+        <div className="flex flex-col items-center justify-center h-full">
+          <h1 className="text-3xl font-light text-white text-center mb-16">
+            やりたいことを書きます
+          </h1>
+
+          <div 
+            className="transition-all duration-1000"
+            style={{
+              opacity: animationPhase >= 1 ? 1 : 0,
+              transform: animationPhase >= 1 ? 'translateY(0)' : 'translateY(20px)'
+            }}
+          >
+            <div className="w-80 bg-blue-500 rounded-2xl p-6 shadow-xl">
+              <div className="text-white text-xl text-center leading-relaxed">
+                背景を青い空にしてください
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 'step3',
+      content: (
+        <div className="flex flex-col items-center justify-center h-full">
+          <h1 className="text-3xl font-light text-white text-center mb-16">
+            美しい写真の完成！
+          </h1>
+
+          <div 
+            className="transition-all duration-1000"
+            style={{
+              opacity: animationPhase >= 1 ? 1 : 0,
+              transform: animationPhase >= 1 ? 'scale(1)' : 'scale(0.9)'
+            }}
+          >
+            <div className="w-72 h-48 bg-gradient-to-br from-blue-200 via-blue-400 to-blue-600 rounded-xl shadow-xl relative">
+              <div className="absolute inset-6 bg-gradient-to-br from-blue-100 via-blue-300 to-blue-500 rounded-lg"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-white text-lg bg-black/40 px-4 py-2 rounded">
+                  青空の写真
+                </div>
+              </div>
+              <div className="absolute inset-0 bg-white/20 animate-pulse rounded-xl"></div>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 'example1',
+      content: (
+        <div className="flex flex-col items-center justify-center h-full">
+          <h1 className="text-3xl font-light text-white text-center mb-12">
+            こんなこともできます
+          </h1>
+
+          <div 
+            className="transition-all duration-1000"
+            style={{
+              opacity: animationPhase >= 1 ? 1 : 0,
+              transform: animationPhase >= 1 ? 'translateY(0)' : 'translateY(30px)'
+            }}
+          >
+            <div className="bg-purple-500 text-white p-4 rounded-2xl mb-6 shadow-lg">
+              <div className="text-xl text-center">
+                夕日の背景にして
+              </div>
+            </div>
+            <div className="w-72 h-40 bg-gradient-to-r from-orange-300 via-red-400 to-purple-500 rounded-xl shadow-xl flex items-center justify-center">
+              <span className="text-white text-lg font-medium">美しい夕日</span>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 'example2',
+      content: (
+        <div className="flex flex-col items-center justify-center h-full">
+          <h1 className="text-3xl font-light text-white text-center mb-12">
+            日本語で自由に
+          </h1>
+
+          <div 
+            className="transition-all duration-1000"
+            style={{
+              opacity: animationPhase >= 1 ? 1 : 0,
+              transform: animationPhase >= 1 ? 'translateY(0)' : 'translateY(30px)'
+            }}
+          >
+            <div className="bg-green-500 text-white p-4 rounded-2xl mb-6 shadow-lg">
+              <div className="text-xl text-center">
+                もっと明るい笑顔に
+              </div>
+            </div>
+            <div className="w-72 h-40 bg-gradient-to-br from-yellow-200 to-yellow-400 rounded-xl shadow-xl flex items-center justify-center">
+              <span className="text-gray-800 text-lg font-medium">明るい笑顔</span>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 'pricing',
+      content: (
+        <div className="flex flex-col items-center justify-center h-full">
+          <h1 className="text-3xl font-light text-white text-center mb-16">
+            今だけ特別価格
+          </h1>
+
+          <div 
+            className="text-center transition-all duration-1000"
+            style={{
+              opacity: animationPhase >= 1 ? 1 : 0,
+              transform: animationPhase >= 1 ? 'scale(1)' : 'scale(0.9)'
+            }}
+          >
+            <div className="relative inline-block mb-8">
+              <div className="text-8xl font-light text-white mb-2">¥50</div>
+              <div className="text-2xl text-gray-400 line-through">¥100</div>
+              <div className="absolute -top-6 -right-10 bg-red-500 text-white text-lg px-4 py-2 rounded-full font-medium">
+                半額
+              </div>
+            </div>
+            <p className="text-white/70 text-xl">最初の1枚</p>
+          </div>
+        </div>
+      )
     }
   ];
 
@@ -123,114 +186,83 @@ export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenPr
     }
   };
 
-  const currentSlideData = slides[currentSlide];
-
   return (
-    <div className="min-h-screen bg-[color:var(--color-jz-surface)] flex flex-col">
-      {/* Skip Button - Fixed Top Right */}
-      <div className="fixed top-[44px] right-[var(--space-24)] z-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col relative overflow-hidden">
+      
+      {/* Skip */}
+      <div className="absolute top-12 right-6 z-50">
         <button
           onClick={onSkip}
-          className="jz-text-body text-[color:var(--color-jz-text-tertiary)] hover:text-[color:var(--color-jz-text-secondary)] transition-colors"
+          className="text-white/50 hover:text-white/70 transition-colors text-sm"
         >
           スキップ
         </button>
       </div>
 
-      {/* Progress Indicators */}
-      <div className="pt-[80px] px-[var(--space-24)]">
-        <div className="flex justify-center gap-[var(--space-8)] mb-[var(--space-48)]">
-          {slides.map((_, index) => (
-            <div
-              key={index}
-              className={`h-[4px] rounded-full transition-all duration-300 ${
-                index === currentSlide
-                  ? 'w-[32px] bg-[color:var(--color-jz-accent)]'
-                  : 'w-[8px] bg-[color:var(--color-jz-border)]'
-              }`}
-            />
-          ))}
+      {/* Progress */}
+      <div className="absolute top-16 left-0 right-0 flex justify-center gap-2 z-40">
+        {slides.map((_, index) => (
+          <div
+            key={index}
+            className={`h-1 rounded-full transition-all duration-500 ${
+              index === currentSlide
+                ? 'w-8 bg-white'
+                : 'w-4 bg-white/20'
+            }`}
+          />
+        ))}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 flex items-center justify-center px-6 py-20">
+        <div className="w-full max-w-md h-full">
+          {slides[currentSlide].content}
         </div>
       </div>
 
-      {/* Content Area */}
-      <div className="flex-1 px-[var(--space-24)] pb-[120px]">
-        <div className="max-w-[375px] mx-auto">
-          {/* Icon */}
-          <div className="text-center mb-[var(--space-32)]">
-            {currentSlideData.icon}
-          </div>
-
-          {/* Title */}
-          <h1 
-            className="text-center mb-[var(--space-16)]"
-            style={{
-              fontFamily: 'SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif',
-              fontSize: '26px',
-              fontWeight: '600',
-              lineHeight: '1.2',
-              color: '#ECECEC'
-            }}
+      {/* Bottom Controls */}
+      <div className="absolute bottom-0 left-0 right-0 bg-slate-900/80 backdrop-blur-sm">
+        <div className="p-6 flex items-center gap-4">
+          {/* Pause/Play Button */}
+          <button
+            onClick={handlePause}
+            className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors"
           >
-            {currentSlideData.title}
-          </h1>
+            {isPaused ? (
+              <div className="text-white text-lg">▶</div>
+            ) : (
+              <div className="text-white text-lg">⏸</div>
+            )}
+          </button>
 
-          {/* Subtitle */}
-          {currentSlideData.subtitle && (
-            <p 
-              className="text-center mb-[var(--space-32)]"
-              style={{
-                fontFamily: 'Noto Sans JP, -apple-system, BlinkMacSystemFont, sans-serif',
-                fontSize: '15px',
-                fontWeight: '400',
-                lineHeight: '1.4',
-                color: '#A1A1AA'
-              }}
-            >
-              {currentSlideData.subtitle}
-            </p>
-          )}
-
-          {/* Content */}
-          {currentSlideData.content && (
-            <div className="mb-[var(--space-48)]">
-              {currentSlideData.content}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Bottom CTA Area */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[color:var(--color-jz-surface)] border-t border-[color:var(--color-jz-border)]">
-        <div className="p-[var(--space-24)]">
-          <JZButton
-            tone="primary"
-            size="lg"
-            fullWidth
+          {/* Manual Next Button */}
+          <button
             onClick={handleNext}
-            className="jz-gradient-primary text-white"
-            style={{
-              background: 'linear-gradient(135deg, var(--color-jz-accent), var(--color-jz-secondary))',
-              borderRadius: '12px'
-            }}
+            className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-medium py-4 rounded-xl text-lg shadow-lg"
           >
-            {currentSlideData.ctaText}
-          </JZButton>
+            {currentSlide === slides.length - 1 ? '始める' : '次へ'}
+          </button>
+        </div>
 
-          {/* Back Button for slides 2+ */}
-          {currentSlide > 0 && (
-            <JZButton
-              tone="tertiary"
-              size="md"
-              fullWidth
+        {/* Back button for manual navigation */}
+        {currentSlide > 0 && (
+          <div className="px-6 pb-4">
+            <button
               onClick={() => setCurrentSlide(currentSlide - 1)}
-              className="mt-[var(--space-16)] text-[color:var(--color-jz-text-secondary)]"
+              className="w-full text-white/50 hover:text-white/70 transition-colors text-sm py-2"
             >
               戻る
-            </JZButton>
-          )}
-        </div>
+            </button>
+          </div>
+        )}
       </div>
+
+      <style jsx>{`
+        @keyframes progress {
+          from { width: 0%; }
+          to { width: 100%; }
+        }
+      `}</style>
     </div>
   );
 };

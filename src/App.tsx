@@ -6,6 +6,9 @@ import { MemorialIntelligenceProvider } from './contexts/MemorialIntelligenceCon
 import { GrowthAchievementProvider } from './contexts/GrowthAchievementContext';
 import { FamilyBondingProvider } from './contexts/FamilyBondingContext';
 import { PersonalizationProvider } from './contexts/PersonalizationContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { JizaiSplashScreen } from './components/screens/jizai-splash-screen';
+import { JizaiLoginScreen } from './components/screens/jizai-login-screen';
 import { JizaiOnboardingScreen } from './components/screens/jizai-onboarding-screen';
 import { JizaiHomeScreen } from './components/screens/jizai-home-screen';
 import { JizaiProgressScreen } from './components/screens/jizai-progress-screen';
@@ -21,7 +24,7 @@ import { DesignSystemReference } from './components/design-tokens/design-system-
 import { JZButton } from './components/design-system/jizai-button';
 import { JZPhotoIcon, JZCreditCardIcon, JZSettingsIcon, JZMemorialPhotoIcon } from './components/design-system/jizai-icons';
 
-type Screen = 'onboarding' | 'home' | 'progress' | 'results' | 'purchase' | 'settings' | 'tutorial-examples' | 'screenshots' | 'design-tokens' | 'user-gallery' | 'memorial-photo' | 'long-term-engagement';
+type Screen = 'splash' | 'login' | 'onboarding' | 'home' | 'progress' | 'results' | 'purchase' | 'settings' | 'tutorial-examples' | 'screenshots' | 'design-tokens' | 'user-gallery' | 'memorial-photo' | 'long-term-engagement';
 
 interface ExampleData {
   title: string;
@@ -32,11 +35,13 @@ interface ExampleData {
   afterImage?: string;
 }
 
-export default function App() {
-  const [currentScreen, setCurrentScreen] = useState<Screen>('onboarding');
+function InnerApp() {
+  const [currentScreen, setCurrentScreen] = useState<Screen>('splash');
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
+  const [hasCompletedSplash, setHasCompletedSplash] = useState(false);
   const [selectedExample, setSelectedExample] = useState<ExampleData | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const { isLoginRequired, isAuthenticated } = useAuth();
 
   // Type-safe navigation function
   const navigate = (screen: string) => {
@@ -49,9 +54,33 @@ export default function App() {
 
   // Screen validation helper
   const isValidScreen = (screen: string): screen is Screen => {
-    const validScreens: Screen[] = ['onboarding', 'home', 'progress', 'results', 'purchase', 'settings', 'tutorial-examples', 'screenshots', 'design-tokens', 'user-gallery', 'memorial-photo', 'long-term-engagement'];
+    const validScreens: Screen[] = ['splash', 'login', 'onboarding', 'home', 'progress', 'results', 'purchase', 'settings', 'tutorial-examples', 'screenshots', 'design-tokens', 'user-gallery', 'memorial-photo', 'long-term-engagement'];
     return validScreens.includes(screen as Screen);
   };
+
+  // Handle splash screen completion
+  const handleSplashComplete = () => {
+    setHasCompletedSplash(true);
+    setCurrentScreen('onboarding');
+  };
+
+  // Handle onboarding completion
+  const handleOnboardingComplete = () => {
+    setHasCompletedOnboarding(true);
+    setCurrentScreen('login');
+  };
+
+  // Handle onboarding skip
+  const handleOnboardingSkip = () => {
+    setHasCompletedOnboarding(true);
+    setCurrentScreen('login');
+  };
+
+  // Handle login completion
+  const handleLoginComplete = () => {
+    setCurrentScreen('home');
+  };
+
 
   // エラートラッキングとモニタリングの初期化
   useEffect(() => {
@@ -82,15 +111,6 @@ export default function App() {
     } catch {}
   }, []);
 
-  const handleOnboardingComplete = () => {
-    setHasCompletedOnboarding(true);
-    setCurrentScreen('home');
-  };
-
-  const handleOnboardingSkip = () => {
-    setHasCompletedOnboarding(true);
-    setCurrentScreen('home');
-  };
 
   const handleExampleSelected = (example: ExampleData) => {
     setIsTransitioning(true);
@@ -110,7 +130,13 @@ export default function App() {
   };
 
   const renderScreen = () => {
-    if (!hasCompletedOnboarding && currentScreen === 'onboarding') {
+    // Show splash screen first
+    if (!hasCompletedSplash && currentScreen === 'splash') {
+      return <JizaiSplashScreen onComplete={handleSplashComplete} />;
+    }
+
+    // Show onboarding if not completed
+    if (!hasCompletedOnboarding) {
       return (
         <JizaiOnboardingScreen 
           onComplete={handleOnboardingComplete}
@@ -119,7 +145,16 @@ export default function App() {
       );
     }
 
+    // Show login screen if onboarding completed but login is required and user not authenticated
+    if (hasCompletedOnboarding && isLoginRequired && !isAuthenticated && currentScreen === 'login') {
+      return <JizaiLoginScreen onComplete={handleLoginComplete} />;
+    }
+
     switch (currentScreen) {
+      case 'splash':
+        return <JizaiSplashScreen onComplete={handleSplashComplete} />;
+      case 'login':
+        return <JizaiLoginScreen onComplete={handleLoginComplete} />;
       case 'onboarding':
         return (
           <JizaiOnboardingScreen 
@@ -154,7 +189,7 @@ export default function App() {
     }
   };
 
-  const showBottomNavigation = hasCompletedOnboarding && ['home', 'purchase', 'settings', 'memorial-photo', 'long-term-engagement'].includes(currentScreen);
+  const showBottomNavigation = hasCompletedOnboarding && !isLoginRequired && ['home', 'purchase', 'settings', 'memorial-photo', 'long-term-engagement'].includes(currentScreen);
 
   return (
     <PersonalizationProvider>
@@ -234,6 +269,15 @@ export default function App() {
         </GrowthAchievementProvider>
       </MemorialIntelligenceProvider>
     </PersonalizationProvider>
+  );
+}
+
+// Main App component that wraps InnerApp with AuthProvider
+export default function App() {
+  return (
+    <AuthProvider>
+      <InnerApp />
+    </AuthProvider>
   );
 }
 
