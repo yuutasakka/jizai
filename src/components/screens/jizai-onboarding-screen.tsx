@@ -8,7 +8,6 @@ interface OnboardingScreenProps {
 export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [animationPhase, setAnimationPhase] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
   const [progress, setProgress] = useState(0);
   
   // スワイプ関連の状態
@@ -16,7 +15,7 @@ export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenPr
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   // 各スライドの表示時間（ミリ秒）
-  const SLIDE_DURATION = 4000; // 4秒
+  const SLIDE_DURATION = 3000; // 3秒
 
   useEffect(() => {
     setAnimationPhase(0);
@@ -26,8 +25,6 @@ export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenPr
 
   // 自動進行とプログレスバー
   useEffect(() => {
-    if (isPaused) return;
-
     setProgress(0);
     const progressInterval = setInterval(() => {
       setProgress(prev => {
@@ -46,7 +43,7 @@ export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenPr
       clearInterval(progressInterval);
       clearTimeout(autoAdvanceTimer);
     };
-  }, [currentSlide, isPaused]);
+  }, [currentSlide]);
 
   const slides = [
     {
@@ -54,7 +51,7 @@ export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenPr
       content: (
         <div className="flex flex-col items-center justify-center h-full">
           <h1 className="text-3xl font-light text-white text-center mb-16">
-            写真を選びます
+            思い出の写真を選びます
           </h1>
 
           <div 
@@ -68,7 +65,7 @@ export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenPr
               <div className="absolute inset-6 bg-gray-400 rounded-lg"></div>
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-white text-lg bg-black/40 px-4 py-2 rounded">
-                  あなたの写真
+                  大切な写真
                 </div>
               </div>
             </div>
@@ -81,7 +78,7 @@ export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenPr
       content: (
         <div className="flex flex-col items-center justify-center h-full">
           <h1 className="text-3xl font-light text-white text-center mb-16">
-            やりたいことを書きます
+            どう美しくしたいか書きます
           </h1>
 
           <div 
@@ -93,7 +90,7 @@ export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenPr
           >
             <div className="w-80 bg-blue-500 rounded-2xl p-6 shadow-xl">
               <div className="text-white text-xl text-center leading-relaxed">
-                背景を青い空にしてください
+                猫を一緒に写してください
               </div>
             </div>
           </div>
@@ -105,7 +102,7 @@ export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenPr
       content: (
         <div className="flex flex-col items-center justify-center h-full">
           <h1 className="text-3xl font-light text-white text-center mb-16">
-            美しい写真の完成！
+            心に残る美しい写真の完成！
           </h1>
 
           <div 
@@ -115,14 +112,69 @@ export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenPr
               transform: animationPhase >= 1 ? 'scale(1)' : 'scale(0.9)'
             }}
           >
-            <div className="w-72 h-48 bg-gradient-to-br from-blue-200 via-blue-400 to-blue-600 rounded-xl shadow-xl relative">
-              <div className="absolute inset-6 bg-gradient-to-br from-blue-100 via-blue-300 to-blue-500 rounded-lg"></div>
+            <div className="w-72 h-48 bg-gradient-to-br from-orange-200 via-orange-400 to-orange-600 rounded-xl shadow-xl relative">
+              <div className="absolute inset-6 bg-gradient-to-br from-orange-100 via-orange-300 to-orange-500 rounded-lg"></div>
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-white text-lg bg-black/40 px-4 py-2 rounded">
-                  青空の写真
+                  猫と一緒の写真
                 </div>
               </div>
+              <div className="absolute top-4 right-6 text-2xl">🐱</div>
               <div className="absolute inset-0 bg-white/20 animate-pulse rounded-xl"></div>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 'example1',
+      content: (
+        <div className="flex flex-col items-center justify-center h-full">
+          <h1 className="text-3xl font-light text-white text-center mb-12">
+            様々な美しい仕上がりに
+          </h1>
+
+          <div 
+            className="transition-all duration-1000"
+            style={{
+              opacity: animationPhase >= 1 ? 1 : 0,
+              transform: animationPhase >= 1 ? 'translateY(0)' : 'translateY(30px)'
+            }}
+          >
+            <div className="bg-purple-500 text-white p-4 rounded-2xl mb-6 shadow-lg">
+              <div className="text-xl text-center">
+                穏やかな夕日の背景に
+              </div>
+            </div>
+            <div className="w-72 h-40 bg-gradient-to-r from-orange-300 via-red-400 to-purple-500 rounded-xl shadow-xl flex items-center justify-center">
+              <span className="text-white text-lg font-medium">美しい夕日</span>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 'example2',
+      content: (
+        <div className="flex flex-col items-center justify-center h-full">
+          <h1 className="text-3xl font-light text-white text-center mb-12">
+            思いを込めて日本語で
+          </h1>
+
+          <div 
+            className="transition-all duration-1000"
+            style={{
+              opacity: animationPhase >= 1 ? 1 : 0,
+              transform: animationPhase >= 1 ? 'translateY(0)' : 'translateY(30px)'
+            }}
+          >
+            <div className="bg-green-500 text-white p-4 rounded-2xl mb-6 shadow-lg">
+              <div className="text-xl text-center">
+                もっと優しい表情に
+              </div>
+            </div>
+            <div className="w-72 h-40 bg-gradient-to-br from-yellow-200 to-yellow-400 rounded-xl shadow-xl flex items-center justify-center">
+              <span className="text-gray-800 text-lg font-medium">優しい表情</span>
             </div>
           </div>
         </div>
@@ -133,7 +185,7 @@ export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenPr
       content: (
         <div className="flex flex-col items-center justify-center h-full">
           <h1 className="text-3xl font-light text-white text-center mb-16">
-            今だけ特別価格
+            大切な写真を美しく
           </h1>
 
           <div 
@@ -174,9 +226,6 @@ export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenPr
     }
   };
 
-  const handlePause = () => {
-    setIsPaused(!isPaused);
-  };
 
   // タッチイベントハンドラー
   const onTouchStart = (e: React.TouchEvent) => {
@@ -250,23 +299,11 @@ export const JizaiOnboardingScreen = ({ onComplete, onSkip }: OnboardingScreenPr
 
       {/* Bottom Controls */}
       <div className="absolute bottom-0 left-0 right-0 bg-slate-900/80 backdrop-blur-sm">
-        <div className="p-6 flex items-center gap-4">
-          {/* Pause/Play Button */}
-          <button
-            onClick={handlePause}
-            className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors"
-          >
-            {isPaused ? (
-              <div className="text-white text-lg">▶</div>
-            ) : (
-              <div className="text-white text-lg">⏸</div>
-            )}
-          </button>
-
+        <div className="p-6">
           {/* Manual Next Button */}
           <button
             onClick={handleNext}
-            className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-medium py-4 rounded-xl text-lg shadow-lg"
+            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-medium py-4 rounded-xl text-lg shadow-lg"
           >
             {currentSlide === slides.length - 1 ? '始める' : '次へ'}
           </button>
