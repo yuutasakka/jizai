@@ -163,7 +163,7 @@ function InnerApp() {
           />
         );
       case 'home':
-        return <JizaiHomeScreen onNavigate={navigate} selectedExample={selectedExample} onClearExample={handleClearExample} />;
+        return <JizaiHomeScreen onNavigate={navigate} />;
       case 'progress':
         return <JizaiProgressScreen onNavigate={navigate} />;
       case 'results':
@@ -185,7 +185,7 @@ function InnerApp() {
       case 'screenshots':
         return <ScreenshotGallery onNavigate={navigate} />;
       default:
-        return <JizaiHomeScreen onNavigate={navigate} selectedExample={selectedExample} onClearExample={handleClearExample} />;
+        return <JizaiHomeScreen onNavigate={navigate} />;
     }
   };
 
