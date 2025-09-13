@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  jizai-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jizai-app
+    ports:
+      - "3002:3001"  # ホストの3002ポートをコンテナの3001ポートにマッピング
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    stdin_open: true
+    tty: true

@@ -1,0 +1,76 @@
+[
+  {
+    "id": "human_bg_solid",
+    "usecase": "human",
+    "title": "背景を無地に",
+    "desc": "髪の毛先を自然に、輪郭はやわらかく",
+    "before": "/examples/human_01_before.png",
+    "after": "/examples/human_01_after.png",
+    "prompt_ja": "背景を無地の薄いグレーにしてください。人物の輪郭を自然に保ち、髪の毛先は残してください。服装や位置は変えないでください。",
+    "preset": { "bg": "solid-lightgray", "hair": true },
+    "engine_profile": "standard",
+    "export": { "size_key": "yotsugiri", "dpi": 350, "bleed_mm": 3, "mode": "fill" }
+  },
+  {
+    "id": "human_cloth_white_blacktie",
+    "usecase": "human",
+    "title": "服装を白シャツ＋黒ネクタイに",
+    "desc": "襟元のしわは自然な範囲で",
+    "before": "/examples/human_02_before.png",
+    "after": "/examples/human_02_after.png",
+    "prompt_ja": "服装を白シャツ＋黒ネクタイに整えてください。襟元のしわは自然な範囲で軽く整え、顔や背景は変えないでください。",
+    "preset": { "cloth": "white-shirt-black-tie" },
+    "engine_profile": "standard",
+    "export": { "size_key": "a4", "dpi": 350, "bleed_mm": 3, "mode": "fit" }
+  }
+  ,
+  {
+    "id": "human_hair_cleanup",
+    "usecase": "human",
+    "title": "髪の乱れを自然に整える",
+    "desc": "輪郭はやわらかく、毛先を残す",
+    "before": "/examples/human_03_before.png",
+    "after": "/examples/human_03_after.png",
+    "prompt_ja": "髪の乱れを自然に整えてください。輪郭はやわらかく、毛先を残してください。背景や服装は変えないでください。",
+    "preset": { "hair": "cleanup-soft" },
+    "engine_profile": "high",
+    "export": { "size_key": "yotsugiri", "dpi": 350, "bleed_mm": 3, "mode": "fill" }
+  }
+  ,
+  {
+    "id": "pet_fur_cleanup",
+    "usecase": "pet",
+    "title": "毛並みを自然に整える",
+    "desc": "目の輝きはそのままに、被写体の色を保つ",
+    "before": "/examples/pet_01_before.png",
+    "after": "/examples/pet_01_after.png",
+    "prompt_ja": "毛並みを自然に整えてください。過剰なぼかしは避け、被写体の色味は保ってください。背景は無地の薄いグレーにしてください。",
+    "preset": { "fur": "natural", "bg": "solid-lightgray" },
+    "engine_profile": "standard",
+    "export": { "size_key": "a4", "dpi": 350, "bleed_mm": 3, "mode": "fit" }
+  },
+  {
+    "id": "seizen_natural_retouch",
+    "usecase": "seizen",
+    "title": "肌の自然なレタッチ",
+    "desc": "しわ・くすみを軽く整える（自然さ優先）",
+    "before": "/examples/seizen_01_before.png",
+    "after": "/examples/seizen_01_after.png",
+    "prompt_ja": "肌のしわやくすみを軽く整えてください。自然さを最優先とし、背景は無地の淡いグレーにしてください。",
+    "preset": { "skin": "light-retouch", "bg": "solid-lightgray" },
+    "engine_profile": "high",
+    "export": { "size_key": "yotsugiri", "dpi": 350, "bleed_mm": 3, "mode": "fill" }
+  },
+  {
+    "id": "photo_remove_objects",
+    "usecase": "photo",
+    "title": "不要物を軽減",
+    "desc": "色味補正と断裁を想定したレイアウト",
+    "before": "/examples/photo_01_before.png",
+    "after": "/examples/photo_01_after.png",
+    "prompt_ja": "不要な写り込みを自然に軽減してください。全体の色味を印刷に適した明るさに調整し、断裁を想定した安全な構図にしてください。",
+    "preset": { "cleanup": true, "tone": "print-safe" },
+    "engine_profile": "standard",
+    "export": { "size_key": "a4", "dpi": 350, "bleed_mm": 3, "mode": "fit" }
+  }
+]

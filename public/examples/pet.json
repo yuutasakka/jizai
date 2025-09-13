@@ -1,0 +1,13 @@
+[
+  {
+    "id": "pet_fur_cleanup",
+    "title": "毛並みを自然に整える",
+    "desc": "目の輝きはそのままに、被写体の色を保つ",
+    "before": "/examples/pet_01_before.png",
+    "after": "/examples/pet_01_after.png",
+    "prompt_ja": "毛並みを自然に整えてください。過剰なぼかしは避け、被写体の色味は保ってください。背景は無地の薄いグレーにしてください。",
+    "preset": { "fur": "natural", "bg": "solid-lightgray" },
+    "engine_profile": "standard",
+    "export": { "size_key": "a4", "dpi": 350, "bleed_mm": 3, "mode": "fit" }
+  }
+]

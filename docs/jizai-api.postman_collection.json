@@ -1,0 +1,593 @@
+{
+  "info": {
+    "name": "Jizai API",
+    "description": "日本向けiOS画像編集アプリのバックエンドAPI\n\n## 特徴\n- Qwen-Image-Edit API統合による高品質な画像編集\n- クレジット制残高管理システム\n- App内課金（IAP）対応\n- UGC 1.2準拠の通報機能\n- プロンプトモデレーション機能\n\n## 認証\nデバイスID (`x-device-id` ヘッダー) によるデバイス識別を使用",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "health"]
+            },
+            "description": "APIサーバーの稼働状況を確認"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/v1/health",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["v1", "health"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"ok\": true\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Credit Management",
+      "item": [
+        {
+          "name": "Get Balance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/balance?deviceId={{deviceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "balance"],
+              "query": [
+                {
+                  "key": "deviceId",
+                  "value": "{{deviceId}}",
+                  "description": "デバイス識別子"
+                }
+              ]
+            },
+            "description": "デバイスのクレジット残高を確認。新規デバイスの場合、自動的に10クレジット付与。"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/v1/balance?deviceId=device-123-abc",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["v1", "balance"],
+                  "query": [
+                    {
+                      "key": "deviceId",
+                      "value": "device-123-abc"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"credits\": 15,\n  \"deviceId\": \"device-123-abc\",\n  \"lastAccessAt\": \"2025-08-21T06:00:00.000Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Process Purchase",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceId\": \"{{deviceId}}\",\n  \"productId\": \"com.example.jizai.coins20\",\n  \"transactionId\": \"txn-{{$randomUUID}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/purchase",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "purchase"]
+            },
+            "description": "App内課金の処理とクレジット追加。重複トランザクション防止機能付き。"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"deviceId\": \"device-123-abc\",\n  \"productId\": \"com.example.jizai.coins20\",\n  \"transactionId\": \"txn-unique-abc123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/v1/purchase",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["v1", "purchase"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"credits\": 35,\n  \"added\": 20,\n  \"deviceId\": \"device-123-abc\",\n  \"productId\": \"com.example.jizai.coins20\",\n  \"transactionId\": \"txn-unique-abc123\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Purchase 100 Credits",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceId\": \"{{deviceId}}\",\n  \"productId\": \"com.example.jizai.coins100\",\n  \"transactionId\": \"txn-{{$randomUUID}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/purchase",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "purchase"]
+            },
+            "description": "100クレジット購入 (¥1,200)"
+          }
+        },
+        {
+          "name": "Purchase 300 Credits",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceId\": \"{{deviceId}}\",\n  \"productId\": \"com.example.jizai.coins300\",\n  \"transactionId\": \"txn-{{$randomUUID}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/purchase",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "purchase"]
+            },
+            "description": "300クレジット購入 (¥2,800)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Image Processing",
+      "item": [
+        {
+          "name": "Edit Image",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-device-id",
+                "value": "{{deviceId}}",
+                "description": "デバイス識別子"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": [],
+                  "description": "編集対象画像ファイル (JPG, PNG, WebP, BMP, TIFF, ≤10MB)"
+                },
+                {
+                  "key": "prompt",
+                  "value": "Change 'OPEN' to 'CLOSED' and keep the original font",
+                  "type": "text",
+                  "description": "画像編集指示"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/edit",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "edit"]
+            },
+            "description": "Qwen-Image-Edit APIを使用して画像を編集。成功時のみ1クレジット消費。"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "x-device-id",
+                    "value": "device-123-abc"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "image",
+                      "type": "file",
+                      "src": []
+                    },
+                    {
+                      "key": "prompt",
+                      "value": "Change 'OPEN' to 'CLOSED' and keep the original font",
+                      "type": "text"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/v1/edit",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["v1", "edit"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "image/png"
+                },
+                {
+                  "key": "X-Credits-Remaining",
+                  "value": "14"
+                }
+              ],
+              "body": "[Binary PNG data]"
+            }
+          ]
+        },
+        {
+          "name": "Edit Image - Text Replacement",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-device-id",
+                "value": "{{deviceId}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "prompt",
+                  "value": "Replace 'SALE 20%' with 'SALE 30%' keeping the same style",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/edit",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "edit"]
+            },
+            "description": "テキスト置換の例"
+          }
+        },
+        {
+          "name": "Edit Image - Background Change",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-device-id",
+                "value": "{{deviceId}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "prompt",
+                  "value": "Change background to night cityscape while keeping the subject",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/edit",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "edit"]
+            },
+            "description": "背景変更の例"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Content Moderation",
+      "item": [
+        {
+          "name": "Submit Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceId\": \"{{deviceId}}\",\n  \"jobId\": \"edit-job-456\",\n  \"reasonId\": \"copyright\",\n  \"note\": \"著作権者の許可なく使用されています\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/report",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "report"]
+            },
+            "description": "UGC 1.2準拠の通報機能。不適切なコンテンツの報告を受け付け。"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"deviceId\": \"device-123-abc\",\n  \"jobId\": \"edit-job-456\",\n  \"reasonId\": \"copyright\",\n  \"note\": \"著作権者の許可なく使用されています\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/v1/report",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["v1", "report"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"reportId\": \"report_1692615600000_abc123def\",\n  \"message\": \"Report submitted successfully\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Report Privacy Violation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceId\": \"{{deviceId}}\",\n  \"reasonId\": \"privacy\",\n  \"note\": \"個人情報が含まれています\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/report",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "report"]
+            },
+            "description": "プライバシー侵害の通報例"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Scenarios",
+      "item": [
+        {
+          "name": "Full Workflow Test",
+          "item": [
+            {
+              "name": "1. Check Initial Balance",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/v1/balance?deviceId={{deviceId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["v1", "balance"],
+                  "query": [
+                    {
+                      "key": "deviceId",
+                      "value": "{{deviceId}}"
+                    }
+                  ]
+                },
+                "description": "新規ユーザーは10クレジットが自動付与される"
+              }
+            },
+            {
+              "name": "2. Purchase Credits",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"deviceId\": \"{{deviceId}}\",\n  \"productId\": \"com.example.jizai.coins20\",\n  \"transactionId\": \"txn-test-{{$timestamp}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/v1/purchase",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["v1", "purchase"]
+                },
+                "description": "20クレジット購入（合計30クレジット）"
+              }
+            },
+            {
+              "name": "3. Edit Image (Consume 1 Credit)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "x-device-id",
+                    "value": "{{deviceId}}"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "image",
+                      "type": "file",
+                      "src": []
+                    },
+                    {
+                      "key": "prompt",
+                      "value": "Test edit - change text to 'TESTING'",
+                      "type": "text"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/v1/edit",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["v1", "edit"]
+                },
+                "description": "画像編集実行（1クレジット消費、29クレジット残り）"
+              }
+            },
+            {
+              "name": "4. Check Final Balance",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/v1/balance?deviceId={{deviceId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["v1", "balance"],
+                  "query": [
+                    {
+                      "key": "deviceId",
+                      "value": "{{deviceId}}"
+                    }
+                  ]
+                },
+                "description": "最終残高確認（29クレジットであることを確認）"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "description": "API base URL"
+    },
+    {
+      "key": "deviceId",
+      "value": "test-device-{{$randomUUID}}",
+      "description": "Test device ID"
+    }
+  ]
+}

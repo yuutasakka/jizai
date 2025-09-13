@@ -1,0 +1,32 @@
+{
+  "identifier" : "F7F8F8F6",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    { "identifier": "com.jizai.coins2", "productID": "com.jizai.coins2", "referenceName": "2 Credits", "type": "Consumable", "displayPrice": "160", "familyShareable": false,
+      "localizations": [ {"description":"2枚（回数の目安）","displayName":"2クレジット","locale":"ja"}, {"description":"2 credits pack","displayName":"2 Credits","locale":"en_US"} ] },
+    { "identifier": "com.jizai.coins10", "productID": "com.jizai.coins10", "referenceName": "10 Credits", "type": "Consumable", "displayPrice": "700", "familyShareable": false,
+      "localizations": [ {"description":"10枚（回数の目安）","displayName":"10クレジット","locale":"ja"}, {"description":"10 credits pack","displayName":"10 Credits","locale":"en_US"} ] },
+    { "identifier": "com.jizai.coins20", "productID": "com.jizai.coins20", "referenceName": "20 Credits", "type": "Consumable", "displayPrice": "1400", "familyShareable": false,
+      "localizations": [ {"description":"20枚（回数の目安）","displayName":"20クレジット","locale":"ja"}, {"description":"20 credits pack","displayName":"20 Credits","locale":"en_US"} ] },
+    { "identifier": "com.jizai.coins50", "productID": "com.jizai.coins50", "referenceName": "50 Credits", "type": "Consumable", "displayPrice": "3250", "familyShareable": false,
+      "localizations": [ {"description":"50枚（回数の目安）","displayName":"50クレジット","locale":"ja"}, {"description":"50 credits pack","displayName":"50 Credits","locale":"en_US"} ] },
+    { "identifier": "com.jizai.coins100", "productID": "com.jizai.coins100", "referenceName": "100 Credits", "type": "Consumable", "displayPrice": "6000", "familyShareable": false,
+      "localizations": [ {"description":"100枚（回数の目安）","displayName":"100クレジット","locale":"ja"}, {"description":"100 credits pack","displayName":"100 Credits","locale":"en_US"} ] },
+    { "identifier": "com.jizai.staff.service", "productID": "com.jizai.staff.service", "referenceName": "Staff Service", "type": "Consumable", "displayPrice": "5980", "familyShareable": false,
+      "localizations": [ {"description":"スタッフにおまかせ（有人仕上げ/1件）","displayName":"スタッフにおまかせ","locale":"ja"}, {"description":"Staff assisted finishing (1 job)","displayName":"Staff Service","locale":"en_US"} ] }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "6475512345",
+    "_developerTeamID" : "TEAM123456",
+    "_lastSynchronizedDate" : 734832000.0
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

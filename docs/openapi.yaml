@@ -1,0 +1,468 @@
+openapi: 3.0.3
+info:
+  title: Jizai API
+  description: |
+    日本向けiOS画像編集アプリのバックエンドAPI
+    
+    ## 特徴
+    - Qwen-Image-Edit API統合による高品質な画像編集
+    - クレジット制残高管理システム
+    - App内課金（IAP）対応
+    - UGC 1.2準拠の通報機能
+    - プロンプトモデレーション機能
+    
+    ## 認証
+    デバイスID (`x-device-id` ヘッダー) によるデバイス識別を使用
+    
+  version: 1.0.0
+  contact:
+    name: Jizai API Support
+    email: support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000
+    description: Development server
+  - url: https://api.jizai.app
+    description: Production server
+
+paths:
+  /v1/health:
+    get:
+      summary: ヘルスチェック
+      description: APIサーバーの稼働状況を確認
+      operationId: getHealth
+      tags:
+        - System
+      responses:
+        '200':
+          description: サーバー正常稼働
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /v1/edit:
+    post:
+      summary: 画像編集
+      description: |
+        Qwen-Image-Edit APIを使用して画像を編集。
+        成功時のみ1クレジット消費。
+      operationId: editImage
+      tags:
+        - Image Processing
+      parameters:
+        - in: header
+          name: x-device-id
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+          description: デバイス識別子
+          example: "device-123-abc"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - image
+                - prompt
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: |
+                    編集対象画像ファイル
+                    - 対応形式: JPG, PNG, WebP, BMP, TIFF
+                    - 最大サイズ: 10MB
+                prompt:
+                  type: string
+                  minLength: 1
+                  maxLength: 1000
+                  description: 画像編集指示
+                  example: "Change 'OPEN' to 'CLOSED' and keep the original font"
+      responses:
+        '200':
+          description: 編集成功
+          headers:
+            X-Credits-Remaining:
+              schema:
+                type: integer
+                minimum: 0
+              description: 残りクレジット数
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '402':
+          $ref: '#/components/responses/InsufficientCredits'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+
+  /v1/balance:
+    get:
+      summary: 残高確認
+      description: |
+        デバイスのクレジット残高を確認。
+        新規デバイスの場合、自動的に10クレジット付与。
+      operationId: getBalance
+      tags:
+        - Credit Management
+      parameters:
+        - in: query
+          name: deviceId
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+          description: デバイス識別子
+          example: "device-123-abc"
+      responses:
+        '200':
+          description: 残高取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /v1/purchase:
+    post:
+      summary: 課金処理
+      description: |
+        App内課金の処理とクレジット追加。
+        重複トランザクション防止機能付き。
+      operationId: processPurchase
+      tags:
+        - Credit Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseRequest'
+      responses:
+        '200':
+          description: 課金処理成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/DuplicateTransaction'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /v1/report:
+    post:
+      summary: 通報機能
+      description: |
+        UGC 1.2準拠の通報機能。
+        不適切なコンテンツの報告を受け付け。
+      operationId: submitReport
+      tags:
+        - Content Moderation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportRequest'
+      responses:
+        '200':
+          description: 通報受付成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    BalanceResponse:
+      type: object
+      required:
+        - credits
+        - deviceId
+        - lastAccessAt
+      properties:
+        credits:
+          type: integer
+          minimum: 0
+          description: 現在のクレジット数
+          example: 15
+        deviceId:
+          type: string
+          description: デバイス識別子
+          example: "device-123-abc"
+        lastAccessAt:
+          type: string
+          format: date-time
+          description: 最終アクセス日時
+          example: "2025-08-21T06:00:00.000Z"
+
+    PurchaseRequest:
+      type: object
+      required:
+        - deviceId
+        - productId
+        - transactionId
+      properties:
+        deviceId:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: デバイス識別子
+          example: "device-123-abc"
+        productId:
+          type: string
+          enum:
+            - "com.example.jizai.coins20"
+            - "com.example.jizai.coins100"
+            - "com.example.jizai.coins300"
+          description: 商品識別子
+          example: "com.example.jizai.coins20"
+        transactionId:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: 取引識別子（重複チェック用）
+          example: "txn-unique-abc123"
+
+    PurchaseResponse:
+      type: object
+      required:
+        - success
+        - credits
+        - added
+        - deviceId
+        - productId
+        - transactionId
+      properties:
+        success:
+          type: boolean
+          example: true
+        credits:
+          type: integer
+          minimum: 0
+          description: 追加後のクレジット総数
+          example: 35
+        added:
+          type: integer
+          minimum: 0
+          description: 今回追加されたクレジット数
+          example: 20
+        deviceId:
+          type: string
+          description: デバイス識別子
+          example: "device-123-abc"
+        productId:
+          type: string
+          description: 購入した商品ID
+          example: "com.example.jizai.coins20"
+        transactionId:
+          type: string
+          description: 取引識別子
+          example: "txn-unique-abc123"
+
+    ReportRequest:
+      type: object
+      required:
+        - deviceId
+        - reasonId
+      properties:
+        deviceId:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: デバイス識別子
+          example: "device-123-abc"
+        jobId:
+          type: string
+          nullable: true
+          description: 関連する編集ジョブID（任意）
+          example: "edit-job-456"
+        reasonId:
+          type: string
+          enum:
+            - "copyright"
+            - "privacy"
+            - "sexual"
+            - "violence"
+            - "other"
+          description: 通報理由
+          example: "copyright"
+        note:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: 詳細説明（任意）
+          example: "著作権者の許可なく使用されています"
+
+    ReportResponse:
+      type: object
+      required:
+        - success
+        - reportId
+        - message
+      properties:
+        success:
+          type: boolean
+          example: true
+        reportId:
+          type: string
+          description: 通報ID
+          example: "report_1692615600000_abc123def"
+        message:
+          type: string
+          description: 処理結果メッセージ
+          example: "Report submitted successfully"
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+        - code
+      properties:
+        error:
+          type: string
+          description: エラータイプ
+          example: "Bad Request"
+        message:
+          type: string
+          description: エラー詳細
+          example: "deviceId is required"
+        code:
+          type: string
+          description: エラーコード
+          example: "MISSING_DEVICE_ID"
+
+  responses:
+    BadRequest:
+      description: リクエストエラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            MissingDeviceId:
+              summary: デバイスID未指定
+              value:
+                error: "Bad Request"
+                message: "deviceId is required"
+                code: "MISSING_DEVICE_ID"
+            SafetyBlocked:
+              summary: NGワード検出
+              value:
+                error: "Bad Request"
+                message: "Prompt contains prohibited content"
+                code: "SAFETY_BLOCKED"
+
+    InsufficientCredits:
+      description: クレジット不足
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ErrorResponse'
+              - type: object
+                properties:
+                  credits:
+                    type: integer
+                    minimum: 0
+                    description: 現在のクレジット数
+          example:
+            error: "Payment Required"
+            message: "Insufficient credits"
+            code: "INSUFFICIENT_CREDITS"
+            credits: 0
+
+    DuplicateTransaction:
+      description: 重複トランザクション
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ErrorResponse'
+              - type: object
+                properties:
+                  credits:
+                    type: integer
+                    minimum: 0
+                    description: 現在のクレジット数
+          example:
+            error: "Conflict"
+            message: "Transaction already processed"
+            code: "DUPLICATE_TRANSACTION"
+            credits: 15
+
+    InternalServerError:
+      description: サーバー内部エラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Internal Server Error"
+            message: "Something went wrong"
+            code: "INTERNAL_ERROR"
+
+    BadGateway:
+      description: 外部API接続エラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Bad Gateway"
+            message: "External API is temporarily unavailable"
+            code: "API_UNAVAILABLE"
+
+  securitySchemes:
+    DeviceId:
+      type: apiKey
+      in: header
+      name: x-device-id
+      description: デバイス識別子
+
+security: []
+
+tags:
+  - name: System
+    description: システム関連
+  - name: Image Processing
+    description: 画像編集機能
+  - name: Credit Management
+    description: クレジット管理
+  - name: Content Moderation
+    description: コンテンツモデレーション
+
+externalDocs:
+  description: Jizai API Documentation
+  url: https://github.com/yuutasakka/jizai

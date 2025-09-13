@@ -1,0 +1,16 @@
+{
+  "human": [
+    { "name": "S.K.", "text": "自然な仕上がりで当日に間に合いました。やり直しも親切でした。", "rating": 5, "verified": true },
+    { "name": "M.N.", "text": "背景の無地化がとても自然。印刷の仕上がりも満足です。", "rating": 5, "verified": true }
+  ],
+  "pet": [
+    { "name": "A.Y.", "text": "毛並みの整えが自然で安心しました。", "rating": 5, "verified": true }
+  ],
+  "photo": [
+    { "name": "T.K.", "text": "不要物の軽減が自然で法要の掲示に使えました。", "rating": 4, "verified": true }
+  ],
+  "seizen": [
+    { "name": "H.T.", "text": "肌のレタッチが過剰でなく、とても良かったです。", "rating": 5, "verified": true }
+  ]
+}
+
