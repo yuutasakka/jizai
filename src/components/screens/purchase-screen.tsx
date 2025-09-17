@@ -11,6 +11,7 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
   const [selectedPlan, setSelectedPlan] = useState('50');
   const [tier, setTier] = useState('free');
   const [storage, setStorage] = useState<{quota: number; used: number}>({ quota: 0, used: 0 });
+  const [loadingBalance, setLoadingBalance] = useState(true);
   // Web版: 購入操作は提供しない
   const [error, setError] = useState<string | null>(null);
 
@@ -23,6 +24,8 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
         if (balance.storage) setStorage(balance.storage);
       } catch (error) {
         console.error('Failed to load balance:', error);
+      } finally {
+        setLoadingBalance(false);
       }
     };
     
@@ -87,8 +90,8 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
       {/* Content */}
       <div className="pt-[140px] pb-[var(--space-24)] px-[var(--space-16)] jz-grid-8pt jz-spacing-20">
         {SALE_ENABLED && (
-          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-yellow-800 text-sm text-center">
+          <div className="mb-4 p-4 bg-[color:var(--color-jz-warning)]/15 border border-[color:var(--color-jz-warning)]/40 rounded-[var(--radius-jz-card)]">
+            <p className="jz-text-caption text-[color:var(--color-jz-warning)] text-center">
               通常価格は 1枚あたり<strong>100円</strong>。いまだけ<strong>期間限定セール</strong>で下記の価格です。
             </p>
           </div>
@@ -96,41 +99,51 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
         
         {/* Error Display */}
         {error && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-800 text-sm">{error}</p>
+          <div className="mb-4 p-4 bg-[color:var(--color-jz-destructive)]/15 border border-[color:var(--color-jz-destructive)]/40 rounded-[var(--radius-jz-card)]">
+            <p className="jz-text-caption text-[color:var(--color-jz-destructive)]">{error}</p>
           </div>
         )}
 
         {/* Current Plan */}
         <JZCard>
           <JZCardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="jz-font-display jz-text-body-large text-[color:var(--color-jz-text-primary)]">
+            {loadingBalance ? (
+              <div className="animate-pulse space-y-[var(--space-12)]">
+                <div className="h-6 w-40 bg-[color:var(--color-jz-border)] rounded" />
+                <div className="h-4 w-56 bg-[color:var(--color-jz-border)] rounded" />
+                <div className="h-2 w-full bg-[color:var(--color-jz-border)] rounded" />
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <div>
+                <h3 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)]">
                   あなたのプラン
                 </h3>
-                <p className="jz-text-body text-[color:var(--color-jz-text-secondary)]">
-                  保存できる容量
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <JZBoltIcon size={20} className="text-[color:var(--color-jz-accent)]" />
-                <span className="jz-font-display jz-text-display-small text-[color:var(--color-jz-accent)] uppercase">
-                  {tier}
-                </span>
-              </div>
-            </div>
-            <div className="mt-3 text-[color:var(--color-jz-text-secondary)]">
-              保存: {formatStorage(storage.used)} / {formatStorage(storage.quota)}
-            </div>
-            <div className="mt-2">
-              <div className="w-full h-2 rounded-full bg-[color:var(--color-jz-border)] overflow-hidden">
-                <div
-                  className={pickBarClass(storage.used, storage.quota)}
-                  style={{ width: `${toPercent(storage.used, storage.quota)}%`, height: '100%' }}
-                />
-              </div>
-            </div>
+                    <p className="jz-text-body text-[color:var(--color-jz-text-secondary)]">
+                      保存できる容量
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <JZBoltIcon size={20} className="text-[color:var(--color-jz-accent)]" />
+                    <span className="jz-font-display jz-text-display-small text-[color:var(--color-jz-accent)] uppercase">
+                      {tier}
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-3 text-[color:var(--color-jz-text-secondary)]">
+                  保存: {formatStorage(storage.used)} / {formatStorage(storage.quota)}
+                </div>
+                <div className="mt-2">
+                  <div className="w-full h-2 rounded-full bg-[color:var(--color-jz-border)] overflow-hidden">
+                    <div
+                      className={pickBarClass(storage.used, storage.quota)}
+                      style={{ width: `${toPercent(storage.used, storage.quota)}%`, height: '100%' }}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
           </JZCardContent>
         </JZCard>
         {/* Benefits Section */}
@@ -173,6 +186,13 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
             return (
             <div key={p.id} className="relative">
               {/* バッジ */}
+              {isRecommended && (
+                <div className="absolute -top-[8px] left-[var(--space-16)] z-10">
+                  <div className="bg-[color:var(--color-jz-accent)] text-white px-[var(--space-12)] py-[var(--space-8)] rounded-[10px] jz-text-caption font-semibold">
+                    おすすめ
+                  </div>
+                </div>
+              )}
               {isStaff ? (
                 <div className="absolute -top-[8px] right-[var(--space-16)] z-10">
                   <div className="bg-gradient-to-r from-[color:var(--color-jz-warning)] to-[color:var(--color-jz-secondary)] text-white px-[var(--space-12)] py-[var(--space-8)] rounded-[10px] jz-text-caption font-semibold">
@@ -189,7 +209,10 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
               
               <JZCard 
                 variant={selectedPlan === p.id ? 'selected' : 'default'}
-                className="cursor-pointer transition-all duration-200"
+                className={cn(
+                  'cursor-pointer transition-all duration-200',
+                  isRecommended && selectedPlan !== p.id ? 'ring-1 ring-[color:var(--color-jz-accent)]/15 hover:scale-[1.01]' : ''
+                )}
                 onClick={() => setSelectedPlan(p.id)}
               >
                 <JZCardContent className="p-[var(--space-16)] space-y-[var(--space-12)]">
@@ -204,11 +227,11 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
                       
                       {/* 価格 */}
                       <div className="flex items-baseline gap-[var(--space-8)] mb-[var(--space-4)]">
-                        <span className="jz-font-display text-[22px] font-semibold text-[color:var(--color-jz-text-primary)]">
+                        <span className="jz-font-display text-[22px] font-semibold text-[color:var(--color-jz-text-primary)]" style={{ fontVariantNumeric: 'tabular-nums', minWidth: '8ch', display: 'inline-block' }}>
                           {formatYen(sale)}
                         </span>
                         {isTwoPack && off > 0 && (
-                          <span className="jz-text-caption text-[color:var(--color-jz-text-tertiary)] line-through">
+                          <span className="jz-text-caption text-[color:var(--color-jz-text-tertiary)] line-through" style={{ fontVariantNumeric: 'tabular-nums', minWidth: '8ch', display: 'inline-block' }}>
                             {formatYen(regular)}
                           </span>
                         )}
@@ -216,7 +239,7 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
                       
                       {/* 小ラベル */}
                       <div className="mb-[var(--space-12)]">
-                        <span className="text-[14px] text-[color:var(--color-jz-text-secondary)]">
+                        <span className="text-[14px] text-[color:var(--color-jz-text-secondary)]" style={{ fontVariantNumeric: 'tabular-nums' }}>
                           {isStaff ? '有人仕上げ / 1件' : (p.unitLabel || `1枚=¥${pricePer}`)}
                         </span>
                       </div>

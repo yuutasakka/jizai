@@ -10,7 +10,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card } from '../ui/card';
-import { Button } from '../ui/button';
+import { JZButton } from '../design-system/jizai-button';
 import { Badge } from '../ui/badge';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
@@ -18,7 +18,6 @@ import { Progress } from '../ui/progress';
 import { 
   Download, 
   Printer, 
-  Settings, 
   Info, 
   Crown,
   AlertCircle,
@@ -84,13 +83,15 @@ interface PrintExportScreenProps {
   imageName?: string;
   onClose: () => void;
   subscriptionTier?: 'free' | 'lite' | 'standard' | 'pro';
+  onUpgrade?: () => void;
 }
 
 export default function PrintExportScreen({ 
   imageUrl, 
   imageName = 'memory',
   onClose,
-  subscriptionTier = 'free'
+  subscriptionTier = 'free',
+  onUpgrade
 }: PrintExportScreenProps) {
   const [selectedSize, setSelectedSize] = useState<string>('l-size');
   const [selectedDpi, setSelectedDpi] = useState<number>(300);
@@ -139,6 +140,18 @@ export default function PrintExportScreen({
   // サイズ選択が利用可能かチェック
   const isSizeAvailable = (sizeKey: string) => {
     return availableFeatures.sizes.includes(sizeKey);
+  };
+
+  // アップグレード導線
+  const handleUpgrade = () => {
+    if (typeof onUpgrade === 'function') {
+      onUpgrade();
+      return;
+    }
+    // 親が未実装でも、アプリ側で拾いやすいようにカスタムイベントを発火
+    window.dispatchEvent(new CustomEvent('jizai:navigate', { detail: { screen: 'purchase' } }));
+    // 併せて閉じる
+    onClose();
   };
 
   // DPI選択が利用可能かチェック
@@ -231,25 +244,25 @@ export default function PrintExportScreen({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+      <div className="bg-[color:var(--color-jz-card)] text-[color:var(--color-jz-text-primary)] border border-[color:var(--color-jz-border)] rounded-[var(--radius-jz-card)] max-w-4xl w-full max-h-[90vh] overflow-hidden">
         {/* ヘッダー */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-[color:var(--color-jz-border)]">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <Printer className="w-6 h-6 text-gray-600" />
+              <Printer className="w-6 h-6 text-[color:var(--color-jz-text-secondary)]" />
               <div>
-                <h2 className="text-xl font-semibold text-gray-900">印刷出力設定</h2>
-                <p className="text-sm text-gray-500">{imageName}</p>
+                <h2 className="jz-font-display jz-text-display-small">印刷出力設定</h2>
+                <p className="jz-text-caption text-[color:var(--color-jz-text-secondary)]">{imageName}</p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Badge variant={subscriptionTier === 'free' ? 'secondary' : 'default'}>
+              <span className="px-2 py-1 rounded-[8px] border border-[color:var(--color-jz-border)] text-[color:var(--color-jz-text-secondary)] jz-text-caption">
                 {subscriptionTier.toUpperCase()}
-              </Badge>
-              <Button variant="ghost" size="sm" onClick={onClose}>
+              </span>
+              <JZButton tone="tertiary" size="sm" onClick={onClose} className="text-[color:var(--color-jz-text-secondary)] hover:text-[color:var(--color-jz-text-primary)]">
                 ✕
-              </Button>
+              </JZButton>
             </div>
           </div>
         </div>
@@ -266,17 +279,17 @@ export default function PrintExportScreen({
               {/* サイズ選択 */}
               <TabsContent value="size" className="space-y-4">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-900 mb-3">印刷サイズ</h3>
+              <h3 className="text-sm font-medium text-[color:var(--color-jz-text-primary)] mb-3">印刷サイズ</h3>
                   <div className="space-y-2">
                     {Object.values(PRINT_SIZES).map((size) => (
                       <div
                         key={size.key}
                         className={`relative p-3 border rounded-lg cursor-pointer transition-all ${
                           selectedSize === size.key
-                            ? 'border-blue-500 bg-blue-50'
+                            ? 'border-[color:var(--color-jz-accent)]/60 bg-[color:var(--color-jz-accent)]/10'
                             : isSizeAvailable(size.key)
-                            ? 'border-gray-200 hover:border-gray-300'
-                            : 'border-gray-100 bg-gray-50 cursor-not-allowed opacity-60'
+                            ? 'border-[color:var(--color-jz-border)] hover:border-[color:var(--color-jz-accent)]/30'
+                            : 'border-[color:var(--color-jz-border)]/60 bg-[color:var(--color-jz-border)]/20 cursor-not-allowed opacity-60'
                         }`}
                         onClick={() => {
                           if (isSizeAvailable(size.key)) {
@@ -287,33 +300,36 @@ export default function PrintExportScreen({
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <div className="flex items-center space-x-2">
-                              <span className="font-medium text-gray-900">
+                              <span className="font-medium text-[color:var(--color-jz-text-primary)]">
                                 {size.name}
                               </span>
-                              <span className="text-sm text-gray-500">
+                              <span className="text-sm text-[color:var(--color-jz-text-secondary)]">
                                 ({size.nameEn})
                               </span>
                               {!isSizeAvailable(size.key) && (
-                                <Crown className="w-4 h-4 text-yellow-500" />
+                                <Crown className="w-4 h-4 text-[color:var(--color-jz-warning)]" />
                               )}
                             </div>
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-[color:var(--color-jz-text-secondary)] mt-1">
                               {size.dimensions.width}×{size.dimensions.height}mm
                             </p>
-                            <p className="text-xs text-gray-400">
+                            <p className="text-xs text-[color:var(--color-jz-text-tertiary)]">
                               {size.description}
                             </p>
                           </div>
                           {selectedSize === size.key && (
-                            <CheckCircle className="w-5 h-5 text-blue-500" />
+                            <CheckCircle className="w-5 h-5 text-[color:var(--color-jz-accent)]" />
                           )}
                         </div>
                         
                         {!isSizeAvailable(size.key) && (
-                          <div className="absolute inset-0 bg-gray-50 bg-opacity-75 rounded-lg flex items-center justify-center">
-                            <Badge variant="secondary" className="text-xs">
+                          <div className="absolute inset-0 bg-black/40 rounded-lg flex flex-col items-center justify-center gap-2 p-3 text-center">
+                            <span className="px-2 py-1 rounded-[8px] bg-[color:var(--color-jz-warning)] text-white jz-text-caption">
                               {subscriptionTier === 'free' ? 'Pro版で利用可能' : 'アップグレードが必要'}
-                            </Badge>
+                            </span>
+                            <JZButton tone="primary" size="sm" onClick={handleUpgrade} aria-label="アップグレード">
+                              アップグレード
+                            </JZButton>
                           </div>
                         )}
                       </div>
@@ -325,17 +341,17 @@ export default function PrintExportScreen({
               {/* 品質設定 */}
               <TabsContent value="quality" className="space-y-4">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-900 mb-3">印刷品質 (DPI)</h3>
+                  <h3 className="text-sm font-medium text-[color:var(--color-jz-text-primary)] mb-3">印刷品質 (DPI)</h3>
                   <div className="space-y-2">
                     {Object.values(DPI_OPTIONS).map((dpi) => (
                       <div
                         key={dpi.value}
                         className={`p-3 border rounded-lg cursor-pointer transition-all ${
                           selectedDpi === dpi.value
-                            ? 'border-blue-500 bg-blue-50'
+                            ? 'border-[color:var(--color-jz-accent)]/60 bg-[color:var(--color-jz-accent)]/10'
                             : isDpiAvailable(dpi.value)
-                            ? 'border-gray-200 hover:border-gray-300'
-                            : 'border-gray-100 bg-gray-50 cursor-not-allowed opacity-60'
+                            ? 'border-[color:var(--color-jz-border)] hover:border-[color:var(--color-jz-accent)]/30'
+                            : 'border-[color:var(--color-jz-border)]/60 bg-[color:var(--color-jz-border)]/20 cursor-not-allowed opacity-60'
                         }`}
                         onClick={() => {
                           if (isDpiAvailable(dpi.value)) {
@@ -346,50 +362,57 @@ export default function PrintExportScreen({
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="flex items-center space-x-2">
-                              <span className="font-medium text-gray-900">
+                              <span className="font-medium text-[color:var(--color-jz-text-primary)]">
                                 {dpi.name}
                               </span>
                               {!isDpiAvailable(dpi.value) && (
-                                <Crown className="w-4 h-4 text-yellow-500" />
+                                <Crown className="w-4 h-4 text-[color:var(--color-jz-warning)]" />
                               )}
                             </div>
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-[color:var(--color-jz-text-secondary)] mt-1">
                               {dpi.description}
                             </p>
                           </div>
                           {selectedDpi === dpi.value && (
-                            <CheckCircle className="w-5 h-5 text-blue-500" />
+                            <CheckCircle className="w-5 h-5 text-[color:var(--color-jz-accent)]" />
                           )}
                         </div>
+                        {!isDpiAvailable(dpi.value) && (
+                          <div className="mt-2 text-center">
+                            <JZButton tone="primary" size="sm" onClick={handleUpgrade} aria-label="アップグレード">
+                              アップグレード
+                            </JZButton>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-sm font-medium text-gray-900 mb-3">出力形式</h3>
+                  <h3 className="text-sm font-medium text-[color:var(--color-jz-text-primary)] mb-3">出力形式</h3>
                   <div className="space-y-2">
                     {availableFeatures.formats.map((format) => (
                       <div
                         key={format}
                         className={`p-3 border rounded-lg cursor-pointer transition-all ${
                           exportFormat === format
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 hover:border-gray-300'
+                            ? 'border-[color:var(--color-jz-accent)]/60 bg-[color:var(--color-jz-accent)]/10'
+                            : 'border-[color:var(--color-jz-border)] hover:border-[color:var(--color-jz-accent)]/30'
                         }`}
                         onClick={() => setExportFormat(format as 'jpeg' | 'png')}
                       >
                         <div className="flex items-center justify-between">
                           <div>
-                            <span className="font-medium text-gray-900">
+                            <span className="font-medium text-[color:var(--color-jz-text-primary)]">
                               {format.toUpperCase()}
                             </span>
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-[color:var(--color-jz-text-secondary)] mt-1">
                               {format === 'jpeg' ? '標準的な写真形式' : '高品質・透明対応'}
                             </p>
                           </div>
                           {exportFormat === format && (
-                            <CheckCircle className="w-5 h-5 text-blue-500" />
+                            <CheckCircle className="w-5 h-5 text-[color:var(--color-jz-accent)]" />
                           )}
                         </div>
                       </div>
@@ -400,7 +423,7 @@ export default function PrintExportScreen({
             </Tabs>
 
             {/* 利用制限情報 */}
-            <Alert className="mt-4">
+            <Alert className="mt-4 bg-[color:var(--color-jz-border)]/20 border border-[color:var(--color-jz-border)] text-[color:var(--color-jz-text-secondary)]">
               <Info className="h-4 w-4" />
               <AlertDescription>
                 {subscriptionTier === 'free' 
@@ -414,12 +437,12 @@ export default function PrintExportScreen({
           {/* プレビューパネル */}
           <div className="w-1/2 p-6 overflow-y-auto">
             <div className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-900">プレビュー</h3>
+              <h3 className="text-lg font-medium text-[color:var(--color-jz-text-primary)]">プレビュー</h3>
               
               {/* 画像プレビュー */}
-              <Card className="p-4">
+              <Card className="p-4 bg-[color:var(--color-jz-card)] border border-[color:var(--color-jz-border)]">
                 <div 
-                  className="w-full bg-gray-100 rounded-lg overflow-hidden"
+                  className="w-full bg-[color:var(--color-jz-border)]/30 rounded-lg overflow-hidden"
                   style={{ aspectRatio: getPreviewAspectRatio(selectedSize) }}
                 >
                   <img
@@ -439,97 +462,109 @@ export default function PrintExportScreen({
               </Card>
 
               {/* 出力情報 */}
-              <Card className="p-4">
-                <h4 className="text-sm font-medium text-gray-900 mb-3">出力情報</h4>
+              <Card className="p-4 bg-[color:var(--color-jz-card)] border border-[color:var(--color-jz-border)]">
+                <h4 className="text-sm font-medium text-[color:var(--color-jz-text-primary)] mb-3">出力情報</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-500">解像度:</span>
-                    <span className="text-gray-900">{selectedDpi} DPI</span>
+                    <span className="text-[color:var(--color-jz-text-secondary)]">解像度:</span>
+                    <span className="text-[color:var(--color-jz-text-primary)]">{selectedDpi} DPI</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500">形式:</span>
-                    <span className="text-gray-900">{exportFormat.toUpperCase()}</span>
+                    <span className="text-[color:var(--color-jz-text-secondary)]">形式:</span>
+                    <span className="text-[color:var(--color-jz-text-primary)]">{exportFormat.toUpperCase()}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500">推定ファイルサイズ:</span>
-                    <span className="text-gray-900">{getEstimatedFileSize()}</span>
+                    <span className="text-[color:var(--color-jz-text-secondary)]">推定ファイルサイズ:</span>
+                    <span className="text-[color:var(--color-jz-text-primary)]">{getEstimatedFileSize()}</span>
                   </div>
                 </div>
               </Card>
 
               {/* 進行状況 */}
               {isExporting && (
-                <Card className="p-4">
+                <Card className="p-4 bg-[color:var(--color-jz-card)] border border-[color:var(--color-jz-border)]">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-900">出力中...</span>
-                      <span className="text-sm text-gray-500">{exportProgress}%</span>
+                      <span className="text-sm font-medium text-[color:var(--color-jz-text-primary)]">出力中...</span>
+                      <span className="text-sm text-[color:var(--color-jz-text-secondary)]">{exportProgress}%</span>
                     </div>
                     <Progress value={exportProgress} className="w-full" />
+                    <div role="status" aria-live="polite" className="sr-only">
+                      出力進行状況 {exportProgress}パーセント
+                    </div>
                   </div>
                 </Card>
               )}
 
               {/* 結果表示 */}
               {exportResult && (
-                <Card className="p-4">
+                <Card className="p-4 bg-[color:var(--color-jz-card)] border border-[color:var(--color-jz-border)]">
                   {exportResult.success ? (
                     <div className="space-y-3">
-                      <div className="flex items-center space-x-2 text-green-600">
+                      <div className="flex items-center space-x-2 text-[color:var(--color-jz-success)]">
                         <CheckCircle className="w-5 h-5" />
                         <span className="font-medium">出力完了</span>
                       </div>
-                      <Button 
-                        className="w-full"
+                      <JZButton 
+                        tone="primary"
+                        fullWidth
                         onClick={() => {
                           if (exportResult.downloadUrl) {
-                            window.open(exportResult.downloadUrl, '_blank');
+                            window.open(exportResult.downloadUrl, '_blank', 'noopener,noreferrer');
                           }
                         }}
                       >
                         <Download className="w-4 h-4 mr-2" />
                         ダウンロード
-                      </Button>
+                      </JZButton>
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <div className="flex items-center space-x-2 text-red-600">
+                      <div className="flex items-center space-x-2 text-[color:var(--color-jz-destructive)]">
                         <AlertCircle className="w-5 h-5" />
                         <span className="font-medium">出力失敗</span>
                       </div>
-                      <p className="text-sm text-red-600">{exportResult.error}</p>
-                      <Button 
-                        variant="outline" 
-                        className="w-full" 
+                      <p className="text-sm text-[color:var(--color-jz-text-secondary)]" role="alert">{exportResult.error}</p>
+                      <JZButton 
+                        tone="secondary" 
+                        fullWidth 
                         onClick={() => setExportResult(null)}
                       >
                         再試行
-                      </Button>
+                      </JZButton>
                     </div>
                   )}
                 </Card>
               )}
 
-              {/* 出力ボタン */}
+              {/* 出力フッター（固定） */}
               {!exportResult && (
-                <Button
-                  className="w-full"
-                  size="lg"
-                  onClick={handleExport}
-                  disabled={isExporting}
-                >
-                  {isExporting ? (
-                    <>
-                      <Settings className="w-4 h-4 mr-2 animate-spin" />
-                      出力中...
-                    </>
-                  ) : (
-                    <>
-                      <Printer className="w-4 h-4 mr-2" />
-                      印刷用に出力
-                    </>
-                  )}
-                </Button>
+                <div className="sticky bottom-0 pt-4 bg-[color:var(--color-jz-card)]">
+                  <div className="flex gap-3 justify-end">
+                    <JZButton
+                      tone="tertiary"
+                      size="md"
+                      onClick={onClose}
+                      aria-label="閉じる"
+                    >
+                      閉じる
+                    </JZButton>
+                    <JZButton
+                      tone="primary"
+                      size="lg"
+                      onClick={handleExport}
+                      state={isExporting ? 'loading' : 'default'}
+                      aria-label={isExporting ? '出力中' : '印刷用に出力'}
+                    >
+                      {isExporting ? '出力中...' : (
+                        <span className="flex items-center gap-2">
+                          <Printer className="w-4 h-4" />
+                          印刷用に出力
+                        </span>
+                      )}
+                    </JZButton>
+                  </div>
+                </div>
               )}
             </div>
           </div>

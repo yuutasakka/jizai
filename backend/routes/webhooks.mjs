@@ -72,9 +72,10 @@ const validateWebhookRequest = (req, res, next) => {
     next();
 };
 
-router.post('/appstore', validateWebhookRequest, express.raw({ type: 'application/json' }), async (req, res) => {
+// Body is parsed as raw in index-vault-integration before JSON parser
+router.post('/appstore', validateWebhookRequest, async (req, res) => {
     try {
-        const body = req.body.toString();
+        const body = Buffer.isBuffer(req.body) ? req.body.toString() : (typeof req.body === 'string' ? req.body : JSON.stringify(req.body));
         
         // Verify this is a legitimate App Store notification
         if (!body) {

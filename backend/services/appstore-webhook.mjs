@@ -5,7 +5,6 @@
  * Supports all notification types with proper signature verification
  */
 
-import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { supabaseService } from '../config/supabase.mjs';
 import { auditServiceClientUsage } from '../utils/service-client-audit.mjs';
@@ -68,27 +67,53 @@ export class AppStoreWebhookHandler {
   /**
    * Verify JWT signature with Apple's certificate
    */
-  verifySignature(signedPayload) {
+  async verifySignature(rawBody, signatureHeader) {
     try {
-      // In production, you should verify against Apple's actual certificate chain
-      // For now, we'll decode and verify the JWT structure
-      const decoded = jwt.decode(signedPayload, { complete: true });
-      
+      // Apple Server Notifications v2 may send a signed JWT in the body (signedPayload) or a signature header.
+      // Here we accept header token precedence, otherwise try to extract signedPayload from JSON body.
+      let token = signatureHeader;
+      if (!token) {
+        try {
+          const parsed = JSON.parse(rawBody);
+          token = parsed?.signedPayload || null;
+        } catch {}
+      }
+      if (!token || typeof token !== 'string') {
+        return { valid: false, error: 'No signature token found' };
+      }
+
+      // Decode without verifying to inspect claims
+      const decoded = jwt.decode(token, { complete: true });
       if (!decoded || !decoded.payload) {
-        return false;
+        return { valid: false, error: 'Invalid JWT structure' };
       }
 
-      // Verify bundle ID matches
-      const bundleId = decoded.payload.data?.bundleId;
-      if (bundleId && bundleId !== this.bundleId) {
-        console.error(`Bundle ID mismatch: expected ${this.bundleId}, got ${bundleId}`);
-        return false;
+      // Soft-validate bundleId if present
+      const bundleId = decoded.payload.data?.bundleId || decoded.payload.bundleId;
+      if (this.bundleId && bundleId && bundleId !== this.bundleId) {
+        return { valid: false, error: `Bundle ID mismatch: expected ${this.bundleId}, got ${bundleId}` };
       }
 
-      return true;
+      // Cryptographic verification (production): requires JWKS/PEM public key
+      // To avoid hardcoding endpoints, allow configuration via APPSTORE_JWKS_PEM (PEM) or APPSTORE_PUBLIC_KEY
+      const publicKey = process.env.APPSTORE_PUBLIC_KEY || process.env.APPSTORE_JWKS_PEM;
+      if (process.env.NODE_ENV === 'production') {
+        if (!publicKey) {
+          console.error('Apple signature verification key not configured');
+          return { valid: false, error: 'Verification key not configured' };
+        }
+        try {
+          jwt.verify(token, publicKey, { algorithms: ['ES256', 'RS256'] });
+        } catch (e) {
+          console.error('JWT verification failed:', e.message);
+          return { valid: false, error: 'JWT verification failed' };
+        }
+      }
+
+      return { valid: true };
     } catch (error) {
       console.error('Signature verification error:', error);
-      return false;
+      return { valid: false, error: error.message };
     }
   }
 

@@ -24,6 +24,7 @@ interface GeneratedImage {
 export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string) => void }) => {
   const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null);
   const [filter, setFilter] = useState<'all' | 'recent' | 'expiring'>('all');
+  const [loading, setLoading] = useState(true);
 
   // モックデータ（90日保存）
   const mockImages: GeneratedImage[] = [
@@ -55,6 +56,12 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
       title: '上着の色変更'
     }
   ];
+
+  // 初期表示のスケルトン（実装時はAPIロードに置き換え）
+  React.useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 400);
+    return () => clearTimeout(t);
+  }, []);
 
   const filteredImages = mockImages.filter(image => {
     switch (filter) {
@@ -184,7 +191,19 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
           </div>
 
           {/* Gallery Grid */}
-          {filteredImages.length > 0 ? (
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--space-16)] animate-pulse">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="bg-[color:var(--color-jz-card)] border border-[color:var(--color-jz-border)] rounded-[var(--radius-jz-card)] overflow-hidden">
+                  <div className="h-[200px] bg-[color:var(--color-jz-border)]" />
+                  <div className="p-[var(--space-16)] space-y-[var(--space-8)]">
+                    <div className="h-4 w-2/3 bg-[color:var(--color-jz-border)] rounded" />
+                    <div className="h-3 w-1/2 bg-[color:var(--color-jz-border)] rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredImages.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--space-16)]">
               {filteredImages.map((image) => {
                 const daysLeft = getDaysUntilExpiry(image.expiresAt);
@@ -267,6 +286,7 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
                             size="sm"
                             onClick={() => handleShare(image)}
                             className="flex items-center gap-[var(--space-8)]"
+                            aria-label={`共有: ${image.title}`}
                           >
                             <JZShareIcon size={14} />
                           </JZButton>
@@ -275,6 +295,7 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
                             size="sm"
                             onClick={() => handleDelete(image)}
                             className="flex items-center gap-[var(--space-8)] text-[color:var(--color-jz-destructive)] hover:text-[color:var(--color-jz-destructive)]"
+                            aria-label={`削除: ${image.title}`}
                           >
                             <JZTrashIcon size={14} />
                           </JZButton>

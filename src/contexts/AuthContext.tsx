@@ -94,7 +94,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const loginWithGoogle = async (): Promise<void> => {
     setIsLoading(true);
     try {
-      if (!supabase) throw new Error('Supabase is not configured');
+      if (!supabase) {
+        // Supabase未設定の場合はデモユーザーとしてログイン
+        console.warn('Supabase未設定 - デモモードでログイン');
+        setUser({
+          id: 'demo-user-google',
+          email: 'demo@example.com',
+          name: 'デモユーザー (Google)',
+          provider: 'google',
+          createdAt: new Date(),
+          lastLoginAt: new Date(),
+        });
+        setIsLoginRequired(false);
+        return;
+      }
       const redirectTo = `${window.location.origin}/auth/callback`;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -115,7 +128,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const loginWithApple = async (): Promise<void> => {
     setIsLoading(true);
     try {
-      if (!supabase) throw new Error('Supabase is not configured');
+      if (!supabase) {
+        // Supabase未設定の場合はデモユーザーとしてログイン
+        console.warn('Supabase未設定 - デモモードでログイン');
+        setUser({
+          id: 'demo-user-apple',
+          email: 'demo@example.com',
+          name: 'デモユーザー (Apple)',
+          provider: 'apple',
+          createdAt: new Date(),
+          lastLoginAt: new Date(),
+        });
+        setIsLoginRequired(false);
+        return;
+      }
       const redirectTo = `${window.location.origin}/auth/callback`;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',

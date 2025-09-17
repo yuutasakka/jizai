@@ -20,6 +20,8 @@ import subscriptionRoutes from './routes/subscriptions.mjs';
 import familySharingRoutes from './routes/family-sharing.mjs';
 import printExportRoutes from './routes/print-export.mjs';
 import webhookRoutes from './routes/webhooks.mjs';
+import { authzTokenMiddleware, requireAuth } from './middleware/authz-token.mjs';
+import { enforceAuthLink } from './middleware/enforce-auth-link.mjs';
 
 // Import legacy store for backward compatibility
 import store from './store.mjs';
@@ -90,6 +92,9 @@ const createMemoryUpload = (maxSize = 50 * 1024 * 1024) => multer({
 
 const upload = createMemoryUpload(10 * 1024 * 1024); // 10MB for image editing
 const vaultUpload = createMemoryUpload(100 * 1024 * 1024); // 100MB for vault memories
+
+// Ensure raw body is available for webhooks before JSON parser (for signature verification)
+app.use('/v1/webhooks', express.raw({ type: 'application/json' }));
 
 // JSON parsing
 app.use(express.json({ limit: '50mb' }));
@@ -230,10 +235,19 @@ app.get('/v1/version', (req, res) => {
 // ========================================
 
 if (databaseInitialized) {
-    // Apply RLS authentication middleware to user-facing routes
+    // Require Supabase JWT and then apply RLS auth (deviceId-based) for user-facing routes
+    app.use('/v1/subscription/*', requireAuth());
+    app.use('/v1/family/*', requireAuth());
+    app.use('/v1/print-export/*', requireAuth());
+
     app.use('/v1/subscription/*', rlsAuthMiddleware());
     app.use('/v1/family/*', rlsAuthMiddleware());
     app.use('/v1/print-export/*', rlsAuthMiddleware());
+
+    // Supabase Auth ユーザーと deviceIdユーザーの紐付けを強制
+    app.use('/v1/subscription/*', enforceAuthLink());
+    app.use('/v1/family/*', enforceAuthLink());
+    app.use('/v1/print-export/*', enforceAuthLink());
     
     // Subscription management
     app.use('/v1/subscription', subscriptionRoutes);

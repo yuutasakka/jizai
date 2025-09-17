@@ -4,6 +4,7 @@
  */
 
 import { secureLogger } from './secure-logger.mjs';
+import { randomBytes } from 'crypto';
 
 /**
  * Security headers configuration
@@ -123,8 +124,7 @@ export function initializeSecurityHeaders() {
  * @returns {string} Base64 encoded nonce
  */
 function generateNonce() {
-    const crypto = require('crypto');
-    return crypto.randomBytes(16).toString('base64');
+    return randomBytes(16).toString('base64');
 }
 
 /**

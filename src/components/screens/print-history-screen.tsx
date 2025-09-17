@@ -58,7 +58,7 @@ export default function PrintHistoryScreen({ onClose }: PrintHistoryScreenProps)
     try {
       // バックエンドから署名付きURLを取得してダウンロード
       const url = await apiClient.getPrintExportDownloadUrl(exportItem.id);
-      window.open(url, '_blank', 'noopener');
+      window.open(url, '_blank', 'noopener,noreferrer');
     } catch (e) {
       console.error('Download failed:', e);
       setError(e instanceof Error ? e.message : 'ダウンロードURLの取得に失敗しました');

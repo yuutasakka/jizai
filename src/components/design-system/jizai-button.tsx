@@ -23,7 +23,7 @@ export const JZButton = React.forwardRef<HTMLButtonElement, JZButtonProps>(
     ...props 
   }, ref) => {
     // アクセシビリティ：44pt以上のタップ領域確保
-    const baseClasses = "inline-flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[color:var(--color-jz-accent)] focus:ring-offset-2 focus:ring-offset-[color:var(--color-jz-surface)] disabled:cursor-not-allowed";
+    const baseClasses = "inline-flex items-center justify-center transition-all duration-200 focus:outline-none focus-visible:ring-3 focus-visible:ring-[color:var(--color-jz-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--color-jz-surface)] disabled:cursor-not-allowed";
     
     const tones = {
       primary: {

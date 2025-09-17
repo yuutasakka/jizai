@@ -158,27 +158,10 @@ export const TutorialExamplesScreen = ({ onNavigate, onExampleSelected }: Tutori
         <div className="max-w-[800px] mx-auto">
           {/* Hero Section */}
           <div className="text-center mb-[var(--space-32)]">
-            <h2 
-              className="mb-[var(--space-16)]"
-              style={{
-                fontFamily: 'SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif',
-                fontSize: '26px',
-                fontWeight: '600',
-                lineHeight: '1.2',
-                color: '#ECECEC'
-              }}
-            >
+            <h2 className="jz-font-display jz-text-display-medium text-[color:var(--color-jz-text-primary)] mb-[var(--space-16)]">
               見て、真似して、1分で体験
             </h2>
-            <p 
-              style={{
-                fontFamily: 'Noto Sans JP, -apple-system, BlinkMacSystemFont, sans-serif',
-                fontSize: '15px',
-                fontWeight: '400',
-                lineHeight: '1.4',
-                color: '#A1A1AA'
-              }}
-            >
+            <p className="jz-text-body text-[color:var(--color-jz-text-secondary)]">
               下の例を選ぶと、画像とプロンプトが自動でセットされます。
             </p>
           </div>

@@ -223,11 +223,11 @@ export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
 
               {/* Slider Handle */}
               <div 
-                className="absolute top-0 bottom-0 w-[4px] bg-white shadow-lg cursor-col-resize z-10"
+                className="absolute top-0 bottom-0 w-[6px] bg-white/90 shadow-lg cursor-col-resize z-10 transition-colors"
                 style={{ left: `${beforeAfterSlider}%`, transform: 'translateX(-50%)' }}
               >
-                <div className="absolute top-1/2 left-1/2 w-[32px] h-[32px] bg-white rounded-full border-2 border-[color:var(--color-jz-accent)] transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center cursor-col-resize">
-                  <JZSliderIcon size={16} className="text-[color:var(--color-jz-accent)]" />
+                <div className="absolute top-1/2 left-1/2 w-[40px] h-[40px] bg-white rounded-full border-2 border-[color:var(--color-jz-accent)] transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center cursor-col-resize hover:ring-2 hover:ring-[color:var(--color-jz-accent)]/60">
+                  <JZSliderIcon size={18} className="text-[color:var(--color-jz-accent)]" />
                 </div>
               </div>
 
