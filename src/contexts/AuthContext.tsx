@@ -21,6 +21,10 @@ interface AuthContextValue {
   logout: () => Promise<void>;
   skipLogin: () => void;
   isLoginRequired: boolean;
+  // Development-only helper to create a temporary user session
+  devLogin?: () => void;
+  // Whether dev login is available (only non-production or when explicitly enabled)
+  isDevLoginEnabled?: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -41,6 +45,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoginRequired, setIsLoginRequired] = useState(true);
+  // Enable dev login in non-production, or when flag is explicitly set
+  const isDevLoginEnabled =
+    ((import.meta as any)?.env?.MODE !== 'production') ||
+    ((import.meta as any)?.env?.VITE_ENABLE_DEV_LOGIN === 'true');
 
   // 初期化: Supabase セッションから復元
   useEffect(() => {
@@ -48,10 +56,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         // Allow skipping login for demo flows
         const loginSkipped = localStorage.getItem('jizai_login_skipped');
+        const devLoginPersisted = localStorage.getItem('jizai_dev_login') === 'true';
 
         if (!supabase) {
           // No Supabase configuration provided — keep previous demo behavior
           if (loginSkipped === 'true') setIsLoginRequired(false);
+          if (isDevLoginEnabled && devLoginPersisted) {
+            // Restore dev user session if previously set
+            setUser({
+              id: 'dev-user',
+              email: 'dev@example.com',
+              name: '開発ユーザー',
+              provider: 'google',
+              createdAt: new Date(),
+              lastLoginAt: new Date(),
+            });
+            setIsLoginRequired(false);
+          }
           return;
         }
 
@@ -63,10 +84,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setIsLoginRequired(false);
         } else if (loginSkipped === 'true') {
           setIsLoginRequired(false);
+        } else if (isDevLoginEnabled && devLoginPersisted) {
+          setUser({
+            id: 'dev-user',
+            email: 'dev@example.com',
+            name: '開発ユーザー',
+            provider: 'google',
+            createdAt: new Date(),
+            lastLoginAt: new Date(),
+          });
+          setIsLoginRequired(false);
         }
       } catch (error) {
         console.error('認証状態の復元に失敗:', error);
         localStorage.removeItem('jizai_login_skipped');
+        localStorage.removeItem('jizai_dev_login');
       } finally {
         setIsLoading(false);
       }
@@ -165,6 +197,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(null);
       setIsLoginRequired(true);
       localStorage.removeItem('jizai_login_skipped');
+      localStorage.removeItem('jizai_dev_login');
     } catch (error) {
       console.error('ログアウトエラー:', error);
       throw error;
@@ -178,6 +211,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.setItem('jizai_login_skipped', 'true');
   };
 
+  // Development-only login: creates a temporary local user
+  const devLogin = (): void => {
+    if (!isDevLoginEnabled) return;
+    setUser({
+      id: 'dev-user',
+      email: 'dev@example.com',
+      name: '開発ユーザー',
+      provider: 'google',
+      createdAt: new Date(),
+      lastLoginAt: new Date(),
+    });
+    setIsLoginRequired(false);
+    localStorage.setItem('jizai_dev_login', 'true');
+  };
+
   const isAuthenticated = user !== null;
 
   const value: AuthContextValue = {
@@ -188,7 +236,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loginWithApple,
     logout,
     skipLogin,
-    isLoginRequired
+    isLoginRequired,
+    devLogin: isDevLoginEnabled ? devLogin : undefined,
+    isDevLoginEnabled,
   };
 
   return (

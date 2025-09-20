@@ -10,7 +10,7 @@ export function JizaiLoginScreen({
 }: JizaiLoginScreenProps = {}) {
   const [isVisible, setIsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { loginWithGoogle, loginWithApple } = useAuth();
+  const { loginWithGoogle, loginWithApple, devLogin, isDevLoginEnabled } = useAuth();
 
   useEffect(() => {
     setTimeout(() => setIsVisible(true), 200);
@@ -31,6 +31,13 @@ export function JizaiLoginScreen({
       await loginWithApple(); // will redirect
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDevLogin = () => {
+    if (isDevLoginEnabled && devLogin) {
+      devLogin();
+      onComplete();
     }
   };
 
@@ -105,6 +112,34 @@ export function JizaiLoginScreen({
               </span>
             </button>
           </div>
+
+          {/* Development-only quick login */}
+          {isDevLoginEnabled && (
+            <div className="pt-8 space-y-4">
+              <div className="flex items-center">
+                <div className="flex-1 h-px bg-[color:var(--color-jz-border)]"></div>
+                <span className="px-4 jz-text-caption text-[color:var(--color-jz-text-secondary)]">開発環境</span>
+                <div className="flex-1 h-px bg-[color:var(--color-jz-border)]"></div>
+              </div>
+
+              <button
+                onClick={handleDevLogin}
+                className="w-full bg-[color:var(--color-jz-accent)]/10 border border-[color:var(--color-jz-accent)]/30 rounded-[var(--radius-jz-button)] px-6 py-4 flex items-center justify-center space-x-3 hover:bg-[color:var(--color-jz-accent)]/20 transition-all duration-200"
+              >
+                <svg className="w-5 h-5 text-[color:var(--color-jz-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                </svg>
+                <span className="jz-text-button text-[color:var(--color-jz-accent)]">
+                  開発用テストユーザーでログイン
+                </span>
+              </button>
+
+              <p className="text-center jz-text-caption text-[color:var(--color-jz-text-secondary)]">
+                開発環境用のテスト認証です<br/>
+                本番環境では削除されます
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
