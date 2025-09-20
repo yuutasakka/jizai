@@ -19,7 +19,6 @@ import { UserGalleryScreen } from './components/screens/user-gallery-screen';
 import { MemorialPhotoScreen } from './components/screens/memorial-photo-screen';
 import { LongTermEngagementScreen } from './components/screens/long-term-engagement-screen';
 import { ProfileScreen } from './components/screens/profile-screen';
-import { NotificationsScreen } from './components/screens/notifications-screen';
 import { AppStoreScreenshot } from './components/screenshots/app-store-screenshots';
 import { DesignSystemReference } from './components/design-tokens/design-system-reference';
 import { JZButton } from './components/design-system/jizai-button';
@@ -30,7 +29,7 @@ import { StorageScreen } from './components/screens/storage-screen';
 import { PurchaseScreen } from './components/screens/purchase-screen';
 import { PricingScreen } from './components/screens/pricing-screen';
 
-type Screen = 'splash' | 'login' | 'onboarding' | 'home' | 'progress' | 'results' | 'settings' | 'tutorial-examples' | 'screenshots' | 'design-tokens' | 'user-gallery' | 'memorial-photo' | 'long-term-engagement' | 'profile' | 'notifications' | 'create' | 'storage' | 'purchase' | 'pricing' | 'prompt-history';
+type Screen = 'splash' | 'login' | 'onboarding' | 'home' | 'progress' | 'results' | 'settings' | 'tutorial-examples' | 'screenshots' | 'design-tokens' | 'user-gallery' | 'memorial-photo' | 'long-term-engagement' | 'profile' | 'create' | 'storage' | 'purchase' | 'pricing' | 'prompt-history';
 
 interface ExampleData {
   title: string;
@@ -60,7 +59,7 @@ function InnerApp() {
 
   // Screen validation helper
   const isValidScreen = (screen: string): screen is Screen => {
-    const validScreens: Screen[] = ['splash', 'login', 'onboarding', 'home', 'progress', 'results', 'settings', 'tutorial-examples', 'screenshots', 'design-tokens', 'user-gallery', 'memorial-photo', 'long-term-engagement', 'profile', 'notifications', 'create', 'storage', 'purchase', 'pricing', 'prompt-history'];
+    const validScreens: Screen[] = ['splash', 'login', 'onboarding', 'home', 'progress', 'results', 'settings', 'tutorial-examples', 'screenshots', 'design-tokens', 'user-gallery', 'memorial-photo', 'long-term-engagement', 'profile', 'create', 'storage', 'purchase', 'pricing', 'prompt-history'];
     return validScreens.includes(screen as Screen);
   };
 
@@ -178,8 +177,6 @@ function InnerApp() {
         return <SettingsScreen onNavigate={navigate} />;
       case 'profile':
         return <ProfileScreen onNavigate={navigate} />;
-      case 'notifications':
-        return <NotificationsScreen onNavigate={navigate} />;
       case 'tutorial-examples':
         return <TutorialExamplesScreen onNavigate={navigate} onExampleSelected={handleExampleSelected} />;
       case 'user-gallery':
