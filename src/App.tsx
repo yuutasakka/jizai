@@ -13,18 +13,24 @@ import { JizaiOnboardingScreen } from './components/screens/jizai-onboarding-scr
 import { JizaiHomeScreen } from './components/screens/jizai-home-screen';
 import { JizaiProgressScreen } from './components/screens/jizai-progress-screen';
 import { ResultsScreen } from './components/screens/results-screen';
-import { PurchaseScreen } from './components/screens/purchase-screen';
 import { SettingsScreen } from './components/screens/settings-screen';
 import { TutorialExamplesScreen } from './components/screens/tutorial-examples-screen';
 import { UserGalleryScreen } from './components/screens/user-gallery-screen';
 import { MemorialPhotoScreen } from './components/screens/memorial-photo-screen';
 import { LongTermEngagementScreen } from './components/screens/long-term-engagement-screen';
+import { ProfileScreen } from './components/screens/profile-screen';
+import { NotificationsScreen } from './components/screens/notifications-screen';
 import { AppStoreScreenshot } from './components/screenshots/app-store-screenshots';
 import { DesignSystemReference } from './components/design-tokens/design-system-reference';
 import { JZButton } from './components/design-system/jizai-button';
-import { JZPhotoIcon, JZCreditCardIcon, JZSettingsIcon, JZMemorialPhotoIcon } from './components/design-system/jizai-icons';
+import { JZHomeIcon, JZMemorialPhotoIcon, JZPlusIcon, JZSearchIcon, JZUserIcon } from './components/design-system/jizai-icons';
+import { CreateImageScreen } from './components/screens/create-image-screen';
+import { PromptHistoryScreen } from './components/screens/prompt-history-screen';
+import { StorageScreen } from './components/screens/storage-screen';
+import { PurchaseScreen } from './components/screens/purchase-screen';
+import { PricingScreen } from './components/screens/pricing-screen';
 
-type Screen = 'splash' | 'login' | 'onboarding' | 'home' | 'progress' | 'results' | 'purchase' | 'settings' | 'tutorial-examples' | 'screenshots' | 'design-tokens' | 'user-gallery' | 'memorial-photo' | 'long-term-engagement';
+type Screen = 'splash' | 'login' | 'onboarding' | 'home' | 'progress' | 'results' | 'settings' | 'tutorial-examples' | 'screenshots' | 'design-tokens' | 'user-gallery' | 'memorial-photo' | 'long-term-engagement' | 'profile' | 'notifications' | 'create' | 'storage' | 'purchase' | 'pricing' | 'prompt-history';
 
 interface ExampleData {
   title: string;
@@ -54,7 +60,7 @@ function InnerApp() {
 
   // Screen validation helper
   const isValidScreen = (screen: string): screen is Screen => {
-    const validScreens: Screen[] = ['splash', 'login', 'onboarding', 'home', 'progress', 'results', 'purchase', 'settings', 'tutorial-examples', 'screenshots', 'design-tokens', 'user-gallery', 'memorial-photo', 'long-term-engagement'];
+    const validScreens: Screen[] = ['splash', 'login', 'onboarding', 'home', 'progress', 'results', 'settings', 'tutorial-examples', 'screenshots', 'design-tokens', 'user-gallery', 'memorial-photo', 'long-term-engagement', 'profile', 'notifications', 'create', 'storage', 'purchase', 'pricing', 'prompt-history'];
     return validScreens.includes(screen as Screen);
   };
 
@@ -168,10 +174,12 @@ function InnerApp() {
         return <JizaiProgressScreen onNavigate={navigate} />;
       case 'results':
         return <ResultsScreen onNavigate={navigate} />;
-      case 'purchase':
-        return <PurchaseScreen onNavigate={navigate} />;
       case 'settings':
         return <SettingsScreen onNavigate={navigate} />;
+      case 'profile':
+        return <ProfileScreen onNavigate={navigate} />;
+      case 'notifications':
+        return <NotificationsScreen onNavigate={navigate} />;
       case 'tutorial-examples':
         return <TutorialExamplesScreen onNavigate={navigate} onExampleSelected={handleExampleSelected} />;
       case 'user-gallery':
@@ -184,12 +192,24 @@ function InnerApp() {
         return <DesignSystemReference />;
       case 'screenshots':
         return <ScreenshotGallery onNavigate={navigate} />;
+      case 'create':
+        return <CreateImageScreen onNavigate={navigate} />;
+      case 'storage':
+        return <StorageScreen onNavigate={navigate} />;
+      case 'prompt-history':
+        return <PromptHistoryScreen onNavigate={navigate} />;
+      case 'purchase':
+        return <PurchaseScreen onNavigate={navigate} />;
+      case 'pricing':
+        return <PricingScreen onNavigate={navigate} />;
       default:
         return <JizaiHomeScreen onNavigate={navigate} />;
     }
   };
 
-  const showBottomNavigation = hasCompletedOnboarding && !isLoginRequired && ['home', 'purchase', 'settings', 'memorial-photo', 'long-term-engagement'].includes(currentScreen);
+  // Show navigation on all screens except splash, login, and onboarding
+  const hideNavigationScreens = ['splash', 'login', 'onboarding'];
+  const showBottomNavigation = hasCompletedOnboarding && isAuthenticated && !hideNavigationScreens.includes(currentScreen);
 
   return (
     <PersonalizationProvider>
@@ -199,66 +219,119 @@ function InnerApp() {
             <ZenModeProvider>
       <div className="min-h-screen bg-[color:var(--color-jz-surface)]">
         {/* Main Content */}
-        <div className={`${showBottomNavigation ? 'pb-[140px]' : ''} ${isTransitioning ? 'transition-all duration-300 ease-in-out transform scale-95 opacity-90' : 'transition-all duration-300 ease-in-out transform scale-100 opacity-100'}`}>
+        <div className={`${showBottomNavigation ? 'pb-[100px]' : ''} ${isTransitioning ? 'transition-all duration-300 ease-in-out transform scale-95 opacity-90' : 'transition-all duration-300 ease-in-out transform scale-100 opacity-100'}`}>
           {renderScreen()}
         </div>
 
-        {/* Bottom Navigation */}
+        {/* Premium Bottom Navigation */}
         {showBottomNavigation && (
           <div className="fixed bottom-0 left-0 right-0 z-50">
-            <div className="jz-glass-effect border-t border-[color:var(--color-jz-border)]">
-              <div className="flex justify-around items-center py-[var(--space-16)] px-[var(--space-16)]">
-                <JZButton
-                  tone="tertiary"
-                  className={`flex flex-col items-center gap-[var(--space-8)] min-h-[56px] px-[var(--space-12)] ${
-                    currentScreen === 'home' 
-                      ? 'text-[color:var(--color-jz-accent)]' 
-                      : 'text-[color:var(--color-jz-text-tertiary)]'
-                  }`}
-                  onClick={() => setCurrentScreen('home')}
-                >
-                  <JZPhotoIcon size={20} />
-                  <span className="jz-text-caption">ホーム</span>
-                </JZButton>
-                
-                <JZButton
-                  tone="tertiary"
-                  className={`flex flex-col items-center gap-[var(--space-8)] min-h-[56px] px-[var(--space-12)] ${
-                    currentScreen === 'memorial-photo' 
-                      ? 'text-[color:var(--color-jz-accent)]' 
-                      : 'text-[color:var(--color-jz-text-tertiary)]'
-                  } hover:text-[color:var(--color-jz-text-secondary)]`}
-                  onClick={() => setCurrentScreen('memorial-photo')}
-                >
-                  <JZMemorialPhotoIcon size={20} />
-                  <span className="jz-text-caption">遺影</span>
-                </JZButton>
-                
-                <JZButton
-                  tone="tertiary"
-                  className={`flex flex-col items-center gap-[var(--space-8)] min-h-[56px] px-[var(--space-12)] ${
-                    currentScreen === 'purchase' 
-                      ? 'text-[color:var(--color-jz-accent)]' 
-                      : 'text-[color:var(--color-jz-text-tertiary)]'
-                  } hover:text-[color:var(--color-jz-text-secondary)]`}
-                  onClick={() => setCurrentScreen('purchase')}
-                >
-                  <JZCreditCardIcon size={20} />
-                  <span className="jz-text-caption">買う</span>
-                </JZButton>
-                
-                <JZButton
-                  tone="tertiary"
-                  className={`flex flex-col items-center gap-[var(--space-8)] min-h-[56px] px-[var(--space-12)] ${
-                    currentScreen === 'settings' 
-                      ? 'text-[color:var(--color-jz-accent)]' 
-                      : 'text-[color:var(--color-jz-text-tertiary)]'
-                  } hover:text-[color:var(--color-jz-text-secondary)]`}
-                  onClick={() => setCurrentScreen('settings')}
-                >
-                  <JZSettingsIcon size={20} />
-                  <span className="jz-text-caption">設定</span>
-                </JZButton>
+            {/* Solid Black Background - No Transparency */}
+            <div className="bg-black border-t border-white/20 shadow-2xl relative">
+              {/* Extra opacity layer to ensure no transparency */}
+              <div className="absolute inset-0 bg-black"></div>
+              <div className="mx-auto max-w-[720px] px-6 relative z-10">
+                <div className="flex items-center justify-between h-[72px] relative">
+                  {/* Home */}
+                  <button
+                    className={`relative h-[48px] w-[48px] flex flex-col items-center justify-center rounded-2xl transition-all duration-300 group ${
+                      currentScreen === 'home'
+                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 shadow-lg shadow-blue-500/40 transform scale-110'
+                        : 'hover:bg-white/10 hover:scale-105'
+                    }`}
+                    onClick={() => setCurrentScreen('home')}
+                  >
+                    <div className={`transition-all duration-300 ${
+                      currentScreen === 'home'
+                        ? 'text-white drop-shadow-lg'
+                        : 'text-white/70 group-hover:text-white'
+                    }`}>
+                      <JZHomeIcon size={24} />
+                    </div>
+                    {currentScreen === 'home' && (
+                      <div className="absolute -bottom-1 w-1 h-1 bg-white rounded-full animate-pulse" />
+                    )}
+                    <span className="sr-only">ホーム</span>
+                  </button>
+
+                  {/* Folders -> User Gallery */}
+                  <button
+                    className={`relative h-[48px] w-[48px] flex flex-col items-center justify-center rounded-2xl transition-all duration-300 group ${
+                      currentScreen === 'user-gallery'
+                        ? 'bg-gradient-to-r from-green-500 to-emerald-600 shadow-lg shadow-green-500/40 transform scale-110'
+                        : 'hover:bg-white/10 hover:scale-105'
+                    }`}
+                    onClick={() => setCurrentScreen('user-gallery')}
+                  >
+                    <div className={`transition-all duration-300 ${
+                      currentScreen === 'user-gallery'
+                        ? 'text-white drop-shadow-lg'
+                        : 'text-white/70 group-hover:text-white'
+                    }`}>
+                      <JZMemorialPhotoIcon size={24} />
+                    </div>
+                    {currentScreen === 'user-gallery' && (
+                      <div className="absolute -bottom-1 w-1 h-1 bg-white rounded-full animate-pulse" />
+                    )}
+                    <span className="sr-only">フォルダ</span>
+                  </button>
+
+                  {/* Premium Center Plus Button */}
+                  <button
+                    aria-label="新規作成"
+                    className={`relative rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 text-white w-14 h-14 flex items-center justify-center shadow-2xl border-2 border-white/30 transition-all duration-300 group hover:scale-110 hover:shadow-purple-500/50 ${
+                      currentScreen === 'create' ? 'scale-110' : ''
+                    }`}
+                    onClick={() => setCurrentScreen('create')}
+                  >
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
+                    <JZPlusIcon size={22} />
+                  </button>
+
+                  {/* Templates (Search) */}
+                  <button
+                    className={`relative h-[48px] w-[48px] flex flex-col items-center justify-center rounded-2xl transition-all duration-300 group ${
+                      currentScreen === 'tutorial-examples'
+                        ? 'bg-gradient-to-r from-orange-500 to-red-600 shadow-lg shadow-orange-500/40 transform scale-110'
+                        : 'hover:bg-white/10 hover:scale-105'
+                    }`}
+                    onClick={() => setCurrentScreen('tutorial-examples')}
+                  >
+                    <div className={`transition-all duration-300 ${
+                      currentScreen === 'tutorial-examples'
+                        ? 'text-white drop-shadow-lg'
+                        : 'text-white/70 group-hover:text-white'
+                    }`}>
+                      <JZSearchIcon size={24} />
+                    </div>
+                    {currentScreen === 'tutorial-examples' && (
+                      <div className="absolute -bottom-1 w-1 h-1 bg-white rounded-full animate-pulse" />
+                    )}
+                    <span className="sr-only">テンプレート</span>
+                  </button>
+
+                  {/* Profile (User) */}
+                  <button
+                    className={`relative h-[48px] w-[48px] flex flex-col items-center justify-center rounded-2xl transition-all duration-300 group ${
+                      currentScreen === 'profile'
+                        ? 'bg-gradient-to-r from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/40 transform scale-110'
+                        : 'hover:bg-white/10 hover:scale-105'
+                    }`}
+                    onClick={() => setCurrentScreen('profile')}
+                  >
+                    <div className={`transition-all duration-300 ${
+                      currentScreen === 'profile'
+                        ? 'text-white drop-shadow-lg'
+                        : 'text-white/70 group-hover:text-white'
+                    }`}>
+                      <JZUserIcon size={24} />
+                    </div>
+                    {currentScreen === 'profile' && (
+                      <div className="absolute -bottom-1 w-1 h-1 bg-white rounded-full animate-pulse" />
+                    )}
+                    <span className="sr-only">プロフィール</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
