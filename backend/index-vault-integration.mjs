@@ -39,6 +39,10 @@ initializeCors();
 
 // Hide implementation details
 app.disable('x-powered-by');
+// Trust first proxy (for accurate req.ip/req.secure behind reverse proxies)
+if (process.env.TRUST_PROXY !== 'false') {
+    app.set('trust proxy', 1);
+}
 
 // ========================================
 // INITIALIZATION
@@ -127,8 +131,8 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Sanitize JSON responses (strip codes, mask 5xx messages)
 app.use(responseSanitizer());
 
-// Loosened CORS only for webhooks (no browser origin)
-app.use('/v1/webhooks', cors({ origin: true, credentials: true }));
+// Tightened CORS for webhooks (no browser credentials required)
+app.use('/v1/webhooks', cors({ origin: true, credentials: false }));
 
 // Apply environment-aware CORS configuration
 app.use(cors(getCorsConfig()));
@@ -527,8 +531,8 @@ app.post('/v1/edit-by-option', editLimiter, requireAuthMaybe, rlsAuthMiddleware(
             }
             const w = meta.width || 0;
             const h = meta.height || 0;
-            const maxSide = 12000;
-            const maxPixels = 100 * 1000 * 1000;
+            const maxSide = parseInt(process.env.MAX_IMAGE_SIDE || '12000', 10);
+            const maxPixels = parseInt(process.env.MAX_IMAGE_PIXELS || String(100 * 1000 * 1000), 10);
             if (w <= 0 || h <= 0 || w > maxSide || h > maxSide || (w * h) > maxPixels) {
                 return res.status(413).json({ error: 'Payload Too Large', message: 'Image dimensions exceed allowed limits', code: 'IMAGE_TOO_LARGE' });
             }
@@ -685,8 +689,8 @@ app.post('/v1/edit', editLimiter, requireAuthMaybe, rlsAuthMiddleware(), upload.
             }
             const w = meta.width || 0;
             const h = meta.height || 0;
-            const maxSide = 12000;
-            const maxPixels = 100 * 1000 * 1000;
+            const maxSide = parseInt(process.env.MAX_IMAGE_SIDE || '12000', 10);
+            const maxPixels = parseInt(process.env.MAX_IMAGE_PIXELS || String(100 * 1000 * 1000), 10);
             if (w <= 0 || h <= 0 || w > maxSide || h > maxSide || (w * h) > maxPixels) {
                 return res.status(413).json({ error: 'Payload Too Large', message: 'Image dimensions exceed allowed limits', code: 'IMAGE_TOO_LARGE' });
             }
@@ -1115,8 +1119,8 @@ app.post('/v1/memories/upload', vaultUploadLimiter, requireAuthMaybe, rlsAuthMid
             // Pixel dimension limits
             const w = meta.width || 0;
             const h = meta.height || 0;
-            const maxSide = 12000;
-            const maxPixels = 100 * 1000 * 1000;
+            const maxSide = parseInt(process.env.MAX_IMAGE_SIDE || '12000', 10);
+            const maxPixels = parseInt(process.env.MAX_IMAGE_PIXELS || String(100 * 1000 * 1000), 10);
             if (w <= 0 || h <= 0 || w > maxSide || h > maxSide || (w * h) > maxPixels) {
                 return res.status(413).json({ error: 'Payload Too Large', message: 'Image dimensions exceed allowed limits', code: 'IMAGE_TOO_LARGE' });
             }

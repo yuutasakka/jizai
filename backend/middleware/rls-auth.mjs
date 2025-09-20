@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken';
 import { createClient } from '@supabase/supabase-js';
 import { SubscriptionService } from '../services/subscription-service.mjs';
 import { secureLogger } from '../utils/secure-logger.mjs';
+import { supabaseService } from '../config/supabase.mjs';
 
 /**
  * Create JWT token for RLS context
@@ -53,13 +54,14 @@ export function rlsAuthMiddleware() {
             let supabaseAuth;
             let user = null;
             let deviceId = null;
+            let claims = null;
 
             if (auth && auth.startsWith('Bearer ')) {
                 // Supabase JWT supplied from frontend
                 const token = auth.slice('Bearer '.length);
                 try {
                     const secret = process.env.SUPABASE_JWT_SECRET;
-                    const claims = jwt.verify(token, secret);
+                    claims = jwt.verify(token, secret);
                     // Build client with provided JWT
                     supabaseAuth = createClient(
                         process.env.SUPABASE_URL,
@@ -78,7 +80,7 @@ export function rlsAuthMiddleware() {
                         .single();
                     if (userRow) {
                         user = { id: userRow.id, email: userRow.email };
-                        deviceId = userRow.device_id || null;
+                        deviceId = userRow.device_id || req.headers['x-device-id'] || claims?.device_id || null;
                     }
                 } catch (e) {
                     secureLogger.warn('JWT verification failed, falling back to deviceId', { error: e.message });
@@ -113,9 +115,9 @@ export function rlsAuthMiddleware() {
             
             // Log successful authentication
             secureLogger.debug('RLS authentication successful', {
-                deviceId: deviceId.substring(0, 8) + '...',
-                userId: user.id,
-                userEmail: user.email || 'no-email'
+                deviceId: typeof deviceId === 'string' ? (deviceId.substring(0, 8) + '...') : 'unknown',
+                userId: user?.id || 'unknown',
+                userEmail: user?.email || 'no-email'
             });
             
             next();
@@ -123,7 +125,7 @@ export function rlsAuthMiddleware() {
         } catch (error) {
             secureLogger.error('RLS authentication failed', {
                 error: error.message,
-                deviceId: req.headers['x-device-id']?.substring(0, 8) + '...'
+                deviceId: typeof req.headers['x-device-id'] === 'string' ? (req.headers['x-device-id'].substring(0, 8) + '...') : 'unknown'
             });
             
             return res.status(401).json({

@@ -7,10 +7,25 @@ import { SubscriptionService } from '../services/subscription-service.mjs';
 import { StorageQuotaService } from '../services/storage-quota-service.mjs';
 import { auditServiceClientUsage } from '../utils/service-client-audit.mjs';
 import { rlsAuthMiddleware } from '../middleware/rls-auth.mjs';
+import rateLimit from 'express-rate-limit';
 
 const router = express.Router();
 const subscriptionService = new SubscriptionService();
 const storageQuotaService = new StorageQuotaService();
+
+// Optional IP allowlist middleware for admin endpoints
+function optionalIpAllowlist(ipsEnvVar = 'ADMIN_IP_ALLOWLIST') {
+    const list = (process.env[ipsEnvVar] || '')
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+    if (list.length === 0) return (_req, _res, next) => next();
+    return (req, res, next) => {
+        const ip = req.ip || req.connection?.remoteAddress || '';
+        if (list.includes(ip)) return next();
+        return res.status(403).json({ error: 'Forbidden', message: 'IP not allowed', code: 'ADMIN_IP_BLOCKED' });
+    };
+}
 
 // Basic admin auth middleware for internal endpoints
 const requireAdmin = (req, res, next) => {
@@ -345,7 +360,14 @@ router.post('/storage/check', rlsAuthMiddleware(), async (req, res) => {
  * GET /v1/subscription/analytics
  * Get subscription analytics (admin/internal use)
  */
-router.get('/analytics', requireAdmin, async (req, res) => {
+const adminAnalyticsLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: parseInt(process.env.ADMIN_ANALYTICS_RATE_LIMIT || '20', 10),
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
+router.get('/analytics', adminAnalyticsLimiter, optionalIpAllowlist(), requireAdmin, async (req, res) => {
     try {
         // This would typically be protected by admin authentication
         const analytics = await subscriptionService.getSubscriptionAnalytics();

@@ -2,9 +2,58 @@
 // Handles real-time updates from Apple's subscription system
 import express from 'express';
 import { AppStoreWebhookHandler } from '../services/appstore-webhook.mjs';
+import rateLimit from 'express-rate-limit';
 
 const router = express.Router();
 const webhookHandler = new AppStoreWebhookHandler();
+
+// Optional IP allowlist (comma-separated) for additional protection
+function optionalIpAllowlist(ipsEnvVar = 'WEBHOOK_IP_ALLOWLIST') {
+    const list = (process.env[ipsEnvVar] || '')
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+    if (list.length === 0) return (_req, _res, next) => next();
+    return (req, res, next) => {
+        const ip = req.ip || req.connection?.remoteAddress || '';
+        if (list.includes(ip)) return next();
+        return res.status(403).json({ error: 'Forbidden', message: 'IP not allowed' });
+    };
+}
+
+// Tight rate limit for webhook endpoint
+const webhookLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: parseInt(process.env.WEBHOOK_RATE_LIMIT || '30', 10),
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
+// Simple in-memory replay protection cache
+const seenNotifications = new Map(); // key: notificationUUID, value: expireAt (ms)
+const REPLAY_TTL_MS = parseInt(process.env.WEBHOOK_REPLAY_TTL_MS || '300000', 10); // 5 minutes
+
+function checkReplay(notificationUUID) {
+    const now = Date.now();
+    const exp = seenNotifications.get(notificationUUID);
+    if (exp && exp > now) return true;
+    // cleanup occasionally
+    if (seenNotifications.size > 1000) {
+        for (const [k, v] of seenNotifications.entries()) {
+            if (v <= now) seenNotifications.delete(k);
+        }
+    }
+    seenNotifications.set(notificationUUID, now + REPLAY_TTL_MS);
+    return false;
+}
+
+// Admin endpoints limiter
+const adminLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: parseInt(process.env.ADMIN_WEBHOOK_RATE_LIMIT || '30', 10),
+    standardHeaders: true,
+    legacyHeaders: false
+});
 
 // Basic admin auth middleware for internal endpoints
 const requireAdmin = (req, res, next) => {
@@ -73,7 +122,7 @@ const validateWebhookRequest = (req, res, next) => {
 };
 
 // Body is parsed as raw in index-vault-integration before JSON parser
-router.post('/appstore', validateWebhookRequest, async (req, res) => {
+router.post('/appstore', webhookLimiter, optionalIpAllowlist(), validateWebhookRequest, async (req, res) => {
     try {
         const body = Buffer.isBuffer(req.body) ? req.body.toString() : (typeof req.body === 'string' ? req.body : JSON.stringify(req.body));
         
@@ -107,6 +156,15 @@ router.post('/appstore', validateWebhookRequest, async (req, res) => {
         }
 
         console.log(`📱 Received App Store notification: ${notificationPayload.notificationType}`);
+
+        // Replay protection
+        if (checkReplay(notificationPayload.notificationUUID)) {
+            return res.status(200).json({
+                success: false,
+                notificationUUID: notificationPayload.notificationUUID,
+                error: 'Duplicate notification (replay ignored)'
+            });
+        }
 
         // Verify signature (in production, this is crucial for security)
         if (process.env.NODE_ENV === 'production') {
@@ -191,7 +249,7 @@ router.post('/appstore', validateWebhookRequest, async (req, res) => {
  * Check webhook health and recent activity
  * Internal endpoint for monitoring
  */
-router.get('/appstore/status', requireAdmin, async (req, res) => {
+router.get('/appstore/status', adminLimiter, requireAdmin, async (req, res) => {
     try {
         // Check recent notification activity
         const stats = await webhookHandler.getWebhookStats();
@@ -226,7 +284,7 @@ router.get('/appstore/status', requireAdmin, async (req, res) => {
  * POST /v1/webhooks/appstore/test
  * Test webhook processing (development only)
  */
-router.post('/appstore/test', requireAdmin, async (req, res) => {
+router.post('/appstore/test', adminLimiter, requireAdmin, async (req, res) => {
     if (process.env.NODE_ENV === 'production') {
         return res.status(403).json({
             error: 'Forbidden',

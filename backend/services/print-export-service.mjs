@@ -254,7 +254,8 @@ export class PrintExportService {
         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
       };
 
-      const { data: exportRecord, error } = await supabaseAuth
+      // Use service role client for system-side recording
+      const { data: exportRecord, error } = await supabaseService
         .from('print_exports')
         .insert(exportData)
         .select('*')
