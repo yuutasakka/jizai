@@ -23,11 +23,10 @@ export function securityHeaders(options = {}) {
     return (req, res, next) => {
         // Only add HSTS in production and over HTTPS
         if (enableHSTS) {
-            // Check if we're in a secure context
+            // Check if we're in a secure context (no NODE_ENV shortcut)
             const isSecure = req.secure || 
                              req.get('X-Forwarded-Proto') === 'https' || 
-                             req.connection.encrypted ||
-                             process.env.NODE_ENV === 'production'; // Assume production is HTTPS
+                             req.connection.encrypted;
             
             if (isSecure) {
                 let hstsValue = `max-age=${hstsMaxAge}`;
@@ -69,11 +68,13 @@ export function securityHeaders(options = {}) {
             res.setHeader('X-Content-Type-Options', 'nosniff');
         }
         
-        // Cross-Origin Resource Policy (CORP) for additional cross-origin protection
-        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        // Cross-Origin Resource Policy (CORP) - stricter in production
+        const corp = process.env.SECURITY_CORP || (process.env.NODE_ENV === 'production' ? 'same-origin' : 'cross-origin');
+        res.setHeader('Cross-Origin-Resource-Policy', corp);
         
-        // Cross-Origin Embedder Policy (COEP) - permissive but explicit
-        res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+        // Cross-Origin Embedder Policy (COEP) - stricter in production (may require auditing)
+        const coep = process.env.SECURITY_COEP || (process.env.NODE_ENV === 'production' ? 'require-corp' : 'unsafe-none');
+        res.setHeader('Cross-Origin-Embedder-Policy', coep);
         
         // Cross-Origin Opener Policy (COOP) - protect against window.opener attacks
         res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
@@ -170,7 +171,7 @@ export function cspHeaders(options = {}) {
             "font-src 'self' https://fonts.gstatic.com",
             
             // Connect sources - minimal necessary connections
-            "connect-src 'self' https://dashscope.aliyuncs.com https://vitals.vercel-analytics.com https://api.supabase.co wss://*.supabase.co",
+            "connect-src 'self' https://dashscope.aliyuncs.com https://vitals.vercel-analytics.com https://*.supabase.co wss://*.supabase.co",
             
             "media-src 'self' data: blob:",
             "object-src 'none'", // Block all plugins

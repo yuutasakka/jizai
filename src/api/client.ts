@@ -1,8 +1,23 @@
 // JizaiバックエンドAPIクライアント
+import { supabase } from '../lib/supabase';
 // Use Vite env var when provided; otherwise derive sensible default for dev
 const API_BASE_URL = (() => {
   const fromEnv = (import.meta as any)?.env?.VITE_API_BASE_URL;
-  if (fromEnv && typeof fromEnv === 'string') return fromEnv;
+  // If running under HTTPS and env points to HTTP (non-local), fallback to same-origin to avoid mixed content
+  if (fromEnv && typeof fromEnv === 'string') {
+    try {
+      if (typeof window !== 'undefined') {
+        const { protocol, hostname } = window.location;
+        const isHttps = protocol === 'https:';
+        const isLocal = /^(localhost|127\.0\.0\.1)$/.test(hostname);
+        if (isHttps && fromEnv.startsWith('http://') && !isLocal) {
+          console.warn('[API] VITE_API_BASE_URL is http on https page; using same-origin to avoid mixed content');
+          return `${protocol}//${hostname}`;
+        }
+      }
+    } catch {}
+    return fromEnv;
+  }
   // Dev fallback: if running on localhost:3001 (vite), target backend 3000
   if (typeof window !== 'undefined') {
     const { protocol, hostname } = window.location;
@@ -139,6 +154,61 @@ export interface ApiError {
   credits?: number;
 }
 
+export interface MemoryItem {
+  id: string;
+  url: string;
+  title: string;
+  uploadedAt: string;
+  mimeType: string;
+  size?: number;
+}
+
+export interface MemoryPage {
+  items: MemoryItem[];
+  pagination: {
+    limit: number;
+    offset: number;
+    total: number;
+    hasMore: boolean;
+  };
+}
+
+export interface SavedPrompt {
+  id: string;
+  prompt_text: string;
+  source: 'user' | 'template';
+  example_key?: string | null;
+  used_in_memory?: string | null;
+  created_at: string;
+}
+
+export interface PromptPage {
+  items: SavedPrompt[];
+  pagination: {
+    limit: number;
+    offset: number;
+    total: number;
+    hasMore: boolean;
+  };
+}
+
+export interface PopularPrompt {
+  key: string;
+  example_key?: string | null;
+  uses: number;
+  last_used: string;
+}
+
+export interface PopularPromptPage {
+  items: PopularPrompt[];
+  pagination: {
+    limit: number;
+    offset: number;
+    total: number;
+    hasMore: boolean;
+  };
+}
+
 class JizaiApiClient {
   private deviceId: string;
 
@@ -185,6 +255,17 @@ class JizaiApiClient {
     return response.json();
   }
 
+  private async authHeaders(): Promise<Record<string, string>> {
+    try {
+      if (!supabase) return {};
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      return token ? { Authorization: `Bearer ${token}` } : {};
+    } catch {
+      return {};
+    }
+  }
+
   // ヘルスチェック
   async healthCheck(): Promise<{ ok: boolean }> {
     const response = await fetch(`${API_BASE_URL}/v1/health`);
@@ -193,7 +274,8 @@ class JizaiApiClient {
 
   // 残高確認
   async getBalance(): Promise<UserBalance> {
-    const response = await fetch(`${API_BASE_URL}/v1/balance?deviceId=${this.deviceId}`);
+    const headers = await this.authHeaders();
+    const response = await fetch(`${API_BASE_URL}/v1/balance`, { headers });
     const raw = await this.handleResponse<any>(response);
     // 旧UI互換: サブスクに応じたダミー残回数を付与
     const tier = raw.subscription?.tier || 'free';
@@ -207,7 +289,7 @@ class JizaiApiClient {
       deviceId: raw.deviceId || this.deviceId,
       subscription: raw.subscription,
       storage: raw.storage,
-      credits: creditsByTier[tier] ?? 10,
+      credits: typeof raw.credits === 'number' ? raw.credits : (creditsByTier[tier] ?? 10),
     };
   }
 
@@ -226,11 +308,31 @@ class JizaiApiClient {
       formData.append('engine_profile', 'standard');
     }
 
+    const headers = await this.authHeaders();
     const response = await fetch(`${API_BASE_URL}/v1/edit`, {
       method: 'POST',
-      headers: {
-        'x-device-id': this.deviceId,
-      },
+      headers,
+      body: formData,
+    });
+
+    return this.handleResponse(response);
+  }
+
+  // 画像編集（編集オプションIDからプロンプトを解決）
+  async editImageByOption(
+    imageFile: File,
+    optionId: string,
+    engineProfile?: 'standard' | 'high'
+  ): Promise<EditResponse> {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    formData.append('option_id', optionId);
+    formData.append('engine_profile', engineProfile || 'standard');
+
+    const headers = await this.authHeaders();
+    const response = await fetch(`${API_BASE_URL}/v1/edit-by-option`, {
+      method: 'POST',
+      headers,
       body: formData,
     });
 
@@ -239,13 +341,11 @@ class JizaiApiClient {
 
   // 課金処理
   async purchase(productId: string, transactionId: string): Promise<PurchaseResponse> {
+    const headers = await this.authHeaders();
     const response = await fetch(`${API_BASE_URL}/v1/purchase`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json', ...headers },
       body: JSON.stringify({
-        deviceId: this.deviceId,
         productId,
         transactionId,
       }),
@@ -254,15 +354,84 @@ class JizaiApiClient {
     return this.handleResponse(response);
   }
 
+  // ユーザーの生成物一覧（編集済み画像）
+  async listMemories(): Promise<MemoryItem[]> {
+    const response = await fetch(`${API_BASE_URL}/v1/memories`, {
+      headers: { 'x-device-id': this.deviceId },
+    });
+    const data = await this.handleResponse<{ items: MemoryItem[] }>(response);
+    return data.items || [];
+  }
+
+  // ページネーション対応の一覧
+  async listMemoriesPaged(limit = 24, offset = 0): Promise<MemoryPage> {
+    const url = new URL(`${API_BASE_URL}/v1/memories`);
+    url.searchParams.set('limit', String(limit));
+    url.searchParams.set('offset', String(offset));
+    const response = await fetch(url.toString(), {
+      headers: { 'x-device-id': this.deviceId },
+    });
+    return this.handleResponse<MemoryPage>(response);
+  }
+
+  // 保存済みプロンプト一覧
+  async listPromptsPaged(params?: { limit?: number; offset?: number; source?: 'user' | 'template' }): Promise<PromptPage> {
+    const limit = params?.limit ?? 20;
+    const offset = params?.offset ?? 0;
+    const source = params?.source;
+    const url = new URL(`${API_BASE_URL}/v1/prompts`);
+    url.searchParams.set('limit', String(limit));
+    url.searchParams.set('offset', String(offset));
+    if (source) url.searchParams.set('source', source);
+    const headers = await this.authHeaders();
+    const res = await fetch(url.toString(), { headers: { ...headers, 'x-device-id': this.deviceId } });
+    return this.handleResponse<PromptPage>(res);
+  }
+
+  // 人気テンプレートプロンプト
+  async listPopularPrompts(limit = 12, offset = 0): Promise<PopularPromptPage> {
+    const url = new URL(`${API_BASE_URL}/v1/prompts/popular`);
+    url.searchParams.set('limit', String(limit));
+    url.searchParams.set('offset', String(offset));
+    const headers = await this.authHeaders();
+    const res = await fetch(url.toString(), { headers: { ...headers, 'x-device-id': this.deviceId } });
+    return this.handleResponse<PopularPromptPage>(res);
+  }
+
+  // 画像アップロード（Vaultに直接、JPEG/PNGのみ）
+  async uploadMemory(imageFile: File, options?: { title?: string; vaultId?: string }): Promise<MemoryItem> {
+    // Client-side validation for quicker feedback
+    const allowedTypes = ['image/jpeg', 'image/png'];
+    if (!allowedTypes.includes(imageFile.type)) {
+      throw new Error('UNSUPPORTED_IMAGE_TYPE: Only JPEG or PNG is allowed');
+    }
+
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    if (options?.title) formData.append('title', options.title);
+    if (options?.vaultId) formData.append('vaultId', options.vaultId);
+
+    const headers = await this.authHeaders();
+    const response = await fetch(`${API_BASE_URL}/v1/memories/upload`, {
+      method: 'POST',
+      headers: { 'x-device-id': this.deviceId, ...headers },
+      body: formData,
+    });
+
+    const data = await this.handleResponse<{ success: boolean; memory: MemoryItem }>(response);
+    if (!data || !(data as any).memory) {
+      throw new Error('UPLOAD_FAILED: Missing memory in response');
+    }
+    return (data as any).memory;
+  }
+
   // 通報
   async report(jobId: string, reasonId: string, note?: string): Promise<ReportResponse> {
+    const headers = await this.authHeaders();
     const response = await fetch(`${API_BASE_URL}/v1/report`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json', ...headers },
       body: JSON.stringify({
-        deviceId: this.deviceId,
         jobId,
         reasonId,
         note,
@@ -290,7 +459,8 @@ class JizaiApiClient {
 
   // サブスクリプション状況取得
   async getSubscriptionStatus(): Promise<SubscriptionStatus> {
-    const response = await fetch(`${API_BASE_URL}/v1/subscription/status?deviceId=${this.deviceId}`);
+    const headers = await this.authHeaders();
+    const response = await fetch(`${API_BASE_URL}/v1/subscription/status?deviceId=${this.deviceId}`, { headers });
     return this.handleResponse(response);
   }
 
@@ -350,7 +520,8 @@ class JizaiApiClient {
       byType: Record<string, number>;
     };
   }> {
-    const response = await fetch(`${API_BASE_URL}/v1/subscription/storage?deviceId=${this.deviceId}`);
+    const headers = await this.authHeaders();
+    const response = await fetch(`${API_BASE_URL}/v1/subscription/storage?deviceId=${this.deviceId}`, { headers });
     return this.handleResponse(response);
   }
 
@@ -365,11 +536,10 @@ class JizaiApiClient {
       requiredSpace: number;
     };
   }> {
+    const headers = await this.authHeaders();
     const response = await fetch(`${API_BASE_URL}/v1/subscription/storage/check`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json', ...headers },
       body: JSON.stringify({
         deviceId: this.deviceId,
         fileSize,
@@ -435,9 +605,8 @@ class JizaiApiClient {
 
   // 印刷出力履歴取得
   async getPrintExportHistory(): Promise<PrintExportHistory[]> {
-    const response = await fetch(
-      `${API_BASE_URL}/v1/print-export/history?deviceId=${this.deviceId}`
-    );
+    const headers = await this.authHeaders();
+    const response = await fetch(`${API_BASE_URL}/v1/print-export/history?deviceId=${this.deviceId}`, { headers });
     const data = await this.handleResponse<{ exports: PrintExportHistory[] }>(response);
     return data.exports;
   }
@@ -456,10 +625,38 @@ class JizaiApiClient {
     );
     return this.handleResponse(response);
   }
+
+  // メモリ削除（ソフトデリート）
+  async deleteMemory(id: string): Promise<boolean> {
+    const uuidV4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidV4.test(id)) throw new Error('INVALID_MEMORY_ID: memory id must be a UUID v4');
+    const headers = await this.authHeaders();
+    const response = await fetch(`${API_BASE_URL}/v1/memories/${id}`, {
+      method: 'DELETE',
+      headers: { 'x-device-id': this.deviceId, ...headers },
+    });
+    const data = await this.handleResponse<{ success: boolean }>(response);
+    return !!data?.success;
+  }
+
+  // レシートを用いた購入（クレジット加算）
+  async purchaseWithReceipt(receiptData: string, productId?: string): Promise<{ success: boolean; productId: string; creditsAdded: number; creditsRemaining: number }>{
+    if (!receiptData || typeof receiptData !== 'string') {
+      throw new Error('MISSING_RECEIPT: receiptData is required');
+    }
+    const headers = await this.authHeaders();
+    const res = await fetch(`${API_BASE_URL}/v1/purchase`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...headers },
+      body: JSON.stringify({ receiptData, productId }),
+    });
+    return this.handleResponse(res);
+  }
 }
 
 // シングルトンインスタンス
 export const apiClient = new JizaiApiClient();
+export default apiClient;
 
 // 利用可能な製品ID
 // 旧UIのPRODUCTSは廃止しました

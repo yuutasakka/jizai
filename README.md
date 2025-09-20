@@ -93,6 +93,13 @@ PersonalizationProvider (最上位)
 - [定数・設定](./src/utils/long-term-engagement-constants.ts) - システム定数
 - [ヘルパー関数](./src/utils/long-term-engagement-helpers.ts) - ユーティリティ関数
 
+### 開発・運用（本リポジトリ新機能のオンボーディング）
+- [Developer Onboarding](./docs/DEVELOPER_ONBOARDING.md)
+- [Architecture Overview](./docs/ARCHITECTURE_OVERVIEW.md)
+- [SUPABASE 初期設定](./SUPABASE_SETUP.md)
+- [デプロイ](./DEPLOYMENT.md)
+- [セキュリティ方針](./SECURITY.md)
+
 ## 🧪 心理学的設計原則
 
 ### 1. 漸進的コミット (Progressive Commitment)

@@ -48,39 +48,64 @@ function createUserJWT(deviceId, user) {
 export function rlsAuthMiddleware() {
     return async (req, res, next) => {
         try {
-            const deviceId = req.headers['x-device-id'];
-            
-            if (!deviceId) {
-                return res.status(400).json({
-                    error: 'Bad Request',
-                    message: 'X-Device-ID header is required'
-                });
-            }
-            
-            // Get or create user for this device
+            const auth = req.headers['authorization'];
             const subscriptionService = new SubscriptionService();
-            const user = await subscriptionService.getOrCreateUser(deviceId);
-            
-            // Create JWT token for this user
-            const userJWT = createUserJWT(deviceId, user);
-            
-            // Create authenticated Supabase client
-            const supabaseAuth = createClient(
-                process.env.SUPABASE_URL,
-                process.env.SUPABASE_ANON_KEY,
-                {
-                    auth: {
-                        autoRefreshToken: false,
-                        persistSession: false
-                    },
-                    global: {
-                        headers: {
-                            Authorization: `Bearer ${userJWT}`
+            let supabaseAuth;
+            let user = null;
+            let deviceId = null;
+
+            if (auth && auth.startsWith('Bearer ')) {
+                // Supabase JWT supplied from frontend
+                const token = auth.slice('Bearer '.length);
+                try {
+                    const secret = process.env.SUPABASE_JWT_SECRET;
+                    const claims = jwt.verify(token, secret);
+                    // Build client with provided JWT
+                    supabaseAuth = createClient(
+                        process.env.SUPABASE_URL,
+                        process.env.SUPABASE_ANON_KEY,
+                        {
+                            auth: { autoRefreshToken: false, persistSession: false },
+                            global: { headers: { Authorization: `Bearer ${token}` } }
                         }
+                    );
+                    // Fetch user/device mapping
+                    const { data: userRow } = await supabaseService
+                        .from('users')
+                        .select('id, email, device_id')
+                        .eq('id', claims.sub)
+                        .limit(1)
+                        .single();
+                    if (userRow) {
+                        user = { id: userRow.id, email: userRow.email };
+                        deviceId = userRow.device_id || null;
                     }
+                } catch (e) {
+                    secureLogger.warn('JWT verification failed, falling back to deviceId', { error: e.message });
                 }
-            );
-            
+            }
+
+            // Fallback to deviceId header for legacy flows
+            if (!supabaseAuth) {
+                deviceId = req.headers['x-device-id'];
+                if (!deviceId) {
+                    return res.status(401).json({
+                        error: 'Unauthorized',
+                        message: 'Authorization token is required (or X-Device-ID for legacy)'
+                    });
+                }
+                user = await subscriptionService.getOrCreateUser(deviceId);
+                const userJWT = createUserJWT(deviceId, user);
+                supabaseAuth = createClient(
+                    process.env.SUPABASE_URL,
+                    process.env.SUPABASE_ANON_KEY,
+                    {
+                        auth: { autoRefreshToken: false, persistSession: false },
+                        global: { headers: { Authorization: `Bearer ${userJWT}` } }
+                    }
+                );
+            }
+
             // Set authenticated client in request context
             req.supabaseAuth = supabaseAuth;
             req.user = user;

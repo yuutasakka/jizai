@@ -191,7 +191,7 @@ router.post('/appstore', validateWebhookRequest, async (req, res) => {
  * Check webhook health and recent activity
  * Internal endpoint for monitoring
  */
-router.get('/appstore/status', async (req, res) => {
+router.get('/appstore/status', requireAdmin, async (req, res) => {
     try {
         // Check recent notification activity
         const stats = await webhookHandler.getWebhookStats();
@@ -226,7 +226,7 @@ router.get('/appstore/status', async (req, res) => {
  * POST /v1/webhooks/appstore/test
  * Test webhook processing (development only)
  */
-router.post('/appstore/test', async (req, res) => {
+router.post('/appstore/test', requireAdmin, async (req, res) => {
     if (process.env.NODE_ENV === 'production') {
         return res.status(403).json({
             error: 'Forbidden',

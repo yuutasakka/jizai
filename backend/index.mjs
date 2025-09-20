@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import multer from 'multer';
 import axios from 'axios';
+import sharp from 'sharp';
 import rateLimit from 'express-rate-limit';
 import { readFile } from 'fs/promises';
 import store from './store.mjs';
@@ -17,6 +18,9 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Hide implementation details
+app.disable('x-powered-by');
 
 // Initialize CORS configuration
 initializeCors();
@@ -39,11 +43,15 @@ const upload = multer({
   },
   fileFilter: (req, file, cb) => {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/bmp', 'image/tiff'];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error(`Unsupported file type: ${file.mimetype}`), false);
+    // basic filename sanity (no control chars, not too long)
+    const name = file.originalname || '';
+    if (name.length > 200 || /[\0\r\n]/.test(name)) {
+      return cb(new Error('Invalid filename'), false);
     }
+    if (allowedTypes.includes(file.mimetype)) {
+      return cb(null, true);
+    }
+    return cb(new Error(`Unsupported file type: ${file.mimetype}`), false);
   }
 });
 
@@ -130,6 +138,7 @@ app.get('/', (req, res) => {
 });
 
 // 画像編集エンドポイント
+// Legacy server (not used in production). Protect with RLS if used.
 app.post('/v1/edit', editLimiter, upload.single('image'), async (req, res) => {
     try {
         const { prompt } = req.body;
@@ -189,6 +198,47 @@ app.post('/v1/edit', editLimiter, upload.single('image'), async (req, res) => {
                 error: 'Internal Server Error',
                 message: 'API key not configured',
                 code: 'API_KEY_MISSING'
+            });
+        }
+
+        // 画像のマジックバイト検証（MIME偽装対策）
+        try {
+            const meta = await sharp(imageFile.buffer).metadata();
+            const format = meta.format; // jpeg | png | webp | tiff | gif | heif など
+            const mimeMap = {
+                jpeg: 'image/jpeg',
+                png: 'image/png',
+                webp: 'image/webp',
+                tiff: 'image/tiff',
+                gif: 'image/gif',
+                heif: 'image/heic',
+                avif: 'image/avif'
+            };
+            const detected = mimeMap[format] || null;
+            if (!detected || detected !== imageFile.mimetype) {
+                return res.status(400).json({
+                    error: 'Bad Request',
+                    message: 'Invalid image data (mime mismatch)',
+                    code: 'INVALID_IMAGE_DATA'
+                });
+            }
+            // Pixel dimension limits
+            const w = meta.width || 0;
+            const h = meta.height || 0;
+            const maxSide = 12000; // 12k px per side
+            const maxPixels = 100 * 1000 * 1000; // 100 MP ceiling
+            if (w <= 0 || h <= 0 || w > maxSide || h > maxSide || (w * h) > maxPixels) {
+                return res.status(413).json({
+                    error: 'Payload Too Large',
+                    message: 'Image dimensions exceed allowed limits',
+                    code: 'IMAGE_TOO_LARGE'
+                });
+            }
+        } catch (e) {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: 'Invalid or corrupted image file',
+                code: 'INVALID_IMAGE_FILE'
             });
         }
 

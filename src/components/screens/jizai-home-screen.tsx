@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import { track } from '../../lib/analytics';
+import { JZBellIcon } from '../design-system/jizai-icons';
+import { JZCard } from '../design-system/jizai-card';
+import { JZButton } from '../design-system/jizai-button';
+import api from '../../api/client';
 
 interface JizaiHomeScreenProps {
   onNavigate: (screen: string) => void;
@@ -7,15 +11,30 @@ interface JizaiHomeScreenProps {
 
 export const JizaiHomeScreen = ({ onNavigate }: JizaiHomeScreenProps) => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const handleImageSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files?.[0]) {
-      setSelectedImage(event.target.files[0]);
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      // 既存URLがあれば解放
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
       track('image_selected');
-      onNavigate('progress');
     }
   };
+
+  // コンポーネントアンマウント時にオブジェクトURLを解放
+  React.useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   // 初回の軽いスケルトン（実装時はAPIロードに置き換え）
   React.useEffect(() => {
@@ -25,52 +44,58 @@ export const JizaiHomeScreen = ({ onNavigate }: JizaiHomeScreenProps) => {
 
   const editingOptions = [
     {
-      id: 'brighten',
-      title: '明るくする',
-      icon: '☀️',
-      description: '暗い写真を明るく自然に調整'
-    },
-    {
-      id: 'background',
-      title: '背景を変える',
+      id: 'bg_remove',
+      title: '1. 背景の変更・除去',
       icon: '🖼️',
-      description: '背景を美しい風景に変更'
+      description: '他の人物や物体が全て除去されます。'
     },
     {
-      id: 'enhance',
-      title: '美しく仕上げる',
-      icon: '✨',
-      description: '全体的な品質を向上させる'
+      id: 'skin_tone',
+      title: '2. 顔色の補正・血色改善',
+      icon: '😊',
+      description: '顔色が健康的で温かみのある自然な肌色に。'
     },
     {
-      id: 'color',
-      title: '色を調整する',
-      icon: '🎨',
-      description: '色合いや彩度を最適化'
-    },
-    {
-      id: 'smooth',
-      title: 'なめらかにする',
-      icon: '🌟',
-      description: 'ノイズを除去してクリアに'
-    },
-    {
-      id: 'formal',
-      title: 'フォーマルに',
+      id: 'attire_suit',
+      title: '3-A. 服装の変更・合成（ダークスーツ）',
       icon: '👔',
-      description: '正式な場面にふさわしく調整'
+      description: 'ダークスーツに白シャツを着用した姿になります。'
     },
     {
-      id: 'gentle',
-      title: '優しい印象に',
-      icon: '🌸',
-      description: 'やわらかで温かみのある仕上がり'
+      id: 'attire_dress',
+      title: '3-B. 服装の変更（ダークドレス）',
+      icon: '👗',
+      description: 'ダークカラーのフォーマルドレスを着用した姿になります。'
     },
     {
-      id: 'classic',
-      title: 'クラシック調',
-      icon: '🎭',
-      description: '伝統的で上品な雰囲気に'
+      id: 'enhance_quality',
+      title: '4. 画質向上・鮮明化処理',
+      icon: '🔍',
+      description: '全体的に高解像度の写真になります。'
+    },
+    {
+      id: 'smile_adjust',
+      title: '5. 笑顔への表情変更',
+      icon: '🙂',
+      description: '自然で温かみのある優しい笑顔になります。'
+    },
+    {
+      id: 'wrinkle_spot_reduce',
+      title: '6. しわ・シミの軽減',
+      icon: '🧴',
+      description: '深いしわが薄くなり、シミや肌の色むらが目立たなくなります。'
+    },
+    {
+      id: 'hair_fix',
+      title: '7. 髪の毛の修正',
+      icon: '💇‍♂️',
+      description: '薄毛部分が自然に補われ、白髪が黒髪になり、整った髪型になります。'
+    },
+    {
+      id: 'glasses_reflection',
+      title: '8. メガネの反射除去・調整',
+      icon: '👓',
+      description: 'メガネの反射や光の映り込みが消えます。'
     }
   ];
 
@@ -81,12 +106,12 @@ export const JizaiHomeScreen = ({ onNavigate }: JizaiHomeScreenProps) => {
         <div className="flex items-center justify-between">
           <h1 className="jz-font-display jz-text-display-medium text-[color:var(--color-jz-text-primary)]">JIZAI</h1>
           <div className="flex items-center gap-4">
-            <button 
-              onClick={() => onNavigate('settings')}
+            <button
+              onClick={() => onNavigate('notifications')}
               className="p-2 text-[color:var(--color-jz-text-secondary)] hover:text-[color:var(--color-jz-text-primary)] transition-colors"
-              aria-label="設定を開く"
+              aria-label="通知を開く"
             >
-              ⚙️
+              <JZBellIcon size={20} />
             </button>
           </div>
         </div>
@@ -120,22 +145,50 @@ export const JizaiHomeScreen = ({ onNavigate }: JizaiHomeScreenProps) => {
               <div className="h-32 bg-[color:var(--color-jz-card)] border-2 border-dashed border-[color:var(--color-jz-border)] rounded-[var(--radius-jz-card)]" />
             </div>
           ) : (
-            <div 
-              onClick={() => document.getElementById('photo-input')?.click()}
-              className="relative bg-[color:var(--color-jz-card)] border-2 border-dashed border-[color:var(--color-jz-border)] rounded-[var(--radius-jz-card)] p-12 text-center cursor-pointer hover:bg-[color:var(--color-jz-card)]/80 transition-colors"
-            >
-              <div className="mb-4">
-                <div className="w-16 h-16 bg-[color:var(--color-jz-accent)]/15 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">📷</span>
+            <>
+              {!previewUrl ? (
+                <div 
+                  onClick={() => document.getElementById('photo-input')?.click()}
+                  className="relative bg-[color:var(--color-jz-card)] border-2 border-dashed border-[color:var(--color-jz-border)] rounded-[var(--radius-jz-card)] p-12 text-center cursor-pointer hover:bg-[color:var(--color-jz-card)]/80 transition-colors"
+                >
+                  <div className="mb-4">
+                    <div className="w-16 h-16 bg-[color:var(--color-jz-accent)]/15 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-2xl">📷</span>
+                    </div>
+                    <h3 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)] mb-2">
+                      写真を選択してください
+                    </h3>
+                    <p className="jz-text-body text-[color:var(--color-jz-text-secondary)]">
+                      クリックまたはドラッグ&ドロップで写真をアップロード
+                    </p>
+                  </div>
                 </div>
-                <h3 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)] mb-2">
-                  写真を選択してください
-                </h3>
-                <p className="jz-text-body text-[color:var(--color-jz-text-secondary)]">
-                  クリックまたはドラッグ&ドロップで写真をアップロード
-                </p>
-              </div>
-            </div>
+              ) : (
+                <div className="bg-[color:var(--color-jz-card)] border border-[color:var(--color-jz-border)] rounded-[var(--radius-jz-card)] p-6">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="w-64 h-64 rounded-[var(--radius-jz-card)] overflow-hidden shadow">
+                      <img src={previewUrl} alt="アップロードした写真のプレビュー" className="w-full h-full object-cover" />
+                    </div>
+                    <p className="jz-text-caption text-[color:var(--color-jz-text-secondary)]">下の「編集の種類」から選択してください</p>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => {
+                          setSelectedImage(null);
+                          if (previewUrl) URL.revokeObjectURL(previewUrl);
+                          setPreviewUrl(null);
+                          setSelectedOptionId(null);
+                          const input = document.getElementById('photo-input') as HTMLInputElement | null;
+                          if (input) input.value = '';
+                        }}
+                        className="bg-[color:var(--color-jz-card)] border border-[color:var(--color-jz-border)] text-[color:var(--color-jz-text-primary)] px-6 py-3 rounded-[var(--radius-jz-button)] hover:bg-[color:var(--color-jz-card)]/80"
+                      >
+                        写真を選び直す
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           )}
           <input
             id="photo-input"
@@ -167,10 +220,14 @@ export const JizaiHomeScreen = ({ onNavigate }: JizaiHomeScreenProps) => {
                   <div
                     key={option.id}
                     onClick={() => {
+                      setSelectedOptionId(option.id);
                       track('editing_option_selected', { option: option.id });
-                      onNavigate('progress');
                     }}
-                    className="bg-[color:var(--color-jz-card)] border border-[color:var(--color-jz-border)] rounded-[var(--radius-jz-card)] p-6 text-center cursor-pointer hover:shadow-lg hover:border-[color:var(--color-jz-accent)]/30 transition-all"
+                    className={`bg-[color:var(--color-jz-card)] rounded-[var(--radius-jz-card)] p-6 text-center cursor-pointer transition-all border ${
+                      selectedOptionId === option.id
+                        ? 'border-[color:var(--color-jz-accent)] ring-2 ring-[color:var(--color-jz-accent)]/50 scale-[1.02]'
+                        : 'border-[color:var(--color-jz-border)] hover:shadow-lg hover:border-[color:var(--color-jz-accent)]/30'
+                    }`}
                   >
                     <div className="text-3xl mb-3">{option.icon}</div>
                     <h4 className="font-medium text-[color:var(--color-jz-text-primary)] mb-2">{option.title}</h4>
@@ -178,23 +235,116 @@ export const JizaiHomeScreen = ({ onNavigate }: JizaiHomeScreenProps) => {
                   </div>
                 ))}
               </div>
+
+              {previewUrl && selectedOptionId && (
+                <div className="mt-6">
+                  {/* 生成前プレビュー（画像 + 変更内容の確認） */}
+                  {(() => {
+                    const selected = editingOptions.find(o => o.id === selectedOptionId);
+                    return (
+                      <div className="bg-[color:var(--color-jz-card)] border border-[color:var(--color-jz-border)] rounded-[var(--radius-jz-card)] p-4 mb-4">
+                        <div className="flex items-center gap-4">
+                          <div className="w-24 h-24 rounded-[var(--radius-jz-card)] overflow-hidden border border-[color:var(--color-jz-border)]">
+                            <img src={previewUrl} alt="生成前の確認用プレビュー" className="w-full h-full object-cover" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="jz-text-caption text-[color:var(--color-jz-text-tertiary)] mb-1">加える変更</div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-lg" aria-hidden>{selected?.icon}</span>
+                              <span className="font-medium text-[color:var(--color-jz-text-primary)]">{selected?.title}</span>
+                            </div>
+                            <div className="text-sm text-[color:var(--color-jz-text-secondary)]">{selected?.description}</div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  <div className="text-center">
+                    <button
+                      onClick={() => {
+                        try { sessionStorage.setItem('selected-editing-option', selectedOptionId); } catch {}
+                        setShowConfirm(true);
+                      }}
+                      className="bg-[color:var(--color-jz-accent)] text-white px-8 py-3 rounded-[var(--radius-jz-button)] font-medium hover:brightness-110 transition-colors jz-shadow-button"
+                    >
+                      選択した編集で生成を開始
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
 
-        {/* Bottom CTA */}
-        <div className="text-center">
-          <button
-            onClick={() => onNavigate('login')}
-            className="bg-[color:var(--color-jz-accent)] text-white px-8 py-3 rounded-[var(--radius-jz-button)] font-medium hover:brightness-110 transition-colors jz-shadow-button"
-          >
-            今すぐ始める
-          </button>
-          <p className="text-sm text-[color:var(--color-jz-text-secondary)] mt-3">
-            登録不要で今すぐ使えます
-          </p>
-        </div>
-      </div>
+        {/* Bottom CTA removed: registration required, no guest start */}
     </div>
+    
+    {/* Confirm Consumption Modal */}
+    {showConfirm && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <JZCard className="max-w-md w-[92%] p-6">
+          <div className="mb-4">
+            <h2 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)] mb-2">
+              生成を開始しますか？
+            </h2>
+            <p className="jz-text-body text-[color:var(--color-jz-text-secondary)]">
+              この操作でクレジットが消費され、画像の生成が開始されます。内容をご確認の上、よろしければ「生成を開始」を押してください。
+            </p>
+          </div>
+          {previewUrl && selectedOptionId && (
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-20 h-20 rounded-[var(--radius-jz-card)] overflow-hidden border border-[color:var(--color-jz-border)]">
+                <img src={previewUrl} alt="確認プレビュー" className="w-full h-full object-cover" />
+              </div>
+              <div className="flex-1">
+                {(() => {
+                  const selected = editingOptions.find(o => o.id === selectedOptionId);
+                  return (
+                    <>
+                      <div className="jz-text-caption text-[color:var(--color-jz-text-tertiary)] mb-1">加える変更</div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg" aria-hidden>{selected?.icon}</span>
+                        <span className="font-medium text-[color:var(--color-jz-text-primary)]">{selected?.title}</span>
+                      </div>
+                      <div className="text-sm text-[color:var(--color-jz-text-secondary)]">{selected?.description}</div>
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end gap-3">
+            <JZButton tone="secondary" onClick={() => setShowConfirm(false)} disabled={isGenerating}>キャンセル</JZButton>
+            <JZButton 
+              tone="primary" 
+              state={isGenerating ? 'loading' : 'enabled'}
+              onClick={async () => {
+                if (!selectedImage || !selectedOptionId) return;
+                setIsGenerating(true);
+                try {
+                  const res = await api.editImageByOption(selectedImage, selectedOptionId);
+                  const genUrl = URL.createObjectURL(res.blob);
+                  try {
+                    sessionStorage.setItem('generated-image-url', genUrl);
+                    if (previewUrl) sessionStorage.setItem('original-image-url', previewUrl);
+                    sessionStorage.setItem('used-prompt', selectedOptionId);
+                  } catch {}
+                  setShowConfirm(false);
+                  onNavigate('results');
+                } catch (e) {
+                  alert('生成に失敗しました。しばらくしてからお試しください。');
+                } finally {
+                  setIsGenerating(false);
+                }
+              }}
+            >
+              生成を開始
+            </JZButton>
+          </div>
+        </JZCard>
+      </div>
+    )}
+  </div>
   );
 };

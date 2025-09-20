@@ -1,5 +1,6 @@
 import { useState, useRef, DragEvent } from 'react';
 import { SupabaseImageStorage, IMAGE_FOLDERS } from '../../lib/supabase-storage';
+import apiClient from '../../api/client';
 
 interface ImageUploaderProps {
   onUploadComplete: (imageUrl: string, imagePath: string) => void;
@@ -9,6 +10,8 @@ interface ImageUploaderProps {
   accept?: string;
   maxSize?: number; // in MB
   children?: React.ReactNode;
+  // Use backend API (/v1/memories/upload) instead of direct Supabase
+  useBackend?: boolean;
 }
 
 export function ImageUploader({
@@ -18,7 +21,8 @@ export function ImageUploader({
   className = '',
   accept = 'image/*',
   maxSize = 10,
-  children
+  children,
+  useBackend = true,
 }: ImageUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -48,12 +52,27 @@ export function ImageUploader({
     setIsUploading(true);
 
     try {
-      const result = await SupabaseImageStorage.uploadImage(file, IMAGE_FOLDERS[folder]);
-      
-      if (result) {
-        onUploadComplete(result.url, result.path);
+      if (useBackend) {
+        // Upload via secured backend (JPEG/PNG only)
+        const memory = await apiClient.uploadMemory(file);
+        if (memory?.url) {
+          // Keep callback signature; pass memory.id as second arg
+          onUploadComplete(memory.url, memory.id);
+          // Notify other views to refresh gallery
+          try {
+            window.dispatchEvent(new CustomEvent('jizai:memories:updated'));
+          } catch {}
+        } else {
+          onUploadError?.('アップロードに失敗しました');
+        }
       } else {
-        onUploadError?.('アップロードに失敗しました');
+        // Fallback: direct Supabase upload (legacy)
+        const result = await SupabaseImageStorage.uploadImage(file, IMAGE_FOLDERS[folder]);
+        if (result) {
+          onUploadComplete(result.url, result.path);
+        } else {
+          onUploadError?.('アップロードに失敗しました');
+        }
       }
     } catch (error) {
       console.error('Upload error:', error);

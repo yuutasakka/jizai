@@ -14,6 +14,9 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
   const [loadingBalance, setLoadingBalance] = useState(true);
   // Web版: 購入操作は提供しない
   const [error, setError] = useState<string | null>(null);
+  const [receiptData, setReceiptData] = useState('');
+  const [devProductId, setDevProductId] = useState('com.jizai.vault.standard');
+  const [purchasing, setPurchasing] = useState(false);
 
   // 現在のプラン・保存容量を取得
   useEffect(() => {
@@ -168,6 +171,66 @@ export const PurchaseScreen = ({ onNavigate }: { onNavigate: (screen: string) =>
             </div>
           </JZCardContent>
         </JZCard>
+
+        {/* Dev receipt submission (for integration testing) */}
+        {((import.meta as any)?.env?.MODE !== 'production') && (
+          <JZCard>
+            <JZCardContent>
+              <h3 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)] mb-[var(--space-12)]">
+                レシート連携（開発用）
+              </h3>
+              <div className="space-y-[var(--space-12)]">
+                <div>
+                  <label className="jz-text-caption text-[color:var(--color-jz-text-tertiary)]">productId（任意）</label>
+                  <input
+                    value={devProductId}
+                    onChange={(e) => setDevProductId(e.target.value)}
+                    className="w-full bg-[color:var(--color-jz-surface)] border border-[color:var(--color-jz-border)] rounded px-3 py-2 text-[color:var(--color-jz-text-primary)]"
+                    placeholder="com.jizai.vault.standard"
+                  />
+                </div>
+                <div>
+                  <label className="jz-text-caption text-[color:var(--color-jz-text-tertiary)]">receiptData</label>
+                  <textarea
+                    value={receiptData}
+                    onChange={(e) => setReceiptData(e.target.value)}
+                    className="w-full h-24 bg-[color:var(--color-jz-surface)] border border-[color:var(--color-jz-border)] rounded px-3 py-2 text-[color:var(--color-jz-text-primary)]"
+                    placeholder="mock_...（sandboxではmock_から始まる値でOK）"
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <JZButton
+                    tone="primary"
+                    state={purchasing ? 'loading' : 'enabled'}
+                    onClick={async () => {
+                      setError(null);
+                      setPurchasing(true);
+                      try {
+                        const res = await apiClient.purchaseWithReceipt(receiptData.trim(), devProductId.trim() || undefined);
+                        // 更新
+                        const balance = await apiClient.getBalance();
+                        if (balance.storage) setStorage(balance.storage);
+                        // トースト代わり
+                        alert(`購入反映: +${res.creditsAdded} クレジット（残り: ${res.creditsRemaining}）`);
+                      } catch (e: any) {
+                        setError(e?.message || '購入に失敗しました');
+                      } finally {
+                        setPurchasing(false);
+                      }
+                    }}
+                  >
+                    購入を反映
+                  </JZButton>
+                </div>
+                {error && (
+                  <div className="p-3 border border-[color:var(--color-jz-destructive)]/40 bg-[color:var(--color-jz-destructive)]/10 text-[color:var(--color-jz-destructive)] jz-text-caption rounded">
+                    {error}
+                  </div>
+                )}
+              </div>
+            </JZCardContent>
+          </JZCard>
+        )}
 
         {/* Pricing Plans */}
         <div className="space-y-[var(--space-12)]">

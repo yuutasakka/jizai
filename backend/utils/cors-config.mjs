@@ -63,7 +63,10 @@ function validateOrigin(origin, callback) {
     
     // Handle requests
     if (!origin) {
-        // Allow requests with no origin (mobile apps, Postman, etc.)
+        // Disallow no-origin in production for standard API routes
+        if (process.env.NODE_ENV === 'production') {
+            return callback(new Error('Origin required'));
+        }
         return callback(null, true);
     }
     
@@ -109,8 +112,14 @@ export function getCorsConfig() {
         // Security headers
         exposedHeaders: [
             'X-Credits-Remaining',
-            'X-Rate-Limit-Remaining',
-            'X-Rate-Limit-Reset'
+            // express-rate-limit standard headers
+            'RateLimit-Limit',
+            'RateLimit-Remaining',
+            'RateLimit-Reset',
+            // legacy headers (if enabled later)
+            'X-RateLimit-Limit',
+            'X-RateLimit-Remaining',
+            'X-RateLimit-Reset'
         ],
         // Preflight cache time (24 hours)
         maxAge: 86400

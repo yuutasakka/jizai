@@ -162,7 +162,16 @@ export function SupabaseAvatar({
     xl: 'w-24 h-24 text-xl'
   };
 
-  const initials = fallbackInitials || name.charAt(0).toUpperCase();
+  const initials = (fallbackInitials || name.charAt(0).toUpperCase());
+
+  // Prevent SVG/data URI injection by safely encoding dynamic text
+  const makeInitialsDataUrl = (text: string) => {
+    const safe = (text || '?')
+      .slice(0, 2)
+      .replace(/[^A-Za-z0-9]/g, '?');
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#374151"/><text x="50" y="50" text-anchor="middle" dy="0.35em" fill="white" font-family="sans-serif" font-size="40">${safe}</text></svg>`;
+    return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+  };
 
   if (!path) {
     return (
@@ -181,7 +190,7 @@ export function SupabaseAvatar({
       height={size === 'sm' ? 32 : size === 'md' ? 40 : size === 'lg' ? 64 : 96}
       format="webp"
       quality={90}
-      fallback={`data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23374151'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='0.35em' fill='white' font-family='sans-serif' font-size='40'%3E${initials}%3C/text%3E%3C/svg%3E`}
+      fallback={makeInitialsDataUrl(initials)}
     />
   );
 }

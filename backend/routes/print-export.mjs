@@ -202,17 +202,10 @@ router.get('/:exportId/status', async (req, res) => {
  * GET /v1/print-export/my-exports
  * Get user's export history
  */
-router.get('/my-exports', async (req, res) => {
+router.get('/my-exports', rlsAuthMiddleware(), async (req, res) => {
     try {
-        const { deviceId, limit = 20, offset = 0, status } = req.query;
-
-        if (!deviceId) {
-            return res.status(400).json({
-                error: 'Bad Request',
-                message: 'deviceId query parameter is required',
-                code: 'MISSING_DEVICE_ID'
-            });
-        }
+        const { limit = 20, offset = 0, status } = req.query;
+        const deviceId = req.deviceId;
 
         const exports = await printExportService.getUserExports(req.supabaseAuth, deviceId, {
             limit: parseInt(limit),
@@ -258,18 +251,10 @@ router.get('/my-exports', async (req, res) => {
  * POST /v1/print-export/:exportId/download
  * Generate secure download URL for completed export
  */
-router.post('/:exportId/download', async (req, res) => {
+router.post('/:exportId/download', rlsAuthMiddleware(), async (req, res) => {
     try {
         const { exportId } = req.params;
-        const { deviceId } = req.body;
-
-        if (!deviceId) {
-            return res.status(400).json({
-                error: 'Bad Request',
-                message: 'deviceId is required',
-                code: 'MISSING_DEVICE_ID'
-            });
-        }
+        const deviceId = req.deviceId;
 
         const downloadInfo = await printExportService.generateDownloadUrl(req.supabaseAuth, exportId, deviceId);
 
@@ -316,19 +301,10 @@ router.post('/:exportId/download', async (req, res) => {
  * DELETE /v1/print-export/:exportId
  * Cancel or delete export job
  */
-router.delete('/:exportId', async (req, res) => {
+router.delete('/:exportId', rlsAuthMiddleware(), async (req, res) => {
     try {
         const { exportId } = req.params;
-        // Some clients/proxies drop DELETE bodies; accept query/header as well
-        const deviceId = (req.body && req.body.deviceId) || req.query.deviceId || req.headers['x-device-id'];
-
-        if (!deviceId) {
-            return res.status(400).json({
-                error: 'Bad Request',
-                message: 'deviceId is required',
-                code: 'MISSING_DEVICE_ID'
-            });
-        }
+        const deviceId = req.deviceId;
 
         await printExportService.cancelExport(req.supabaseAuth, exportId, deviceId);
 

@@ -6,6 +6,7 @@ import { validateAppStoreReceipt } from '../services/appstore-validator.mjs';
 import { SubscriptionService } from '../services/subscription-service.mjs';
 import { StorageQuotaService } from '../services/storage-quota-service.mjs';
 import { auditServiceClientUsage } from '../utils/service-client-audit.mjs';
+import { rlsAuthMiddleware } from '../middleware/rls-auth.mjs';
 
 const router = express.Router();
 const subscriptionService = new SubscriptionService();
@@ -44,18 +45,9 @@ const requireAdmin = (req, res, next) => {
  * GET /v1/subscription/status
  * Get current subscription status for user
  */
-router.get('/status', async (req, res) => {
+router.get('/status', rlsAuthMiddleware(), async (req, res) => {
     try {
-        const { deviceId } = req.query;
-        
-        if (!deviceId) {
-            return res.status(400).json({
-                error: 'Bad Request',
-                message: 'deviceId query parameter is required',
-                code: 'MISSING_DEVICE_ID'
-            });
-        }
-
+        const deviceId = req.deviceId;
         const subscription = await subscriptionService.getActiveSubscription(deviceId);
         const quotaInfo = await storageQuotaService.getQuotaInfo(deviceId);
         
@@ -91,15 +83,16 @@ router.get('/status', async (req, res) => {
  * POST /v1/subscription/validate
  * Validate App Store receipt and update subscription status
  */
-router.post('/validate', async (req, res) => {
+router.post('/validate', rlsAuthMiddleware(), async (req, res) => {
     try {
-        const { deviceId, receiptData, originalTransactionId } = req.body;
+        const { receiptData, originalTransactionId } = req.body;
+        const deviceId = req.deviceId;
 
         // Validation
-        if (!deviceId || !receiptData) {
+        if (!receiptData) {
             return res.status(400).json({
                 error: 'Bad Request',
-                message: 'deviceId and receiptData are required',
+                message: 'receiptData is required',
                 code: 'MISSING_REQUIRED_FIELDS'
             });
         }
@@ -157,14 +150,15 @@ router.post('/validate', async (req, res) => {
  * POST /v1/subscription/start-trial
  * Start 14-day trial period
  */
-router.post('/start-trial', async (req, res) => {
+router.post('/start-trial', rlsAuthMiddleware(), async (req, res) => {
     try {
-        const { deviceId, productId } = req.body;
+        const { productId } = req.body;
+        const deviceId = req.deviceId;
 
-        if (!deviceId || !productId) {
+        if (!productId) {
             return res.status(400).json({
                 error: 'Bad Request',
-                message: 'deviceId and productId are required',
+                message: 'productId is required',
                 code: 'MISSING_REQUIRED_FIELDS'
             });
         }
@@ -251,17 +245,10 @@ router.get('/tiers', async (req, res) => {
  * POST /v1/subscription/cancel
  * Cancel subscription (user initiated)
  */
-router.post('/cancel', async (req, res) => {
+router.post('/cancel', rlsAuthMiddleware(), async (req, res) => {
     try {
-        const { deviceId, reason } = req.body;
-
-        if (!deviceId) {
-            return res.status(400).json({
-                error: 'Bad Request',
-                message: 'deviceId is required',
-                code: 'MISSING_DEVICE_ID'
-            });
-        }
+        const { reason } = req.body;
+        const deviceId = req.deviceId;
 
         const cancelledSubscription = await subscriptionService.cancelSubscription(deviceId, reason);
 
@@ -293,18 +280,9 @@ router.post('/cancel', async (req, res) => {
  * GET /v1/subscription/storage
  * Get detailed storage usage information
  */
-router.get('/storage', async (req, res) => {
+router.get('/storage', rlsAuthMiddleware(), async (req, res) => {
     try {
-        const { deviceId } = req.query;
-
-        if (!deviceId) {
-            return res.status(400).json({
-                error: 'Bad Request',
-                message: 'deviceId query parameter is required',
-                code: 'MISSING_DEVICE_ID'
-            });
-        }
-
+        const deviceId = req.deviceId;
         const storageInfo = await storageQuotaService.getDetailedStorageInfo(deviceId);
 
         res.json(storageInfo);
@@ -323,14 +301,15 @@ router.get('/storage', async (req, res) => {
  * POST /v1/subscription/storage/check
  * Check if file upload would exceed storage quota
  */
-router.post('/storage/check', async (req, res) => {
+router.post('/storage/check', rlsAuthMiddleware(), async (req, res) => {
     try {
-        const { deviceId, fileSize, vaultId } = req.body;
+        const { fileSize, vaultId } = req.body;
+        const deviceId = req.deviceId;
 
-        if (!deviceId || !fileSize) {
+        if (!fileSize) {
             return res.status(400).json({
                 error: 'Bad Request',
-                message: 'deviceId and fileSize are required',
+                message: 'fileSize is required',
                 code: 'MISSING_REQUIRED_FIELDS'
             });
         }

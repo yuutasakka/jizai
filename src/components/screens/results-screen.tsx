@@ -27,6 +27,17 @@ export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [usedPrompt, setUsedPrompt] = useState<string>('');
+  const promptTitleMap: Record<string, string> = {
+    bg_remove: '背景の変更・除去',
+    skin_tone: '顔色の補正・血色改善',
+    attire_suit: '服装の変更（ダークスーツ）',
+    attire_dress: '服装の変更（ダークドレス）',
+    enhance_quality: '画質向上・鮮明化処理',
+    smile_adjust: '笑顔への表情変更',
+    wrinkle_spot_reduce: 'しわ・シミの軽減',
+    hair_fix: '髪の毛の修正',
+    glasses_reflection: 'メガネの反射除去・調整',
+  };
   
   // sessionStorageから画像データを取得
   useEffect(() => {
@@ -38,14 +49,62 @@ export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
       setGeneratedImage(generatedUrl);
       setOriginalImage(originalUrl);
       setUsedPrompt(prompt);
+      // 通知: 生成完了によりサーバ側のメモリ一覧が更新されている可能性
+      try { window.dispatchEvent(new CustomEvent('jizai:memories:updated')); } catch {}
     } else {
       // データがない場合はホーム画面に戻る
       onNavigate('home');
     }
   }, [onNavigate]);
+
+  // 生成結果をローカルギャラリーに保存（デモ用途）
+  useEffect(() => {
+    const persistToGallery = async () => {
+      try {
+        if (!originalImage || !generatedImage) return;
+        // 画像URLをDataURLに変換（ObjectURLでも可能だが、再起動後の持続性のため）
+        const toDataUrl = async (url: string) => {
+          const res = await fetch(url);
+          const blob = await res.blob();
+          return await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+        };
+
+        const [origDataUrl, genDataUrl] = await Promise.all([
+          toDataUrl(originalImage),
+          toDataUrl(generatedImage),
+        ]);
+
+        const entry = {
+          id: `${Date.now()}`,
+          originalImage: origDataUrl,
+          generatedImage: genDataUrl,
+          prompt: usedPrompt,
+          createdAt: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+          title: promptTitleMap[usedPrompt] || '生成結果'
+        };
+
+        const raw = localStorage.getItem('jizai_gallery');
+        const parsed = raw ? JSON.parse(raw) : [];
+        // 直近の重複保存を避ける（同一generatedImageが直近と同じならスキップ）
+        if (!parsed.length || parsed[parsed.length - 1].generatedImage !== entry.generatedImage) {
+          parsed.push(entry);
+          localStorage.setItem('jizai_gallery', JSON.stringify(parsed));
+        }
+      } catch (e) {
+        // 保存失敗は致命ではないので握り潰す
+      }
+    };
+    persistToGallery();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [originalImage, generatedImage, usedPrompt]);
   
   // 実際に送信された英語指示
-  const sentEnglishInstruction = usedPrompt;
+  const sentEnglishInstruction = '';
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -150,7 +209,7 @@ export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
               <CollapsibleTrigger asChild>
                 <div className="flex items-center justify-between cursor-pointer p-[var(--space-12)] bg-[color:var(--color-jz-card)] rounded-[--radius-jz-button] border border-[color:var(--color-jz-border)] hover:bg-[color:var(--color-jz-card)]/80 transition-colors">
                   <span className="jz-text-body text-[color:var(--color-jz-text-primary)]">
-                    最終送信内容（ログ）
+                    最終送信内容（機密のため非表示）
                   </span>
                   <JZChevronDownIcon 
                     size={16} 
@@ -163,17 +222,10 @@ export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
               </CollapsibleTrigger>
               <CollapsibleContent className="mt-[var(--space-8)]">
                 <div className="p-[var(--space-16)] bg-[color:var(--color-jz-surface)] rounded-[--radius-jz-button] border border-[color:var(--color-jz-border)]">
-                  <div className="jz-text-caption text-[color:var(--color-jz-text-secondary)] font-mono leading-relaxed">
-                    {sentEnglishInstruction}
-                  </div>
+                  <div className="jz-text-caption text-[color:var(--color-jz-text-secondary)]">（表示しません）</div>
                 </div>
                 
-                {/* 注意書き */}
-                <div className="p-[var(--space-12)] bg-[color:var(--color-jz-card)] rounded-[--radius-jz-button] border border-[color:var(--color-jz-border)] mt-[var(--space-8)]">
-                  <p className="jz-text-caption text-[#A1A1AA]">
-                    ※<strong>画像に日本語の文字を入れる場合は、その部分を日本語に置き換えて</strong>ください。
-                  </p>
-                </div>
+                {/* 追加案内なし（機密のためプロンプトは非表示） */}
               </CollapsibleContent>
             </Collapsible>
           </JZCardContent>

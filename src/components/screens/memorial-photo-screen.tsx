@@ -94,6 +94,27 @@ export const MemorialPhotoScreen: React.FC<MemorialPhotoScreenProps> = ({ onNavi
     }
   }, []);
 
+  // Create画面からの事前選択（DataURL渡し）を復元
+  useEffect(() => {
+    const dataUrl = sessionStorage.getItem('create_image_file');
+    if (dataUrl && !selectedImage && !imagePreview) {
+      try {
+        fetch(dataUrl)
+          .then(res => res.blob())
+          .then(blob => {
+            const file = new File([blob], 'selected.jpg', { type: blob.type || 'image/jpeg' });
+            setSelectedImage(file);
+            setImagePreview(dataUrl);
+          })
+          .finally(() => {
+            sessionStorage.removeItem('create_image_file');
+          });
+      } catch {
+        sessionStorage.removeItem('create_image_file');
+      }
+    }
+  }, [selectedImage, imagePreview]);
+
   // ハプティックフィードバック関数
   const triggerHapticFeedback = useCallback((duration: number = 5) => {
     if ('vibrate' in navigator) {
@@ -159,20 +180,18 @@ export const MemorialPhotoScreen: React.FC<MemorialPhotoScreenProps> = ({ onNavi
 
     setSelectedImage(file);
     
-    // Zen Mode セッション開始
-    await startSession(file);
-    
     const reader = new FileReader();
     reader.onload = (e) => {
       setImagePreview(e.target?.result as string);
-      // 画像選択と同時にAI処理を開始
-      setTimeout(() => startMagicalProcessing(file), 100);
+      // 手動開始に変更: ここでは処理を開始しない
     };
     reader.readAsDataURL(file);
   }, [startSession, triggerHapticFeedback, playWarmTone]);
 
   // 魔法的な処理プロセス（Zen Mode統合）
   const startMagicalProcessing = useCallback(async (file: File) => {
+    // Zen Mode セッション開始（手動トリガ時）
+    await startSession(file);
     track('memorial_photo_processing_started');
     
     const stages: ProcessingStage[] = ['uploading', 'detecting', 'enhancing', 'generating'];
@@ -361,30 +380,60 @@ export const MemorialPhotoScreen: React.FC<MemorialPhotoScreenProps> = ({ onNavi
                   {getPersonalizedMessage()}
                 </p>
                 <p className="jz-text-body text-[color:var(--jz-seasonal-text-secondary)] mb-12">
-                  写真を選ぶだけで、AIが自動で美しく調整します
+                  写真を選んでから、生成を開始できます
                 </p>
               </div>
 
-              <div className="relative">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  accept="image/*"
-                  onChange={handleImageSelect}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                />
-                <div className="w-80 h-80 bg-gradient-to-br from-[color:var(--color-jz-accent)]/20 to-[color:var(--color-jz-secondary)]/20 rounded-full flex flex-col items-center justify-center border-2 border-dashed border-[color:var(--color-jz-accent)]/30 hover:border-[color:var(--color-jz-accent)]/60 transition-all duration-300 hover:scale-105 cursor-pointer">
-                  <JZPhotoIcon size={80} className="text-[color:var(--color-jz-accent)] mb-6" />
-                  <div className="text-center">
-                    <div className="jz-text-display-medium text-[color:var(--color-jz-text-primary)] mb-2">
-                      写真を選択
-                    </div>
-                    <div className="jz-text-body text-[color:var(--color-jz-text-secondary)]">
-                      タップして開始
+              {(!selectedImage || !imagePreview) ? (
+                <div className="relative">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    accept="image/*"
+                    onChange={handleImageSelect}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  />
+                  <div className="w-80 h-80 bg-gradient-to-br from-[color:var(--color-jz-accent)]/20 to-[color:var(--color-jz-secondary)]/20 rounded-full flex flex-col items-center justify-center border-2 border-dashed border-[color:var(--color-jz-accent)]/30 hover:border-[color:var(--color-jz-accent)]/60 transition-all duration-300 hover:scale-105 cursor-pointer">
+                    <JZPhotoIcon size={80} className="text-[color:var(--color-jz-accent)] mb-6" />
+                    <div className="text-center">
+                      <div className="jz-text-display-medium text-[color:var(--color-jz-text-primary)] mb-2">
+                        写真を選択
+                      </div>
+                      <div className="jz-text-body text-[color:var(--color-jz-text-secondary)]">
+                        タップして選択
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex flex-col items-center gap-6">
+                  <div className="w-60 h-60 rounded-lg overflow-hidden shadow-lg">
+                    <img src={imagePreview} alt="選択された画像" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex gap-4">
+                    <JZButton
+                      tone="primary"
+                      onClick={() => selectedImage && startMagicalProcessing(selectedImage)}
+                    >
+                      生成を開始
+                    </JZButton>
+                    <JZButton
+                      tone="secondary"
+                      onClick={() => {
+                        setSelectedImage(null);
+                        setImagePreview(null);
+                        setCandidates([]);
+                        setSelectedCandidate(null);
+                        setProcessingStage('idle');
+                        setShowRetryButton(false);
+                        setProgress(0);
+                      }}
+                    >
+                      写真を選び直す
+                    </JZButton>
+                  </div>
+                </div>
+              )}
 
               <div className="mt-12 text-center">
                 <p className="jz-text-caption text-[color:var(--color-jz-text-tertiary)]">

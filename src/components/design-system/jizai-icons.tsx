@@ -290,3 +290,26 @@ export const JZAwardIcon = ({ className, size = 24 }: JZIconProps) => (
     <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" stroke="currentColor" strokeWidth="2"/>
   </svg>
 );
+
+// Home icon (house)
+export const JZHomeIcon = ({ className, size = 24 }: JZIconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+    <path d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1v-5H10v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-10.5z" stroke="currentColor" strokeWidth="2" fill="none"/>
+  </svg>
+);
+
+// Search icon (magnifier)
+export const JZSearchIcon = ({ className, size = 24 }: JZIconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+    <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2"/>
+    <line x1="16.65" y1="16.65" x2="21" y2="21" stroke="currentColor" strokeWidth="2"/>
+  </svg>
+);
+
+// Single user icon (person silhouette)
+export const JZUserIcon = ({ className, size = 24 }: JZIconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+    <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
+    <path d="M20 21a8 8 0 1 0-16 0" stroke="currentColor" strokeWidth="2"/>
+  </svg>
+);
