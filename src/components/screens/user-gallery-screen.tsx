@@ -339,13 +339,13 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
       </div>
 
       {/* Content */}
-      <div className="pt-[140px] pb-[120px] px-[var(--space-20)] min-h-screen flex items-center justify-center">
+      <div className="pt-[120px] sm:pt-[140px] pb-[100px] sm:pb-[120px] px-[var(--space-12)] sm:px-[var(--space-20)] min-h-screen flex items-center justify-center">
         <div className="max-w-[1200px] w-full">
           {/* Gallery Grid */}
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-[var(--space-24)] animate-pulse">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[var(--space-16)] sm:gap-[var(--space-24)] animate-pulse">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="bg-[color:var(--color-jz-card)] border border-[color:var(--color-jz-border)] rounded-[var(--radius-jz-card)] overflow-hidden w-full max-w-[400px]">
+                <div key={i} className="bg-[color:var(--color-jz-card)] border border-[color:var(--color-jz-border)] rounded-[var(--radius-jz-card)] overflow-hidden w-full sm:max-w-[400px]">
                   <div className="h-[240px] bg-[color:var(--color-jz-border)]" />
                   <div className="p-[var(--space-20)] space-y-[var(--space-8)]">
                     <div className="h-5 w-2/3 bg-[color:var(--color-jz-border)] rounded" />
@@ -355,7 +355,7 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
               ))}
             </div>
           ) : serverItems.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-[var(--space-24)] justify-items-center">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[var(--space-16)] sm:gap-[var(--space-24)] justify-items-center">
               {serverItems.map(item => (
                 <JZCard key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-200 w-full max-w-[400px]">
                   <JZCardContent className="p-0">
@@ -407,7 +407,7 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
               )}
             </div>
           ) : filteredImages.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-[var(--space-24)] justify-items-center">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[var(--space-16)] sm:gap-[var(--space-24)] justify-items-center">
               {filteredImages.map((image) => {
                 const daysLeft = getDaysUntilExpiry(image.expiresAt);
                 const isExpiringSoon = daysLeft <= 14;

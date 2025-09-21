@@ -436,67 +436,50 @@ async function resolveEditingPrompt(optionId) {
     return fallback[optionId] || 'Enhance the image quality naturally.';
 }
 
-// Provider-agnostic image editing call; currently uses DashScope. Gemini support can be added.
-async function runImageEdit({ dataURL, prompt, profile }) {
-    // Dry-run mode for CI/testing: skip external provider
+// Gemini Images API integration (edits). Falls back to dry-run when enabled.
+async function runImageEditGemini({ base64Data, mimeType, prompt, profile = 'standard' }) {
+    // Dry-run: return tiny transparent PNG
     if (process.env.EDIT_DRY_RUN === 'true') {
-        // Return a tiny transparent PNG
-        const png = await sharp({ create: { width: 16, height: 16, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } }).png().toBuffer();
-        return png;
+        return sharp({ create: { width: 16, height: 16, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } }).png().toBuffer();
     }
 
-    if (!process.env.DASHSCOPE_API_KEY) {
-        throw new Error('API key not configured');
+    if (!process.env.GEMINI_API_KEY) {
+        throw new Error('GEMINI_API_KEY not configured');
     }
 
-    const ENGINE = {
-        standard: { num_inference_steps: 35, true_cfg_scale: 4.0 },
-        high: { num_inference_steps: 60, true_cfg_scale: 4.6 }
-    }[profile] || { num_inference_steps: 35, true_cfg_scale: 4.0 };
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/images:edit?key=${process.env.GEMINI_API_KEY}`;
+    const body = {
+        image: { inlineData: { mimeType, data: base64Data } },
+        instructions: prompt || 'Enhance the image quality naturally.',
+        config: { mimeType: 'image/png' },
+        // vendor-specific hints (profile as a lightweight hint)
+        options: { profile }
+    };
 
-    const qwenResponse = await axios.post(
-        'https://dashscope.aliyuncs.com/api/v1/services/aigc/image-generation/generation',
-        {
-            model: 'qwen-image-editor',
-            input: { image: dataURL, prompt },
-            parameters: {
-                format: 'png',
-                num_inference_steps: ENGINE.num_inference_steps,
-                true_cfg_scale: ENGINE.true_cfg_scale
-            }
-        },
-        {
-            headers: {
-                'Authorization': `Bearer ${process.env.DASHSCOPE_API_KEY}`,
-                'Content-Type': 'application/json',
-                'X-DashScope-Async': 'enable'
-            },
-            timeout: 90000
-        }
-    );
-
-    if (!qwenResponse.data?.output?.results?.length) {
-        throw new Error('No output in API response');
-    }
-    const imageUrl = qwenResponse.data.output.results[0]?.url;
-    if (!imageUrl) throw new Error('No image URL');
-
-    const parsedUrl = new URL(imageUrl);
-    if (parsedUrl.protocol !== 'https:' || !parsedUrl.hostname.endsWith('aliyuncs.com')) {
-        throw new Error('Untrusted image host');
-    }
-
-    const imageDownload = await axios.get(imageUrl, {
-        responseType: 'arraybuffer',
-        timeout: 30000,
+    const resp = await axios.post(endpoint, body, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 90000,
         maxContentLength: 50 * 1024 * 1024,
-        maxRedirects: 0,
         validateStatus: (s) => s === 200
     });
-    if (!imageDownload.data || imageDownload.data.length < 1024) {
-        throw new Error('Downloaded image invalid');
+
+    // Try multiple response shapes (defensive parsing across API variants)
+    const candidates = [
+        resp.data?.image?.inlineData?.data,
+        resp.data?.images?.[0]?.inlineData?.data,
+        resp.data?.candidates?.[0]?.content?.parts?.find(p => p.inline_data)?.inline_data?.data,
+        resp.data?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data
+    ].filter(Boolean);
+
+    if (!candidates.length) {
+        throw new Error('No inline image data returned from Gemini');
     }
-    return Buffer.from(imageDownload.data);
+    const b64 = candidates[0];
+    const buf = Buffer.from(b64, 'base64');
+    if (!buf || buf.length < 1024) {
+        throw new Error('Edited image invalid or too small');
+    }
+    return buf;
 }
 
 // New: Edit by optionId -> resolves prompt from Supabase then runs edit
@@ -564,8 +547,8 @@ app.post('/v1/edit-by-option', editLimiter, requireAuthMaybe, rlsAuthMiddleware(
         const dataURL = `data:${mimeType};base64,${base64Data}`;
         secureLogger.editRequest(deviceId, prompt, imageFile.size);
 
-        // Run provider
-        const editedBuffer = await runImageEdit({ dataURL, prompt, profile });
+        // Gemini-based edit
+        const editedBuffer = await runImageEditGemini({ base64Data, mimeType, prompt, profile });
 
         // Persist original and edited images to Supabase Storage and record as memories (same as /v1/edit)
         const user = req.user || await subscriptionService.getOrCreateUser(deviceId);
@@ -668,14 +651,7 @@ app.post('/v1/edit', editLimiter, requireAuthMaybe, rlsAuthMiddleware(), upload.
             });
         }
 
-        // API キーチェック
-        if (!process.env.DASHSCOPE_API_KEY) {
-            return res.status(500).json({
-                error: 'Internal Server Error',
-                message: 'API key not configured',
-                code: 'API_KEY_MISSING'
-            });
-        }
+        // External provider (Gemini) configuration validated earlier
 
         // Magic byte check (prevent MIME spoofing)
         try {
@@ -721,109 +697,8 @@ app.post('/v1/edit', editLimiter, requireAuthMaybe, rlsAuthMiddleware(), upload.
             high: { num_inference_steps: 60, true_cfg_scale: 4.6 }
         }[profile] || { num_inference_steps: 35, true_cfg_scale: 4.0 };
 
-        // Provider call or dry-run
-        let imageDownload;
-        if (process.env.EDIT_DRY_RUN === 'true') {
-            const pngBuf = await sharp({ create: { width: 16, height: 16, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } }).png().toBuffer();
-            imageDownload = { data: pngBuf };
-        } else {
-            // Qwen-Image-Edit API呼び出し
-            const qwenResponse = await axios.post(
-                'https://dashscope.aliyuncs.com/api/v1/services/aigc/image-generation/generation',
-                {
-                    model: 'qwen-image-editor',
-                    input: {
-                        image: dataURL,
-                        prompt: prompt
-                    },
-                    parameters: {
-                        format: 'png',
-                        num_inference_steps: ENGINE.num_inference_steps,
-                        true_cfg_scale: ENGINE.true_cfg_scale
-                    }
-                },
-                {
-                    headers: {
-                        'Authorization': `Bearer ${process.env.DASHSCOPE_API_KEY}`,
-                        'Content-Type': 'application/json',
-                        'X-DashScope-Async': 'enable'
-                    },
-                    timeout: 90000 // 90秒タイムアウト
-                }
-            );
-
-            // レスポンス詳細検証
-            if (!qwenResponse.data) {
-                throw new Error('Empty response from Qwen API');
-            }
-
-            // APIエラーレスポンスチェック
-            if (qwenResponse.data.code && qwenResponse.data.code !== '200') {
-                const errorMsg = qwenResponse.data.message || 'Unknown API error';
-                throw new Error(`Qwen API Error: ${errorMsg} (Code: ${qwenResponse.data.code})`);
-            }
-
-            // 出力構造検証
-            if (!qwenResponse.data.output) {
-                throw new Error('No output in API response');
-            }
-
-            if (!qwenResponse.data.output.results || !Array.isArray(qwenResponse.data.output.results)) {
-                throw new Error('Invalid results format in API response');
-            }
-
-            if (qwenResponse.data.output.results.length === 0) {
-                throw new Error('No results returned from API');
-            }
-
-            const imageUrl = qwenResponse.data.output.results[0]?.url;
-            if (!imageUrl || typeof imageUrl !== 'string') {
-                throw new Error('No valid image URL in response');
-            }
-
-            // URL形式とホストの検証（SSRF対策）
-            let parsedUrl;
-            try {
-                parsedUrl = new URL(imageUrl);
-            } catch {
-                throw new Error('Invalid image URL format');
-            }
-
-            if (parsedUrl.protocol !== 'https:') {
-                throw new Error('Untrusted image URL protocol');
-            }
-
-            // DashScope の生成画像は aliyuncs.com 配下を想定。必要に応じて調整。
-            if (!parsedUrl.hostname.endsWith('aliyuncs.com')) {
-                throw new Error('Untrusted image host');
-            }
-
-            console.log(`📸 Generated image URL: ${imageUrl}`);
-
-            // 画像をダウンロード
-            try {
-                imageDownload = await axios.get(imageUrl, {
-                    responseType: 'arraybuffer',
-                    timeout: 30000, // 30秒タイムアウト
-                    maxContentLength: 50 * 1024 * 1024, // 50MB制限
-                    maxRedirects: 0, // リダイレクト無効化（SSRF対策）
-                    validateStatus: (status) => status === 200
-                });
-            } catch (downloadError) {
-                console.error('❌ Image download failed:', downloadError.message);
-                throw new Error('Failed to download generated image');
-            }
-
-            // ダウンロードした画像の検証
-            if (!imageDownload.data || imageDownload.data.length === 0) {
-                throw new Error('Downloaded image is empty');
-            }
-
-            // 最小サイズ検証（1KB以上）
-            if (imageDownload.data.length < 1024) {
-                throw new Error('Downloaded image is too small (likely corrupted)');
-            }
-        }
+        // Gemini-based edit
+        const editedPng = await runImageEditGemini({ base64Data, mimeType, prompt, profile });
 
         // Persist original and edited images to Supabase Storage and record as memories
         const user = req.user || await subscriptionService.getOrCreateUser(deviceId);
@@ -872,7 +747,7 @@ app.post('/v1/edit', editLimiter, requireAuthMaybe, rlsAuthMiddleware(), upload.
         const editedPath = `memories/${user.id}/${editedFilename}`;
         await supabaseStorage
             .from('vault-storage')
-            .upload(editedPath, Buffer.from(imageDownload.data), {
+            .upload(editedPath, editedPng, {
                 cacheControl: '3600',
                 contentType: 'image/png'
             });
@@ -1407,10 +1282,7 @@ const server = app.listen(PORT, () => {
     console.log(`  ${databaseInitialized ? '✅' : '❌'} Print Export`);
     console.log(`  ${databaseInitialized ? '✅' : '❌'} App Store Integration`);
     
-    // 必須環境変数チェック
-    if (!process.env.DASHSCOPE_API_KEY) {
-        console.warn('\n⚠️  DASHSCOPE_API_KEY not set in .env file');
-    }
+    // 必須環境変数チェック（DashScopeは不使用）
     
     if (databaseInitialized && !process.env.SUPABASE_URL) {
         console.warn('\n⚠️  SUPABASE_URL not set - vault features unavailable');

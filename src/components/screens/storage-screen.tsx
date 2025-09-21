@@ -152,7 +152,7 @@ export const StorageScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
             {/* Storage Overview Card */}
             <div className="group relative overflow-hidden">
               <div className="absolute -inset-4 bg-gradient-to-r from-blue-500/30 to-cyan-500/30 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-500" />
-              <div className="relative bg-white/95 backdrop-blur-2xl rounded-3xl p-8 shadow-2xl border-2 border-white/60 hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.25)] transition-all duration-500 hover:scale-[1.02] hover:bg-white/98">
+              <div className="relative bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-2xl border-2 border-white/60 hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.25)] transition-all duration-500 hover:scale-[1.02] hover:bg-white/98">
                 <div className="space-y-6">
                   {/* Header */}
                   <div className="flex items-center gap-6">
@@ -221,70 +221,70 @@ export const StorageScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
             {/* Current Plan Card */}
             <div className="group relative overflow-hidden">
               <div className="absolute -inset-4 bg-gradient-to-r from-purple-500/30 to-pink-500/30 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-500" />
-              <div className="relative bg-white/95 backdrop-blur-2xl rounded-3xl p-8 shadow-2xl border-2 border-white/60 hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.25)] transition-all duration-500 hover:scale-[1.02] hover:bg-white/98">
-                <div className="flex items-center gap-6">
+              <div className="relative bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-2xl border-2 border-white/60 hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.25)] transition-all duration-500 hover:scale-[1.02] hover:bg-white/98">
+                <div className="flex items-center gap-3 sm:gap-6">
                   <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl blur-lg opacity-60" />
-                    <div className="relative w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-xl group-hover:shadow-2xl transition-all duration-300 hover:rotate-12">
-                      {tier === 'Pro' ? <Crown className="w-10 h-10 text-white drop-shadow-lg" /> :
-                       tier === 'Premium' ? <Star className="w-10 h-10 text-white drop-shadow-lg" /> :
-                       <Zap className="w-10 h-10 text-white drop-shadow-lg" />}
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl sm:rounded-2xl blur-lg opacity-60" />
+                    <div className="relative w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-xl group-hover:shadow-2xl transition-all duration-300 hover:rotate-12">
+                      {tier === 'Pro' ? <Crown className="w-7 h-7 sm:w-10 sm:h-10 text-white drop-shadow-lg" /> :
+                       tier === 'Premium' ? <Star className="w-7 h-7 sm:w-10 sm:h-10 text-white drop-shadow-lg" /> :
+                       <Zap className="w-7 h-7 sm:w-10 sm:h-10 text-white drop-shadow-lg" />}
                     </div>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-2">現在のプラン</h3>
-                    <div className="text-gray-600 text-base mb-1">{(user?.email || user?.name || user?.id || 'guest').toString()}</div>
-                    <div className="inline-flex items-center px-3 py-1 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full">
-                      <span className="text-purple-700 font-bold text-sm">{tier} プラン</span>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">現在のプラン</h3>
+                    <div className="text-gray-600 text-sm sm:text-base mb-1 break-all">{(user?.email || user?.name || user?.id || 'guest').toString()}</div>
+                    <div className="inline-flex items-center px-2 sm:px-3 py-1 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full">
+                      <span className="text-purple-700 font-bold text-xs sm:text-sm">{tier} プラン</span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-2xl font-bold text-gray-900">{formatStorage(data?.quota || 0)}</div>
-                    <div className="text-gray-500 text-sm">容量上限</div>
+                    <div className="text-lg sm:text-2xl font-bold text-gray-900 break-all">{formatStorage(data?.quota || 0)}</div>
+                    <div className="text-gray-500 text-xs sm:text-sm">容量上限</div>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <button
                 onClick={() => onNavigate('pricing')}
-                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-4 px-6 rounded-2xl transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 border-2 border-white/30"
+                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl sm:rounded-2xl transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 border-2 border-white/30 min-h-[44px]"
               >
-                <div className="flex items-center justify-center gap-3">
-                  <Crown className="w-6 h-6" />
-                  <span>アップグレード</span>
+                <div className="flex items-center justify-center gap-2 sm:gap-3">
+                  <Crown className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <span className="text-sm sm:text-base">アップグレード</span>
                 </div>
               </button>
               <button
                 onClick={() => onNavigate('user-gallery')}
-                className="bg-white/20 backdrop-blur-xl hover:bg-white/30 text-white font-bold py-4 px-6 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 border-2 border-white/30"
+                className="bg-white/20 backdrop-blur-xl hover:bg-white/30 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl sm:rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 border-2 border-white/30 min-h-[44px]"
               >
-                <div className="flex items-center justify-center gap-3">
-                  <Trash2 className="w-6 h-6" />
-                  <span>ファイル管理</span>
+                <div className="flex items-center justify-center gap-2 sm:gap-3">
+                  <Trash2 className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <span className="text-sm sm:text-base">ファイル管理</span>
                 </div>
               </button>
             </div>
 
             {/* Storage Tips */}
-            <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-6 border border-white/20">
-              <h3 className="text-white text-lg font-bold mb-4 flex items-center gap-2">
-                <Zap className="w-5 h-5 text-yellow-400" />
+            <div className="bg-white/10 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/20">
+              <h3 className="text-white text-base sm:text-lg font-bold mb-3 sm:mb-4 flex items-center gap-2">
+                <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" />
                 ストレージのコツ
               </h3>
-              <div className="space-y-3 text-white/90 text-sm">
-                <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-cyan-400 rounded-full mt-2" />
+              <div className="space-y-2 sm:space-y-3 text-white/90 text-xs sm:text-sm">
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <div className="w-2 h-2 bg-cyan-400 rounded-full mt-1 sm:mt-2 flex-shrink-0" />
                   <span>不要なファイルを定期的に削除してスペースを確保</span>
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-green-400 rounded-full mt-2" />
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <div className="w-2 h-2 bg-green-400 rounded-full mt-1 sm:mt-2 flex-shrink-0" />
                   <span>プレミアムプランで無制限容量を利用</span>
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-purple-400 rounded-full mt-2" />
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <div className="w-2 h-2 bg-purple-400 rounded-full mt-1 sm:mt-2 flex-shrink-0" />
                   <span>自動バックアップで大切なデータを保護</span>
                 </div>
               </div>

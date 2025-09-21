@@ -10,7 +10,7 @@ These variables are bundled with the client and are publicly visible:
 - `VITE_STORAGE_*` - UI configuration
 
 ### ❌ NEVER expose in frontend
-- API keys (Supabase service key, Qwen API key, etc.)
+- API keys (e.g., Supabase service key, external provider keys)
 - JWT secrets
 - Database credentials
 - Encryption keys
@@ -34,6 +34,37 @@ NODE_ENV=production
 PORT=3001
 
 # Security
+
+本プロジェクトでは以下の対策を実装・推奨しています。
+
+## 秘密情報の管理
+- `.env.local`（フロント）, `backend/.env`（バックエンド）は Git 追跡から除外。
+- サンプルは `*.example` のみ追跡。実値はコミットしない運用。
+- 追加推奨: CI で `gitleaks` などのシークレット検出を実行。
+
+## ヘッダ/ブラウザ防御
+- HSTS（本番/HTTPS のみ）、`X-Content-Type-Options: nosniff`、`X-Frame-Options: DENY`、`Referrer-Policy: strict-origin-when-cross-origin` を適用。
+- CSP: 本番は `nonce` ベース（サーバ側）。フロント（Vercel）は段階的に `unsafe-inline` を削減予定。
+
+## CORS
+- 本番では `NEXT_PUBLIC_SITE_URL` または `ORIGIN_ALLOWLIST` の許可リスト方式。
+- Webhook はブラウザ起点を想定しないため `credentials:false`。
+
+## Webhook/管理APIの保護
+- レート制限: `WEBHOOK_RATE_LIMIT`、`ADMIN_WEBHOOK_RATE_LIMIT`、`ADMIN_ANALYTICS_RATE_LIMIT`。
+- リプレイ防止: `WEBHOOK_REPLAY_TTL_MS` による UUID キャッシュ。
+- IP 許可リスト: `WEBHOOK_IP_ALLOWLIST`、`ADMIN_IP_ALLOWLIST`。
+- 管理トークン: `ADMIN_TOKEN`（本番は必須かつ十分な長さ）。
+
+## 画像アップロード防御
+- Multer によるタイプ/サイズ制限、Sharp によるマジックバイト検証。
+- 次の環境変数で上限を制御: `MAX_IMAGE_SIDE`, `MAX_IMAGE_PIXELS`。
+
+## 逆プロキシ環境
+- `TRUST_PROXY`（既定有効）。`app.set('trust proxy', 1)` により `req.ip`/`req.secure` を正確に取得。
+
+## 依存関係
+- `npm audit`/`npm outdated` の定期実行を推奨（CI 連携）。
 JWT_SECRET=your-secure-jwt-secret
 
 # Rate Limiting

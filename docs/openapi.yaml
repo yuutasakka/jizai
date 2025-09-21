@@ -5,7 +5,7 @@ info:
     日本向けiOS画像編集アプリのバックエンドAPI
     
     ## 特徴
-    - Qwen-Image-Edit API統合による高品質な画像編集
+    - Gemini API による画像編集
     - クレジット制残高管理システム
     - App内課金（IAP）対応
     - UGC 1.2準拠の通報機能
@@ -54,7 +54,7 @@ paths:
     post:
       summary: 画像編集
       description: |
-        Qwen-Image-Edit APIを使用して画像を編集。
+        画像を Gemini API で編集。
         成功時のみ1クレジット消費。
       operationId: editImage
       tags:

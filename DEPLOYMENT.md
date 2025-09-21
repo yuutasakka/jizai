@@ -144,8 +144,17 @@ vercel env add SUPABASE_ANON_KEY
 vercel env add SUPABASE_SERVICE_KEY
 vercel env add SUPABASE_JWT_SECRET
 vercel env add ADMIN_TOKEN
-vercel env add DASHSCOPE_API_KEY
 vercel env add ORIGIN_ALLOWLIST
+vercel env add TRUST_PROXY
+vercel env add WEBHOOK_RATE_LIMIT
+vercel env add ADMIN_WEBHOOK_RATE_LIMIT
+vercel env add ADMIN_ANALYTICS_RATE_LIMIT
+vercel env add WEBHOOK_REPLAY_TTL_MS
+vercel env add WEBHOOK_IP_ALLOWLIST
+vercel env add ADMIN_IP_ALLOWLIST
+vercel env add MAX_IMAGE_SIDE
+vercel env add MAX_IMAGE_PIXELS
+vercel env add GEMINI_API_KEY
 ```
 
 #### Railway/Render/Heroku（コンテナ）

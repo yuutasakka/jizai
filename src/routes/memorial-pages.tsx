@@ -228,7 +228,7 @@ export function MemorialHumanPage() {
   return (
     <BaseMemorialPage
       h1="遺影写真の編集と仕上げ"
-      desc="四つ切・A4・L判対応。服装・背景・肌/髪の整え。やり直し2回無料、当日仕上げ可。"
+      desc="四つ切・A4・L判対応。服装・背景・肌/髪の整え。当日仕上げ可。"
       serviceType="遺影写真編集"
       path="/memorial/human"
       steps={[

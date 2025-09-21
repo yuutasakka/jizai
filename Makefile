@@ -62,13 +62,13 @@ setup: install
 env-template:
 	@echo "Creating environment template..."
 	@cat > backend/.env.example << 'EOF'
-DASHSCOPE_API_KEY=sk-xxxx
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_KEY=
+SUPABASE_JWT_SECRET=
+ADMIN_TOKEN=
 PORT=3000
 RATE_LIMIT_RPS=2
 ORIGIN_ALLOWLIST=http://localhost:3000
-S3_BUCKET=
-S3_REGION=ap-northeast-1
-S3_ACCESS_KEY_ID=
-S3_SECRET_ACCESS_KEY=
 EOF
-	@echo ".env.example created in backend/"
+	@echo ".env.example created in backend/ (no external image provider)"

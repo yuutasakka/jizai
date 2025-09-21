@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Jizai API",
-    "description": "日本向けiOS画像編集アプリのバックエンドAPI\n\n## 特徴\n- Qwen-Image-Edit API統合による高品質な画像編集\n- クレジット制残高管理システム\n- App内課金（IAP）対応\n- UGC 1.2準拠の通報機能\n- プロンプトモデレーション機能\n\n## 認証\nデバイスID (`x-device-id` ヘッダー) によるデバイス識別を使用",
+    "description": "日本向けiOS画像編集アプリのバックエンドAPI\n\n## 特徴\n- Gemini API による画像編集\n- クレジット制残高管理システム\n- App内課金（IAP）対応\n- UGC 1.2準拠の通報機能\n- プロンプトモデレーション機能\n\n## 認証\nデバイスID (`x-device-id` ヘッダー) によるデバイス識別を使用",
     "version": "1.0.0",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
@@ -255,7 +255,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["v1", "edit"]
             },
-            "description": "Qwen-Image-Edit APIを使用して画像を編集。成功時のみ1クレジット消費。"
+            "description": "Gemini API を用いて画像を編集。成功時のみ1クレジット消費。"
           },
           "response": [
             {

@@ -1,10 +1,10 @@
 # Jizai iOS App
 
-SwiftUI画像編集アプリ - Qwen-Image-Edit API統合
+SwiftUI画像編集アプリ - Gemini API バックエンド
 
 ## 概要
 
-JizaiはAI搭載の画像編集iOSアプリです。Node.jsバックエンドとQwen-Image-Edit APIを使用して、自然言語での画像編集を実現します。
+Jizaiは画像編集iOSアプリです。Node.jsバックエンドから Gemini Images API を呼び出し、プロンプトに基づく画像編集を行います。
 
 ## 機能
 

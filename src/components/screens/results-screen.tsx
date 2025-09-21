@@ -21,7 +21,7 @@ export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
   const [isRangeSelectMode, setIsRangeSelectMode] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [retryCount, setRetryCount] = useState(2); // 無料やり直し残り回数
+  // 無料やり直し制度を廃止したため、カウンタは撤去
   const [translationEnabled] = useState(true); // 変換の状態
   const [showEnglishLog, setShowEnglishLog] = useState(false);
   const [originalImage, setOriginalImage] = useState<string | null>(null);
@@ -120,9 +120,6 @@ export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
   };
 
   const handleRegenerate = () => {
-    if (retryCount > 0) {
-      setRetryCount(retryCount - 1);
-    }
     onNavigate('progress');
   };
 
@@ -194,14 +191,7 @@ export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
                 </JZChip>
               </div>
               
-              <div className="text-right">
-                <span className={cn(
-                  "jz-text-caption",
-                  retryCount > 0 ? "text-[color:var(--color-jz-success)]" : "text-[color:var(--color-jz-text-tertiary)]"
-                )}>
-                  やり直し 残り{retryCount}回
-                </span>
-              </div>
+              <div className="text-right" />
             </div>
             
             {/* 送信ログ折りたたみ */}
@@ -349,12 +339,7 @@ export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
                   onClick={handleRegenerate}
                   className="flex flex-col gap-[var(--space-4)] h-[56px]"
                 >
-                  <span>やり直し{retryCount > 0 ? '（無料）' : ''}</span>
-                  {retryCount > 0 && (
-                    <span className="jz-text-caption text-[color:var(--color-jz-success)]">
-                      残り{retryCount}回
-                    </span>
-                  )}
+                  <span>やり直し</span>
                 </JZButton>
 
                 <JZButton

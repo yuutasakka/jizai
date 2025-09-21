@@ -6,13 +6,13 @@ This guide helps new contributors set up, understand, and extend the Jizai proje
 - Frontend: Vite + React (TypeScript). Entry at `src/`, app shell in `src/App.tsx`.
 - Backend: Node.js (Express) at `backend/index-vault-integration.mjs`.
 - Database/Auth/Storage: Supabase (RLS enforced; Storage bucket `vault-storage`).
-- Image Editing: DashScope (Qwen-Image-Editor). Requires `DASHSCOPE_API_KEY`.
+- Image Editing: Gemini Images API（要 `GEMINI_API_KEY`）
 - Security: CORS + CSP + Security headers; RLS auth middleware; sanitized logging.
 
 ## Prerequisites
 - Node.js 20+
 - Supabase project (or use project from SUPABASE_SETUP.md)
-- DashScope API key (image editing)
+GEMINI_API_KEY=<gemini_api_key>
 
 ## Environment
 Create these files as needed:
@@ -37,18 +37,30 @@ SUPABASE_SERVICE_KEY=<service_role_key>
 SUPABASE_JWT_SECRET=<supabase_jwt_secret>
 
 # External providers
-DASHSCOPE_API_KEY=<dashscope_key>
 
 # Security & CORS
 ADMIN_TOKEN=<strong_random>
 ORIGIN_ALLOWLIST=http://localhost:5173
 NEXT_PUBLIC_SITE_URL=http://localhost:5173
+TRUST_PROXY=true
 
 # Rate limits (optional overrides)
 RATE_LIMIT_RPS=100
 EDIT_RATE_LIMIT=5
 PURCHASE_RATE_LIMIT=10
 VAULT_UPLOAD_RATE_LIMIT=20
+
+# Webhook/Admin hardening (optional)
+WEBHOOK_RATE_LIMIT=30
+ADMIN_WEBHOOK_RATE_LIMIT=30
+ADMIN_ANALYTICS_RATE_LIMIT=20
+WEBHOOK_REPLAY_TTL_MS=300000
+WEBHOOK_IP_ALLOWLIST=
+ADMIN_IP_ALLOWLIST=
+
+# Image limits (optional)
+MAX_IMAGE_SIDE=12000
+MAX_IMAGE_PIXELS=100000000
 ```
 
 See also: `SUPABASE_SETUP.md`, `DEPLOYMENT.md`, `SECURITY.md`.
@@ -108,7 +120,10 @@ All user-facing routes require Supabase auth token (`Authorization: Bearer <jwt>
 - CORS: see `backend/utils/cors-config.mjs` (allowlist/strict in production).
 - CSP & Headers: `backend/utils/security-headers.mjs` + `vercel.json`.
 - RLS Auth: `backend/middleware/rls-auth.mjs` (Supabase JWT building + scoping).
-- Admin endpoints: `backend/routes/webhooks.mjs` guarded by `x-admin-token`.
+- Admin endpoints: `backend/routes/webhooks.mjs` guarded by `x-admin-token`、IP許可（任意）、レート制限を適用。
+- Webhook: 署名検証（本番）、レート制限、リプレイ防止（UUID TTL）、任意のIP許可を適用。
+- Proxy: 逆プロキシ配下では `TRUST_PROXY=true` を設定し、`req.ip`/`req.secure` を適正化。
+- Upload: magic-bytes（`sharp`）、ファイル名サニタイズ、ピクセル上限（`MAX_IMAGE_*`）。
 - Upload validation: magic-bytes via `sharp`, filename sanitation, pixel limits.
 
 ## Database Migration (Credits)

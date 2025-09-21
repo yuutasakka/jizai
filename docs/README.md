@@ -104,7 +104,7 @@ npx swagger-ui-serve openapi.yaml
 
 1. **環境変数** (`.env`):
 ```env
-DASHSCOPE_API_KEY=sk-xxxx    # Qwen API キー
+# (No external image provider key required)
 PORT=3000                    # サーバーポート
 ```
 

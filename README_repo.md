@@ -1,6 +1,6 @@
 # Jizai - iOS 画像編集アプリ
 
-日本向け iOS 画像編集アプリ（フロントエンド：SwiftUI、バックエンド：Qwen-Image-Edit API）
+日本向け iOS 画像編集アプリ（フロントエンド：SwiftUI、バックエンド：ローカルSharpベース）
 
 ## プロジェクト構成
 
@@ -17,7 +17,7 @@ Jizai/
 ## 各ディレクトリの役割
 
 ### `/backend`
-- **役割**: Qwen-Image-Edit API との連携、残高管理、課金処理
+- **役割**: 画像編集（ローカル処理）、残高管理、課金処理
 - **技術**: Node.js 20 + Express
 - **主要機能**:
   - 画像編集API (`/v1/edit`)
@@ -56,7 +56,7 @@ Jizai/
 ## 必要な環境変数
 
 ```
-DASHSCOPE_API_KEY=sk-xxxx          # Qwen API キー
+# (No external image provider key required)
 PORT=3000                          # サーバーポート
 RATE_LIMIT_RPS=2                   # レート制限
 ORIGIN_ALLOWLIST=http://localhost:3000

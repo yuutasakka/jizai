@@ -4,7 +4,7 @@
 - SPA (Vite + React) served by Vercel (or static host)
 - Express API server (`backend/index-vault-integration.mjs`)
 - Supabase for auth (JWT), RLS-protected DB, and public Storage
-- External Image Editing provider: DashScope
+- Image editing via Gemini Images API
 
 ## Backend Modules
 - `backend/index-vault-integration.mjs` – main server with:
@@ -15,6 +15,7 @@
   - `utils/security-headers.mjs` – HSTS, headers, CSP (nonce optional), reporting
   - `utils/cors-config.mjs` – strict allowlist in production, standard `RateLimit-*` exposed
   - `utils/secure-logger.mjs` – PII sanitization, special `editRequest()` logger
+  - `routes/webhooks.mjs` – signature verify (prod), rate limit, replay protection (UUID TTL), optional IP allowlist
 - Credit store:
   - `store.mjs` – simple JSON ledger for legacy “credits” (`store.json`), used for per-edit billing flows
 - Supabase config:
@@ -34,7 +35,7 @@
 - Editing:
   - `POST /v1/edit` / `POST /v1/edit-by-option`
   - Validates image (magic-bytes), pixel limits, prompt moderation
-  - Calls DashScope, downloads edited image, stores both original and edited
+  - Calls Gemini Images API for edits; stores original + edited
   - Consumes 1 credit on success (legacy credit ledger)
 
 - Balance & Subscription:
@@ -48,10 +49,12 @@
 - `src/components/screens/storage-screen.tsx` – storage details and tier; auto-refresh on updates
 
 ## Security Notes
-- CSP enforced & duplicated in Vercel headers; connect-src restricted to DashScope + Supabase
+- CSP enforced & duplicated in Vercel headers; connect-src restricted to Supabase + Gemini API
 - CORS allowlist and preflight cache; production disallows localhost
 - Upload safety: filename sanitation, magic-bytes check with `sharp`, pixel dimension limits
-- Webhook admin routes require `x-admin-token`
+- Webhook/admin routes require `x-admin-token`; rate limited; optional IP allowlist
+- Reverse proxy readiness: `trust proxy` enabled (configurable)
+- Image limits configurable via `MAX_IMAGE_SIDE` / `MAX_IMAGE_PIXELS`
 
 ## Rate Limits
 - General limiter (15m window), endpoint-specific for edit/purchase/upload
@@ -61,4 +64,3 @@
 - New providers: implement an adapter in editing call, keep safety checks
 - New memory types: extend `memories` schema and list projection; update gallery rendering
 - Replace credits with subscription metering: swap out `store.mjs` consumer at edit endpoints
-

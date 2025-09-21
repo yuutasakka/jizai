@@ -100,6 +100,11 @@ PersonalizationProvider (最上位)
 - [デプロイ](./DEPLOYMENT.md)
 - [セキュリティ方針](./SECURITY.md)
 
+### セキュリティ要点（バックエンド）
+- 本番: `ADMIN_TOKEN` を強固に設定し、Webhook/管理API にレート制限・（任意）IP許可を適用。
+- 画像上限は `MAX_IMAGE_SIDE` / `MAX_IMAGE_PIXELS` で制御可能。
+- 逆プロキシ配下では `TRUST_PROXY=true` を設定。
+
 ## 🧪 心理学的設計原則
 
 ### 1. 漸進的コミット (Progressive Commitment)
@@ -149,13 +154,13 @@ npm test -- --testNamePattern="Engagement flow"
   - 依存関係インストール: `npm i`
   - 開発サーバ起動: `npm run dev`
   - ブラウザで `http://localhost:5173` を開く（Vite のデフォルト）
-- バックエンドも起動して動作を確認する場合（任意）
+  - バックエンドも起動して動作を確認する場合（任意）
   - ルートに `.env.local`（任意）で `VITE_API_BASE_URL=http://localhost:3000` を設定
   - `backend/` に移動して `npm i`、`.env` を作成（`backend/.env.example` を参考に値をセット）
   - `cd backend && npm run dev`（ポート `3000`）
   - 別ターミナルでフロントエンドを `npm run dev` 起動
 - 既知の注意点
-  - バックエンドは Supabase と DashScope のキーが必要です。LPの見た目だけ確認する場合はフロントエンドのみ起動で十分です。
+  - バックエンドは Supabase のキーが必要です。LPの見た目だけ確認する場合はフロントエンドのみ起動で十分です。
 
 ## Google Search Console 登録・サイトマップ送信手順（Next.js）
 

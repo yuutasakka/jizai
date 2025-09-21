@@ -102,13 +102,13 @@ export const JizaiHomeScreen = ({ onNavigate }: JizaiHomeScreenProps) => {
   return (
     <div className="min-h-screen bg-[color:var(--color-jz-surface)]">
       {/* Header */}
-      <div className="bg-[color:var(--color-jz-surface)] border-b border-[color:var(--color-jz-border)] px-6 py-4">
+      <div className="bg-[color:var(--color-jz-surface)] border-b border-[color:var(--color-jz-border)] px-4 sm:px-6 py-3 sm:py-4">
         <div className="flex items-center justify-between">
-          <h1 className="jz-font-display jz-text-display-medium text-[color:var(--color-jz-text-primary)]">JIZAI</h1>
-          <div className="flex items-center gap-4">
+          <h1 className="jz-font-display jz-text-display-small sm:jz-text-display-medium text-[color:var(--color-jz-text-primary)]">JIZAI</h1>
+          <div className="flex items-center gap-2 sm:gap-4">
             <button
               onClick={() => onNavigate('notifications')}
-              className="p-2 text-[color:var(--color-jz-text-secondary)] hover:text-[color:var(--color-jz-text-primary)] transition-colors"
+              className="p-2 text-[color:var(--color-jz-text-secondary)] hover:text-[color:var(--color-jz-text-primary)] transition-colors min-h-[44px] w-11 h-11 flex items-center justify-center"
               aria-label="通知を開く"
             >
               <JZBellIcon size={20} />
@@ -118,9 +118,9 @@ export const JizaiHomeScreen = ({ onNavigate }: JizaiHomeScreenProps) => {
       </div>
 
       {/* Main Content */}
-      <div className="px-6 py-8">
+      <div className="px-4 sm:px-6 py-6 sm:py-8">
         {/* Title Section */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8 sm:mb-12">
           {loading ? (
             <div className="animate-pulse space-y-3 max-w-md mx-auto">
               <div className="h-7 bg-[color:var(--color-jz-border)] rounded" />
@@ -128,10 +128,10 @@ export const JizaiHomeScreen = ({ onNavigate }: JizaiHomeScreenProps) => {
             </div>
           ) : (
             <>
-              <h2 className="jz-font-display jz-text-display-medium text-[color:var(--color-jz-text-primary)] mb-4">
+              <h2 className="jz-font-display jz-text-display-small sm:jz-text-display-medium text-[color:var(--color-jz-text-primary)] mb-3 sm:mb-4">
                 思い出の写真を美しく
               </h2>
-              <p className="jz-text-body text-[color:var(--color-jz-text-secondary)]">
+              <p className="jz-text-body text-[color:var(--color-jz-text-secondary)] text-sm sm:text-base">
                 AIが自然で美しい仕上がりにします
               </p>
             </>
@@ -139,7 +139,7 @@ export const JizaiHomeScreen = ({ onNavigate }: JizaiHomeScreenProps) => {
         </div>
 
         {/* Image Upload Section */}
-        <div className="mb-12">
+        <div className="mb-8 sm:mb-12">
           {loading ? (
             <div className="animate-pulse">
               <div className="h-32 bg-[color:var(--color-jz-card)] border-2 border-dashed border-[color:var(--color-jz-border)] rounded-[var(--radius-jz-card)]" />
@@ -212,10 +212,10 @@ export const JizaiHomeScreen = ({ onNavigate }: JizaiHomeScreenProps) => {
             </div>
           ) : (
             <>
-              <h3 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)] mb-6 text-center">
+              <h3 className="jz-font-display jz-text-caption sm:jz-text-display-small text-[color:var(--color-jz-text-primary)] mb-4 sm:mb-6 text-center">
                 編集の種類を選択
               </h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                 {editingOptions.map((option) => (
                   <div
                     key={option.id}
@@ -223,15 +223,15 @@ export const JizaiHomeScreen = ({ onNavigate }: JizaiHomeScreenProps) => {
                       setSelectedOptionId(option.id);
                       track('editing_option_selected', { option: option.id });
                     }}
-                    className={`bg-[color:var(--color-jz-card)] rounded-[var(--radius-jz-card)] p-6 text-center cursor-pointer transition-all border ${
+                    className={`bg-[color:var(--color-jz-card)] rounded-[var(--radius-jz-card)] p-4 sm:p-6 text-center cursor-pointer transition-all border min-h-[120px] sm:min-h-[140px] flex flex-col justify-center ${
                       selectedOptionId === option.id
                         ? 'border-[color:var(--color-jz-accent)] ring-2 ring-[color:var(--color-jz-accent)]/50 scale-[1.02]'
                         : 'border-[color:var(--color-jz-border)] hover:shadow-lg hover:border-[color:var(--color-jz-accent)]/30'
                     }`}
                   >
-                    <div className="text-3xl mb-3">{option.icon}</div>
-                    <h4 className="font-medium text-[color:var(--color-jz-text-primary)] mb-2">{option.title}</h4>
-                    <p className="text-sm text-[color:var(--color-jz-text-secondary)]">{option.description}</p>
+                    <div className="text-2xl sm:text-3xl mb-2 sm:mb-3">{option.icon}</div>
+                    <h4 className="font-medium text-[color:var(--color-jz-text-primary)] mb-1 sm:mb-2 text-xs sm:text-sm">{option.title}</h4>
+                    <p className="text-xs sm:text-sm text-[color:var(--color-jz-text-secondary)] leading-tight">{option.description}</p>
                   </div>
                 ))}
               </div>
@@ -266,7 +266,7 @@ export const JizaiHomeScreen = ({ onNavigate }: JizaiHomeScreenProps) => {
                         try { sessionStorage.setItem('selected-editing-option', selectedOptionId); } catch {}
                         setShowConfirm(true);
                       }}
-                      className="bg-[color:var(--color-jz-accent)] text-white px-8 py-3 rounded-[var(--radius-jz-button)] font-medium hover:brightness-110 transition-colors jz-shadow-button"
+                      className="bg-[color:var(--color-jz-accent)] text-white px-6 sm:px-8 py-3 rounded-[var(--radius-jz-button)] font-medium hover:brightness-110 transition-colors jz-shadow-button text-sm sm:text-base min-h-[44px]"
                     >
                       選択した編集で生成を開始
                     </button>
@@ -283,12 +283,12 @@ export const JizaiHomeScreen = ({ onNavigate }: JizaiHomeScreenProps) => {
     {/* Confirm Consumption Modal */}
     {showConfirm && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-        <JZCard className="max-w-md w-[92%] p-6">
+        <JZCard className="max-w-sm sm:max-w-md w-[95%] sm:w-[92%] p-4 sm:p-6">
           <div className="mb-4">
-            <h2 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)] mb-2">
+            <h2 className="jz-font-display jz-text-caption sm:jz-text-display-small text-[color:var(--color-jz-text-primary)] mb-2">
               生成を開始しますか？
             </h2>
-            <p className="jz-text-body text-[color:var(--color-jz-text-secondary)]">
+            <p className="jz-text-body text-[color:var(--color-jz-text-secondary)] text-sm sm:text-base">
               この操作でクレジットが消費され、画像の生成が開始されます。内容をご確認の上、よろしければ「生成を開始」を押してください。
             </p>
           </div>

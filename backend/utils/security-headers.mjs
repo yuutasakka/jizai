@@ -171,7 +171,7 @@ export function cspHeaders(options = {}) {
             "font-src 'self' https://fonts.gstatic.com",
             
             // Connect sources - minimal necessary connections
-            "connect-src 'self' https://dashscope.aliyuncs.com https://vitals.vercel-analytics.com https://*.supabase.co wss://*.supabase.co",
+            "connect-src 'self' https://vitals.vercel-analytics.com https://*.supabase.co wss://*.supabase.co https://generativelanguage.googleapis.com",
             
             "media-src 'self' data: blob:",
             "object-src 'none'", // Block all plugins

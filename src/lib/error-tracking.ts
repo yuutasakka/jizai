@@ -248,7 +248,7 @@ export function setupPerformanceMonitoring() {
       
       if (entry.entryType === 'resource') {
         const resourceEntry = entry as PerformanceResourceTiming;
-        if (resourceEntry.name.includes('api') || resourceEntry.name.includes('dashscope')) {
+        if (resourceEntry.name.includes('api')) {
           errorTracker.recordMetric('api_response_time', resourceEntry.responseEnd - resourceEntry.requestStart, {
             url: resourceEntry.name
           });

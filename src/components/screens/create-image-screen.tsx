@@ -108,8 +108,8 @@ export const CreateImageScreen = ({ onNavigate }: { onNavigate: (screen: string)
       </div>
 
       {/* Main Content */}
-      <div className="pt-[120px] pb-[160px] px-[var(--space-16)]">
-        <div className="max-w-[720px] mx-auto">
+      <div className="pt-[100px] sm:pt-[120px] pb-[100px] sm:pb-[160px] px-[var(--space-12)] sm:px-[var(--space-16)]">
+        <div className="max-w-full sm:max-w-[720px] mx-auto">
 
           {/* Welcome Message */}
           <div className="text-center mb-[var(--space-32)]">
@@ -126,9 +126,9 @@ export const CreateImageScreen = ({ onNavigate }: { onNavigate: (screen: string)
           <div className="space-y-[var(--space-16)] mb-[var(--space-32)]">
 
             {/* Upload Photo Card */}
-            <div className="bg-[color:var(--color-jz-card)] border border-[color:var(--color-jz-border)] rounded-[var(--radius-jz-card)] p-[var(--space-24)]">
-              <div className="flex items-start gap-[var(--space-16)]">
-                <div className="flex-shrink-0 w-12 h-12 bg-[color:var(--color-jz-accent)]/10 rounded-[var(--radius-jz-button)] flex items-center justify-center">
+            <div className="bg-[color:var(--color-jz-card)] border border-[color:var(--color-jz-border)] rounded-[var(--radius-jz-card)] p-[var(--space-16)] sm:p-[var(--space-24)]">
+              <div className="flex flex-col sm:flex-row items-start gap-[var(--space-12)] sm:gap-[var(--space-16)]">
+                <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-[color:var(--color-jz-accent)]/10 rounded-[var(--radius-jz-button)] flex items-center justify-center">
                   <JZPhotoIcon size={24} className="text-[color:var(--color-jz-accent)]" />
                 </div>
                 <div className="flex-1">
@@ -146,7 +146,7 @@ export const CreateImageScreen = ({ onNavigate }: { onNavigate: (screen: string)
                         <img
                           src={uploadedImage}
                           alt="アップロードされた写真"
-                          className="w-full h-48 object-cover rounded-[var(--radius-jz-button)] border border-[color:var(--color-jz-border)]"
+                          className="w-full h-32 sm:h-48 object-cover rounded-[var(--radius-jz-button)] border border-[color:var(--color-jz-border)]"
                         />
                         <button
                           onClick={handleRemoveImage}
@@ -174,9 +174,9 @@ export const CreateImageScreen = ({ onNavigate }: { onNavigate: (screen: string)
             </div>
 
             {/* Text Prompt Card */}
-            <div className="bg-[color:var(--color-jz-card)] border border-[color:var(--color-jz-border)] rounded-[var(--radius-jz-card)] p-[var(--space-24)]">
-              <div className="flex items-start gap-[var(--space-16)]">
-                <div className="flex-shrink-0 w-12 h-12 bg-[color:var(--color-jz-accent)]/10 rounded-[var(--radius-jz-button)] flex items-center justify-center">
+            <div className="bg-[color:var(--color-jz-card)] border border-[color:var(--color-jz-border)] rounded-[var(--radius-jz-card)] p-[var(--space-16)] sm:p-[var(--space-24)]">
+              <div className="flex flex-col sm:flex-row items-start gap-[var(--space-12)] sm:gap-[var(--space-16)]">
+                <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-[color:var(--color-jz-accent)]/10 rounded-[var(--radius-jz-button)] flex items-center justify-center">
                   <JZMagicWandIcon size={24} className="text-[color:var(--color-jz-accent)]" />
                 </div>
                 <div className="flex-1">
