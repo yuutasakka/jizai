@@ -14,6 +14,7 @@ import { getCorsConfig, initializeCors } from './utils/cors-config.mjs';
 import { initializeSecurityHeaders, initializeCSPReporting } from './utils/security-headers.mjs';
 import { responseSanitizer } from './middleware/response-sanitizer.mjs';
 import { cspReportHandler, cspStatsHandler } from './utils/csp-reporter.mjs';
+import { metrics } from './utils/metrics.mjs';
 
 // Import vault subscription system
 import { initializeDatabase, checkDatabaseHealth } from './config/supabase.mjs';
@@ -224,6 +225,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/v1/health', async (req, res) => {
+    const t0 = Date.now();
     const health = {
         ok: true,
         timestamp: new Date().toISOString(),
@@ -239,6 +241,8 @@ app.get('/v1/health', async (req, res) => {
 
     const statusCode = health.services.database ? 200 : 503;
     res.status(statusCode).json(health);
+    metrics.inc('http_requests_total', { route: '/v1/health', method: 'GET', status: statusCode });
+    metrics.observe('http_request_duration_ms', { route: '/v1/health', method: 'GET' }, Date.now() - t0);
 });
 
 // CSP statistics endpoint (for security monitoring)
@@ -484,11 +488,13 @@ async function runImageEditGemini({ base64Data, mimeType, prompt, profile = 'sta
 
 // New: Edit by optionId -> resolves prompt from Supabase then runs edit
 app.post('/v1/edit-by-option', editLimiter, requireAuthMaybe, rlsAuthMiddleware(), upload.single('image'), async (req, res) => {
+    const t0 = Date.now();
+    let profile = 'standard';
     try {
         const imageFile = req.file;
         const deviceId = req.deviceId;
         const { option_id: optionId, engine_profile } = req.body || {};
-        const profile = (engine_profile || 'standard').toString();
+        profile = (engine_profile || 'standard').toString();
 
         // deviceIdはミドルウェアで識別
         if (!imageFile) {
@@ -598,20 +604,26 @@ app.post('/v1/edit-by-option', editLimiter, requireAuthMaybe, rlsAuthMiddleware(
         res.setHeader('Content-Length', editedBuffer.length);
         res.setHeader('X-Credits-Remaining', String(remaining));
         res.send(editedBuffer);
+        metrics.inc('edit_success_total', { route: '/v1/edit-by-option' });
+        metrics.observe('edit_duration_ms', { route: '/v1/edit-by-option', profile }, Date.now() - t0);
 
     } catch (error) {
         console.error('❌ Edit-by-option error:', error.message);
+        metrics.inc('edit_failure_total', { route: '/v1/edit-by-option' });
+        metrics.observe('edit_duration_ms', { route: '/v1/edit-by-option', profile }, Date.now() - t0);
         res.status(500).json({ error: 'Internal Server Error', message: 'Edit-by-option failed', code: 'EDIT_BY_OPTION_FAILED' });
     }
 });
 app.post('/v1/edit', editLimiter, requireAuthMaybe, rlsAuthMiddleware(), upload.single('image'), async (req, res) => {
+    const t0 = Date.now();
+    let profile = 'standard';
     try {
         const { prompt } = req.body;
         const imageFile = req.file;
         const deviceId = req.deviceId;
         const { vaultId: providedVaultId } = req.body || {};
         const profileInput = (req.body.engine_profile || 'standard').toString();
-        const profile = ['standard','high'].includes(profileInput) ? profileInput : 'standard';
+        profile = ['standard','high'].includes(profileInput) ? profileInput : 'standard';
 
         // バリデーション
         // deviceId はミドルウェアで識別済み
@@ -772,7 +784,7 @@ app.post('/v1/edit', editLimiter, requireAuthMaybe, rlsAuthMiddleware(), upload.
                 vault_id: targetVaultId,
                 filename: editedFilename,
                 original_filename: editedFilename,
-                file_size_bytes: imageDownload.data.length,
+                file_size_bytes: editedPng.length,
                 mime_type: 'image/png',
                 file_url: editedPath,
                 title: `Edited: ${sanitizeText(prompt, { maxLength: 60 })}`,
@@ -800,14 +812,19 @@ app.post('/v1/edit', editLimiter, requireAuthMaybe, rlsAuthMiddleware(), upload.
         const consume1 = await creditsService.consumeOne(req.user.id, deviceId);
         const remaining = consume1.remaining || 0;
         res.setHeader('Content-Type', 'image/png');
-        res.setHeader('Content-Length', imageDownload.data.length);
+        res.setHeader('Content-Length', editedPng.length);
         res.setHeader('X-Credits-Remaining', String(remaining));
-        res.send(Buffer.from(imageDownload.data));
+        res.send(editedPng);
+
+        metrics.inc('edit_success_total', { route: '/v1/edit' });
+        metrics.observe('edit_duration_ms', { route: '/v1/edit', profile }, Date.now() - t0);
 
         console.log(`✅ Edit completed successfully, ${imageDownload.data.length} bytes`);
 
     } catch (error) {
         console.error('❌ Edit error:', error.message);
+        metrics.inc('edit_failure_total', { route: '/v1/edit' });
+        metrics.observe('edit_duration_ms', { route: '/v1/edit', profile }, Date.now() - t0);
 
         // エラー分類
         if (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT') {
@@ -1220,6 +1237,24 @@ app.use('*', (req, res) => {
             ] : ['(unavailable)']
         }
     });
+});
+
+// Metrics endpoint (Prometheus exposition format)
+function allowMetrics(req) {
+    const ipList = (process.env.METRICS_IP_ALLOWLIST || '').split(',').map(s => s.trim()).filter(Boolean);
+    const ip = req.ip || req.connection?.remoteAddress || '';
+    if (ipList.length && ipList.includes(ip)) return true;
+    const token = req.headers['x-admin-token'];
+    const expected = process.env.ADMIN_TOKEN;
+    return expected && token === expected;
+}
+
+app.get('/v1/metrics', (req, res) => {
+    if (!allowMetrics(req)) {
+        return res.status(403).json({ error: 'Forbidden', message: 'Metrics access denied' });
+    }
+    res.setHeader('Content-Type', 'text/plain; version=0.0.4');
+    res.send(metrics.serialize());
 });
 
 // エラーハンドラー

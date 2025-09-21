@@ -47,6 +47,33 @@ npm run preflight
 
 本番環境で実行すると、`ORIGIN_ALLOWLIST` や Webhook/管理系のハードニング（レート制限やIP許可）の未設定も警告します。
 
+## 合成監視 / スモークテスト
+
+### 合成監視（ヘルス＋編集の通し確認）
+環境変数に本番の API ベースURLと認証トークンを設定して実行します。
+
+```bash
+cd backend
+API_BASE_URL=https://api.example.com \
+AUTH_BEARER=eyJ... \
+DEVICE_ID=synthetic-device \
+npm run check:synthetic
+```
+
+CI での自動実行例は `.github/workflows/synthetic-monitoring.yml` を参照し、
+`SYNTHETIC_API_BASE_URL` と `SYNTHETIC_AUTH_BEARER` を GitHub Secrets に登録してください。
+
+### エラー系スモーク
+禁止語や不正ファイルで 400 が返ることを確認します。
+
+```bash
+cd backend
+API_BASE_URL=https://api.example.com \
+AUTH_BEARER=eyJ... \
+DEVICE_ID=smoke-fail-device \
+npm run smoke:edit:fail
+```
+
 ## セキュリティ強化（新規）
 
 以下の保護を追加済みです。必要に応じて環境変数で調整できます。
@@ -97,6 +124,11 @@ curl http://localhost:3000/v1/health
 - `GET /v1/balance` - 残高確認 ✅
 - `POST /v1/purchase` - 課金処理 ✅
 - `POST /v1/report` - 通報機能 ✅
+
+### クレジット消費仕様
+- 画像編集（`POST /v1/edit` / `POST /v1/edit-by-option`）は「成功時のみ」都度1クレジットを消費します。
+- 無料のやり直し制度は廃止しました。再編集も同様に1クレジットを消費します。
+- 応答ヘッダ `X-Credits-Remaining` に編集後の残高を返します。
 
 ### Webhooks
 
