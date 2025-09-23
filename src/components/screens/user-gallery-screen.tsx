@@ -238,14 +238,6 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
     }
   };
 
-  const enhanceQuality = async (image: GeneratedImage) => {
-    // 高画質は印刷用ページへナビゲート（A4/300dpiなどの選択を案内）
-    const params = new URLSearchParams();
-    params.set('src', image.generatedImage);
-    params.set('title', image.title || '');
-    params.set('dpi', '300');
-    navigate(`/tools/print?${params.toString()}`);
-  };
 
   const resizeAndDownload = async (image: GeneratedImage, targetWidth: number) => {
     try {
@@ -584,15 +576,6 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
                             className="flex items-center gap-[var(--space-8)]"
                           >
                             サイズ変更
-                          </JZButton>
-                          <JZButton
-                            tone="secondary"
-                            size="md"
-                            onClick={() => enhanceQuality(image)}
-                            className="flex items-center gap-[var(--space-8)]"
-                            disabled={resizing}
-                          >
-                            高画質
                           </JZButton>
                           <JZButton
                             tone="secondary"

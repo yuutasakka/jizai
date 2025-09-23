@@ -854,7 +854,7 @@ app.post('/v1/edit', editLimiter, requireAuthMaybe, rlsAuthMiddleware(), enforce
         res.send(editedPng);
 
         metrics.inc('edit_success_total', { route: '/v1/edit' });
-        metrics.observe('edit_duration_ms', { route: '/v1/edit', profile }, Date.now() - t0);
+    metrics.observe('edit_duration_ms', { route: '/v1/edit', profile }, Date.now() - t0);
 
         console.log(`✅ Edit completed successfully, ${editedPng.length} bytes`);
 
@@ -895,6 +895,122 @@ app.post('/v1/edit', editLimiter, requireAuthMaybe, rlsAuthMiddleware(), enforce
             code: 'GENERATION_FAILED'
         });
     }
+});
+
+// ========================================
+// IMAGE UPSCALE (Replicate API)
+// ========================================
+
+// POST /v1/upscale { src_url, factor=3, image_key }
+// Limits: per user+image_key max 3 times
+app.post('/v1/upscale', requireAuthMaybe, rlsAuthMiddleware(), enforceAuthLink(), async (req, res) => {
+  const t0 = Date.now();
+  try {
+    const { src_url: srcUrl, factor, image_key: imageKey } = req.body || {};
+    const upFactor = Number.isFinite(Number(factor)) ? Number(factor) : 3;
+    if (!srcUrl || typeof srcUrl !== 'string' || !/^https?:\/\//i.test(srcUrl)) {
+      return res.status(400).json({ error: 'Bad Request', message: 'src_url is required (http/https)', code: 'MISSING_SRC_URL' });
+    }
+    const imgKey = typeof imageKey === 'string' && imageKey.length > 0 ? imageKey.slice(0, 128) : 'default';
+
+    // Usage check (Supabase table: image_upscale_uses)
+    let used = 0;
+    let remaining = 0;
+    const MAX_USES = 3;
+    try {
+      const { data: row } = await req.supabaseAuth
+        .from('image_upscale_uses')
+        .select('uses')
+        .eq('user_id', req.user.id)
+        .eq('image_key', imgKey)
+        .maybeSingle();
+      used = row?.uses || 0;
+    } catch {}
+    if (used >= MAX_USES) {
+      return res.status(429).json({ error: 'Too Many Requests', message: 'Upscale limit reached (3 per image)', code: 'UPSCALE_LIMIT' });
+    }
+
+    // Call Replicate API
+    if (!process.env.REPLICATE_API_TOKEN) {
+      return res.status(503).json({ error: 'Service Unavailable', message: 'REPLICATE_API_TOKEN not configured', code: 'REPLICATE_MISSING' });
+    }
+
+    // Create prediction
+    const createResp = await axios.post('https://api.replicate.com/v1/predictions', {
+      version: process.env.REPLICATE_MODEL_VERSION || 'nightmareai/real-esrgan:5c1f8f2c2f1c90b28a6a4e6c9fbd8b7df0a5a6f0e7c2d3b4f6c8a7b9d0e1f2a3',
+      input: { image: srcUrl, scale: upFactor }
+    }, {
+      headers: {
+        'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      timeout: 20000
+    });
+
+    const predId = createResp.data?.id;
+    if (!predId) {
+      return res.status(502).json({ error: 'Bad Gateway', message: 'Failed to create prediction', code: 'REPLICATE_CREATE_FAILED' });
+    }
+
+    // Poll until complete
+    let status = createResp.data.status;
+    let outputUrl = null;
+    const started = Date.now();
+    while (true) {
+      if (Date.now() - started > 120000) { // 2 minutes
+        return res.status(504).json({ error: 'Gateway Timeout', message: 'Upscale timed out', code: 'UPSCALE_TIMEOUT' });
+      }
+      if (status === 'succeeded') {
+        const out = createResp.data?.output || [];
+        outputUrl = Array.isArray(out) ? out[0] : (typeof out === 'string' ? out : null);
+        break;
+      }
+      if (status === 'failed' || status === 'canceled') {
+        return res.status(502).json({ error: 'Bad Gateway', message: 'Upscale failed', code: 'UPSCALE_FAILED' });
+      }
+      await new Promise(r => setTimeout(r, 1500));
+      const poll = await axios.get(`https://api.replicate.com/v1/predictions/${predId}`, {
+        headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}` },
+        timeout: 15000
+      });
+      status = poll.data?.status;
+      if (status === 'succeeded') {
+        const out = poll.data?.output || [];
+        outputUrl = Array.isArray(out) ? out[0] : (typeof out === 'string' ? out : null);
+        break;
+      }
+    }
+
+    if (!outputUrl) {
+      return res.status(502).json({ error: 'Bad Gateway', message: 'No output from Replicate', code: 'NO_OUTPUT' });
+    }
+
+    // Fetch the upscaled image and stream back
+    const fileResp = await axios.get(outputUrl, { responseType: 'arraybuffer', timeout: 60000 });
+
+    // Increment usage (best-effort)
+    try {
+      const { data: row } = await req.supabaseAuth
+        .from('image_upscale_uses')
+        .upsert({ user_id: req.user.id, image_key: imgKey, uses: used + 1 }, { onConflict: 'user_id,image_key' })
+        .select('uses')
+        .single();
+      remaining = Math.max(0, MAX_USES - (row?.uses || used + 1));
+    } catch {
+      remaining = Math.max(0, MAX_USES - (used + 1));
+    }
+
+    res.setHeader('Content-Type', fileResp.headers['content-type'] || 'image/png');
+    res.setHeader('Content-Disposition', 'attachment; filename="upscaled.png"');
+    res.setHeader('X-Upscale-Remaining', String(remaining));
+    return res.send(Buffer.from(fileResp.data));
+
+  } catch (e) {
+    console.error('❌ Upscale error:', e.message);
+    return res.status(500).json({ error: 'Internal Server Error', message: 'Upscale failed', code: 'UPSCALE_ERROR' });
+  } finally {
+    metrics.observe('http_request_duration_ms', { route: '/v1/upscale', method: 'POST' }, Date.now() - t0);
+  }
 });
 
 // 残高確認エンドポイント（RLS適用 + Vault統合）

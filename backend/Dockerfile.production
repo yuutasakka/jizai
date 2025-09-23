@@ -1,0 +1,32 @@
+# Production Dockerfile for Jizai Backend (Express)
+# - Multi-stage, non-root, minimal attack surface
+
+FROM node:20-alpine AS deps
+WORKDIR /app
+
+# Install production dependencies only
+COPY backend/package*.json ./
+RUN npm ci --omit=dev
+
+FROM node:20-alpine AS runner
+ENV NODE_ENV=production
+WORKDIR /app
+
+# Create non-root user
+RUN addgroup -S nodejs && adduser -S nodeuser -G nodejs
+
+# Copy node_modules from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copy backend source
+COPY backend/. .
+
+# Drop privileges
+USER nodeuser
+
+# Default port (override with PORT env)
+EXPOSE 3000
+
+# Start server
+CMD ["node", "index-vault-integration.mjs"]
+
