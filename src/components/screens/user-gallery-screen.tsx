@@ -11,6 +11,7 @@ import {
 } from '../design-system/jizai-icons';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import api from '../../api/client';
+import { navigate } from '../../router';
 import { ChevronDown, Cloud, Plus, Image as ImageIcon } from 'lucide-react';
 
 interface GeneratedImage {
@@ -34,6 +35,8 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
   const [loadingMore, setLoadingMore] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const [dimensions, setDimensions] = useState<Record<string, { w: number; h: number }>>({});
+  const [openResize, setOpenResize] = useState<string | null>(null);
+  const [resizing, setResizing] = useState(false);
 
   const formatSize = (bytes?: number) => {
     if (!bytes || bytes <= 0) return '';
@@ -50,7 +53,51 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
   const stored: GeneratedImage[] = (() => {
     try {
       const raw = localStorage.getItem('jizai_gallery');
-      if (!raw) return [] as any;
+      if (!raw) {
+        // 初回シード（サンプル）: public/examples からモックデータを投入
+        const now = Date.now();
+        const samples: GeneratedImage[] = [
+          {
+            id: 'ex_human_01',
+            originalImage: '/examples/human_01_before.png',
+            generatedImage: '/examples/human_01_after.png',
+            prompt: '肌トーン調整と背景の自然な補正',
+            createdAt: new Date(now - 2 * 24 * 60 * 60 * 1000),
+            expiresAt: new Date(now + 90 * 24 * 60 * 60 * 1000),
+            title: '人物（サンプル）'
+          },
+          {
+            id: 'ex_pet_01',
+            originalImage: '/examples/pet_01_before.png',
+            generatedImage: '/examples/pet_01_after.png',
+            prompt: '明るさ/コントラストの最適化と背景ぼかし',
+            createdAt: new Date(now - 5 * 24 * 60 * 60 * 1000),
+            expiresAt: new Date(now + 90 * 24 * 60 * 60 * 1000),
+            title: 'ペット（サンプル）'
+          },
+          {
+            id: 'ex_photo_01',
+            originalImage: '/examples/photo_01_before.png',
+            generatedImage: '/examples/photo_01_after.png',
+            prompt: '背景除去と高画質化',
+            createdAt: new Date(now - 7 * 24 * 60 * 60 * 1000),
+            expiresAt: new Date(now + 90 * 24 * 60 * 60 * 1000),
+            title: '写真（サンプル）'
+          }
+        ];
+        try {
+          localStorage.setItem('jizai_gallery', JSON.stringify(samples.map(s => ({
+            id: s.id,
+            originalImage: s.originalImage,
+            generatedImage: s.generatedImage,
+            prompt: s.prompt,
+            createdAt: s.createdAt.toISOString(),
+            expiresAt: s.expiresAt.toISOString(),
+            title: s.title
+          }))));
+        } catch {}
+        return samples as any;
+      }
       const arr = JSON.parse(raw) as any[];
       return arr.map((x) => ({
         id: x.id,
@@ -178,8 +225,65 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
   };
 
   const handleDownload = (image: GeneratedImage) => {
-    // モック：実際の実装では画像をダウンロード
-    alert(`${image.title} をダウンロードしました`);
+    try {
+      const a = document.createElement('a');
+      a.href = image.generatedImage;
+      const safeTitle = (image.title || 'image').replace(/[^\w\-]+/g, '_').slice(0, 40);
+      a.download = `${safeTitle}_${image.id}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch {
+      alert(`${image.title} をダウンロードできませんでした`);
+    }
+  };
+
+  const enhanceQuality = async (image: GeneratedImage) => {
+    // 高画質は印刷用ページへナビゲート（A4/300dpiなどの選択を案内）
+    const params = new URLSearchParams();
+    params.set('src', image.generatedImage);
+    params.set('title', image.title || '');
+    params.set('dpi', '300');
+    navigate(`/tools/print?${params.toString()}`);
+  };
+
+  const resizeAndDownload = async (image: GeneratedImage, targetWidth: number) => {
+    try {
+      setResizing(true);
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const i = new Image();
+        i.crossOrigin = 'anonymous';
+        i.onload = () => resolve(i);
+        i.onerror = reject as any;
+        i.src = image.generatedImage;
+      });
+      const scale = targetWidth / img.naturalWidth;
+      const w = Math.max(1, Math.round(targetWidth));
+      const h = Math.max(1, Math.round(img.naturalHeight * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Canvas context unavailable');
+      ctx.drawImage(img, 0, 0, w, h);
+      const blob: Blob = await new Promise((resolve, reject) => {
+        canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob failed'))), 'image/png', 0.92);
+      });
+      const a = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      const safeTitle = (image.title || 'image').replace(/[^\w\-]+/g, '_').slice(0, 40);
+      a.href = url;
+      a.download = `${safeTitle}_${image.id}_${w}x${h}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert('サイズ変更に失敗しました');
+    } finally {
+      setResizing(false);
+      setOpenResize(null);
+    }
   };
 
   const handleShare = (image: GeneratedImage) => {
@@ -391,6 +495,13 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
                         </button>
                         <button
                           className="underline hover:text-[color:var(--color-jz-text-secondary)]"
+                          onClick={() => navigate(`/tools/resize?src=${encodeURIComponent(item.url)}&title=${encodeURIComponent(item.title || '')}`)}
+                          title="サイズ変更"
+                        >
+                          サイズ変更
+                        </button>
+                        <button
+                          className="underline hover:text-[color:var(--color-jz-text-secondary)]"
                           onClick={() => handleDeleteServer(item.id, item.title)}
                           title="削除"
                         >
@@ -415,34 +526,16 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
                 return (
                   <JZCard key={image.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-200 w-full max-w-[400px]">
                     <JZCardContent className="p-0">
-                      {/* Before/After Image Display */}
+                      {/* Generated Image Only (BEFORE not shown) */}
                       <div className="relative h-[240px] bg-[color:var(--color-jz-border)]">
-                        <div className="absolute inset-0 grid grid-cols-2 gap-[1px]">
-                          {/* Before */}
-                          <div className="relative bg-[color:var(--color-jz-surface)]">
-                            <ImageWithFallback
-                              src={image.originalImage}
-                              alt="Original"
-                              className="w-full h-full object-cover"
-                            />
-                            <div className="absolute bottom-[var(--space-8)] left-[var(--space-8)] px-[var(--space-8)] py-[var(--space-4)] bg-black/70 backdrop-blur-sm rounded-[var(--radius-jz-button)]">
-                              <span className="jz-text-caption text-white font-medium">BEFORE</span>
-                            </div>
-                          </div>
-
-                          {/* After */}
-                          <div className="relative bg-[color:var(--color-jz-surface)]">
-                            <ImageWithFallback
-                              src={image.generatedImage}
-                              alt="Generated"
-                              className="w-full h-full object-cover"
-                            />
-                            <div className="absolute bottom-[var(--space-8)] right-[var(--space-8)] px-[var(--space-8)] py-[var(--space-4)] bg-black/70 backdrop-blur-sm rounded-[var(--radius-jz-button)]">
-                              <span className="jz-text-caption text-white font-medium">AFTER</span>
-                            </div>
-                          </div>
+                        <div className="absolute inset-0">
+                          <ImageWithFallback
+                            src={image.generatedImage}
+                            alt="Generated"
+                            className="w-full h-full object-cover"
+                          />
                         </div>
-
+                      
                         {/* Expiry Warning */}
                         {isExpiringSoon && (
                           <div className="absolute top-[var(--space-8)] right-[var(--space-8)]">
@@ -474,7 +567,7 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex gap-[var(--space-12)]">
+                        <div className="flex gap-[var(--space-12)] items-center relative">
                           <JZButton
                             tone="primary"
                             size="md"
@@ -483,6 +576,23 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
                           >
                             <JZDownloadIcon size={16} />
                             保存
+                          </JZButton>
+                          <JZButton
+                            tone="secondary"
+                            size="md"
+                            onClick={() => navigate(`/tools/resize?src=${encodeURIComponent(image.generatedImage)}&title=${encodeURIComponent(image.title || '')}`)}
+                            className="flex items-center gap-[var(--space-8)]"
+                          >
+                            サイズ変更
+                          </JZButton>
+                          <JZButton
+                            tone="secondary"
+                            size="md"
+                            onClick={() => enhanceQuality(image)}
+                            className="flex items-center gap-[var(--space-8)]"
+                            disabled={resizing}
+                          >
+                            高画質
                           </JZButton>
                           <JZButton
                             tone="secondary"
@@ -497,10 +607,10 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
                             tone="secondary"
                             size="md"
                             onClick={() => handleDeleteLocal(image)}
-                            className="flex items-center gap-[var(--space-8)] text-[color:var(--color-jz-destructive)] hover:text-[color:var(--color-jz-destructive)]"
+                            className="flex items-center gap-[var(--space-8)] text-red-500 hover:text-red-600 font-medium"
                             aria-label={`削除: ${image.title}`}
                           >
-                            <JZTrashIcon size={16} />
+                            削除
                           </JZButton>
                         </div>
                       </div>

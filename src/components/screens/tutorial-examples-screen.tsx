@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from '../../lib/supabase';
 import { Search, Bell, Sparkles, Zap, Star, Crown, Filter, Wand2 } from 'lucide-react';
 
 interface InspirationExample {
@@ -70,9 +71,71 @@ const inspirationExamples: InspirationExample[] = [
 export const TutorialExamplesScreen = ({ onNavigate, onExampleSelected }: TutorialExamplesScreenProps) => {
   const [activeTab, setActiveTab] = useState<'inspire' | 'search' | 'following' | 'ai-generated'>('inspire');
   const [loading, setLoading] = useState(false);
+  const searchCategories: Array<{ key: string; label: string }> = [
+    { key: 'expression', label: '表情' },
+    { key: 'background', label: '背景' },
+    { key: 'attire', label: '着せ替え' },
+    { key: 'pose', label: '姿勢' },
+    { key: 'quality', label: '画質' },
+    { key: 'size', label: 'サイズ' },
+  ];
+  const [selectedCategory, setSelectedCategory] = useState<string>(searchCategories[0].key);
+  const [sortBy, setSortBy] = useState<'recommend' | 'newest' | 'title'>('recommend');
+  const [searchResults, setSearchResults] = useState<Array<{ key: string; title: string; cover_url?: string | null; created_at?: string | null; popularity?: number | null }>>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   // Filter examples by active tab
   const filteredExamples = inspirationExamples.filter(example => example.category === activeTab);
+
+  // Apply sorting
+  const sortedExamples = React.useMemo(() => {
+    const arr = [...filteredExamples];
+    switch (sortBy) {
+      case 'newest':
+        // Proxy: idの降順を新着順とする
+        return arr.sort((a, b) => Number(b.id) - Number(a.id));
+      case 'title':
+        return arr.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+      case 'recommend':
+      default:
+        return arr; // デフォルト順
+    }
+  }, [filteredExamples, sortBy]);
+
+  // Fetch Supabase-backed search results
+  useEffect(() => {
+    let cancelled = false;
+    async function run() {
+      if (!supabase) return; // Frontend may run without supabase configured
+      if (activeTab !== 'search') return;
+      setSearchLoading(true);
+      setSearchError(null);
+      try {
+        let query = supabase
+          .from('editing_prompts')
+          .select('key, ja_title, cover_url, category, created_at, popularity')
+          .eq('category', selectedCategory)
+          .limit(50);
+
+        if (sortBy === 'newest') query = query.order('created_at', { ascending: false });
+        else if (sortBy === 'title') query = query.order('ja_title', { ascending: true });
+        else query = query.order('popularity', { ascending: false }).order('created_at', { ascending: false });
+
+        const { data, error } = await query;
+        if (error) throw error;
+        if (!cancelled) {
+          setSearchResults((data || []).map((r: any) => ({ key: r.key, title: r.ja_title || r.key, cover_url: r.cover_url, created_at: r.created_at, popularity: r.popularity })));
+        }
+      } catch (e: any) {
+        if (!cancelled) setSearchError(e?.message || '読み込みに失敗しました');
+      } finally {
+        if (!cancelled) setSearchLoading(false);
+      }
+    }
+    run();
+    return () => { cancelled = true; };
+  }, [activeTab, selectedCategory, sortBy]);
 
   const tabs = [
     { id: 'inspire' as const, label: 'インスピ', icon: <Sparkles className="w-4 h-4" />, color: 'from-blue-400 to-purple-500' },
@@ -203,12 +266,87 @@ export const TutorialExamplesScreen = ({ onNavigate, onExampleSelected }: Tutori
         </div>
       </div>
 
+      {/* 検索カテゴリ + ソート（ヘッダー直下） */}
+      {activeTab === 'search' && (
+        <div className="relative z-10 px-5 -mt-2 mb-4">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+            {searchCategories.map(cat => {
+              const active = selectedCategory === cat.key;
+              return (
+                <button
+                  key={cat.key}
+                  onClick={() => setSelectedCategory(cat.key)}
+                  className={`whitespace-nowrap px-3.5 py-2 rounded-full border text-sm font-medium transition-all duration-200 shadow-sm backdrop-blur
+                    ${active
+                      ? 'bg-white text-black border-white'
+                      : 'bg-white/10 text-white/90 border-white/20 hover:bg-white/20'}
+                  `}
+                  aria-pressed={active}
+                >
+                  {cat.label}
+                </button>
+              );
+            })}
+            <div className="ml-auto flex items-center gap-2">
+              <label htmlFor="search-sort" className="text-white/80 text-xs">並び替え</label>
+              <select
+                id="search-sort"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="bg-white/10 text-white text-sm rounded-xl px-3 py-2 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30"
+              >
+                <option value="recommend">おすすめ</option>
+                <option value="newest">新着順</option>
+                <option value="title">タイトル順</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {/* Premium Content */}
       <div className="relative z-10 px-5 pb-[120px]">
-        {filteredExamples.length > 0 ? (
+        {/* Search tab: Supabase results */}
+        {activeTab === 'search' ? (
+          searchLoading ? (
+            <div className="flex items-center justify-center min-h-[200px] text-white/80">読み込み中...</div>
+          ) : searchError ? (
+            <div className="flex items-center justify-center min-h-[200px] text-red-300">{searchError}</div>
+          ) : searchResults.length > 0 ? (
+            <div className="grid grid-cols-2 gap-4">
+              {searchResults.map((item, index) => (
+                <div key={item.key} className="transition-all duration-500" style={{ animationDelay: `${index * 0.05}s` }}>
+                  <div className="relative bg-white/10 backdrop-blur-xl rounded-3xl overflow-hidden shadow-lg border border-white/20 hover:bg-white/20 transition-all duration-300 group">
+                    <div className="relative h-[220px] overflow-hidden">
+                      {item.cover_url ? (
+                        <img src={item.cover_url} alt={item.title} className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-white/60 text-sm">No Image</div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-60" />
+                      <div className="absolute bottom-3 left-3 right-3 px-3 py-2 bg-black/60 backdrop-blur rounded-xl border border-white/10">
+                        <span className="text-white text-sm font-semibold truncate" title={item.title}>{item.title}</span>
+                      </div>
+                    </div>
+                    <div className="p-3">
+                      <button
+                        onClick={() => { try { sessionStorage.setItem('desired-template-key', item.key); } catch {}; onNavigate('create'); }}
+                        className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-xs font-bold py-2.5 px-3 rounded-2xl transition-all duration-300 border border-white/20"
+                      >
+                        このテンプレートを使う
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center min-h-[200px] text-white/80">該当するテンプレートがありません</div>
+          )
+        ) : sortedExamples.length > 0 ? (
           <div className="grid grid-cols-2 gap-4">
-            {filteredExamples.map((example, index) => (
+            {sortedExamples.map((example, index) => (
               <div
                 key={example.id}
                 className="transition-all duration-500"

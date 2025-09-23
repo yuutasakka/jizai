@@ -2,6 +2,8 @@ import React from 'react';
 import App from './App';
 import { MemorialHumanPage, MemorialPetPage, MemorialSeizenPage, MemorialPhotoPage } from './routes/memorial-pages';
 import AuthCallback from './routes/auth-callback';
+import ResizeEditorPage from './routes/resize-editor';
+import PrintPreparePage from './routes/print-prepare';
 
 function usePathname() {
   const [path, setPath] = React.useState<string>(window.location.pathname);
@@ -27,5 +29,7 @@ export default function RootRouter() {
   if (path.startsWith('/memorial/pet')) return <MemorialPetPage />;
   if (path.startsWith('/memorial/seizen')) return <MemorialSeizenPage />;
   if (path.startsWith('/memorial/photo')) return <MemorialPhotoPage />;
+  if (path.startsWith('/tools/resize')) return <ResizeEditorPage />;
+  if (path.startsWith('/tools/print')) return <PrintPreparePage />;
   return <App />;
 }

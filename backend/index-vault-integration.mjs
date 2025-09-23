@@ -246,7 +246,29 @@ app.get('/v1/health', async (req, res) => {
 });
 
 // CSP statistics endpoint (for security monitoring)
-app.get('/v1/security/csp-stats', cspStatsHandler());
+// Admin token/IP gate for CSP stats (avoid information exposure)
+function requireAdminToken(req, res, next) {
+    const expected = process.env.ADMIN_TOKEN;
+    const provided = req.headers['x-admin-token'];
+    if (process.env.NODE_ENV === 'production') {
+        if (!expected || !provided || provided !== expected) {
+            return res.status(401).json({ error: 'Unauthorized', message: 'Admin token required' });
+        }
+    }
+    return next();
+}
+function optionalAdminIpAllowlist(req, res, next) {
+    const list = (process.env.ADMIN_IP_ALLOWLIST || '')
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+    if (list.length === 0) return next();
+    const ip = req.ip || req.connection?.remoteAddress || '';
+    if (list.includes(ip)) return next();
+    return res.status(403).json({ error: 'Forbidden', message: 'IP not allowed' });
+}
+
+app.get('/v1/security/csp-stats', optionalAdminIpAllowlist, requireAdminToken, cspStatsHandler());
 
 // API version check
 app.get('/v1/version', (req, res) => {
@@ -308,7 +330,7 @@ const requireAuthMaybe = (process.env.NODE_ENV === 'production') ? requireAuth()
 // ========================================
 
 // List saved prompts for current user (RLS-scoped)
-app.get('/v1/prompts', requireAuthMaybe, rlsAuthMiddleware(), async (req, res) => {
+app.get('/v1/prompts', requireAuthMaybe, rlsAuthMiddleware(), enforceAuthLink(), async (req, res) => {
     try {
         const { supabaseAuth } = req;
         const rawLimit = parseInt(req.query.limit, 10);
@@ -349,7 +371,7 @@ app.get('/v1/prompts', requireAuthMaybe, rlsAuthMiddleware(), async (req, res) =
 });
 
 // Popular template prompts (global, based on usage count)
-app.get('/v1/prompts/popular', requireAuthMaybe, rlsAuthMiddleware(), async (req, res) => {
+app.get('/v1/prompts/popular', requireAuthMaybe, rlsAuthMiddleware(), enforceAuthLink(), async (req, res) => {
     try {
         const { supabaseAuth } = req;
         const rawLimit = parseInt(req.query.limit, 10);
@@ -460,12 +482,29 @@ async function runImageEditGemini({ base64Data, mimeType, prompt, profile = 'sta
         options: { profile }
     };
 
-    const resp = await axios.post(endpoint, body, {
-        headers: { 'Content-Type': 'application/json' },
-        timeout: 90000,
-        maxContentLength: 50 * 1024 * 1024,
-        validateStatus: (s) => s === 200
-    });
+    const maxAttempts = 3;
+    let lastErr = null;
+    let resp = null;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            resp = await axios.post(endpoint, body, {
+                headers: { 'Content-Type': 'application/json' },
+                timeout: 90000,
+                maxContentLength: 50 * 1024 * 1024,
+                validateStatus: (s) => s === 200
+            });
+            break;
+        } catch (e) {
+            lastErr = e;
+            const status = e?.response?.status;
+            const retriable = status === 429 || (status >= 500 && status < 600) || e.code === 'ETIMEDOUT' || e.code === 'ECONNRESET';
+            if (!retriable || attempt === maxAttempts) {
+                throw e;
+            }
+            const backoff = 400 * Math.pow(2, attempt - 1) + Math.floor(Math.random() * 200);
+            await new Promise(r => setTimeout(r, backoff));
+        }
+    }
 
     // Try multiple response shapes (defensive parsing across API variants)
     const candidates = [
@@ -487,7 +526,7 @@ async function runImageEditGemini({ base64Data, mimeType, prompt, profile = 'sta
 }
 
 // New: Edit by optionId -> resolves prompt from Supabase then runs edit
-app.post('/v1/edit-by-option', editLimiter, requireAuthMaybe, rlsAuthMiddleware(), upload.single('image'), async (req, res) => {
+app.post('/v1/edit-by-option', editLimiter, requireAuthMaybe, rlsAuthMiddleware(), enforceAuthLink(), upload.single('image'), async (req, res) => {
     const t0 = Date.now();
     let profile = 'standard';
     try {
@@ -587,13 +626,13 @@ app.post('/v1/edit-by-option', editLimiter, requireAuthMaybe, rlsAuthMiddleware(
             { vault_id: targetVaultId, filename: editedFilename, original_filename: editedFilename, file_size_bytes: editedBuffer.length, mime_type: 'image/png', file_url: editedPath, title: 'Edited Image', uploaded_by: deviceId, uploaded_at: new Date().toISOString(), memory_type: 'image', is_archived: false }
         ]).select('id');
 
-        // Save prompt used (template)
+        // Save prompt used (template) - do not persist actual prompt text
         try {
             const editedRow = Array.isArray(insertedMemories) ? insertedMemories[1] : null;
             const usedMemoryId = editedRow?.id || null;
             await req.supabaseAuth
                 .from('user_prompts')
-                .insert({ user_id: req.user.id, prompt_text: prompt, source: 'template', example_key: optionId, used_in_memory: usedMemoryId });
+                .insert({ user_id: req.user.id, prompt_text: '[REDACTED]', source: 'template', example_key: optionId, used_in_memory: usedMemoryId });
         } catch {}
 
         // Return edited image binary inline for immediate preview
@@ -614,7 +653,7 @@ app.post('/v1/edit-by-option', editLimiter, requireAuthMaybe, rlsAuthMiddleware(
         res.status(500).json({ error: 'Internal Server Error', message: 'Edit-by-option failed', code: 'EDIT_BY_OPTION_FAILED' });
     }
 });
-app.post('/v1/edit', editLimiter, requireAuthMaybe, rlsAuthMiddleware(), upload.single('image'), async (req, res) => {
+app.post('/v1/edit', editLimiter, requireAuthMaybe, rlsAuthMiddleware(), enforceAuthLink(), upload.single('image'), async (req, res) => {
     const t0 = Date.now();
     let profile = 'standard';
     try {
@@ -686,13 +725,11 @@ app.post('/v1/edit', editLimiter, requireAuthMaybe, rlsAuthMiddleware(), upload.
             return res.status(400).json({ error: 'Bad Request', message: 'Invalid or corrupted image file', code: 'INVALID_IMAGE_FILE' });
         }
 
-        // Credits check (legacy credit system)
-        try {
-            const legacy = await store.getUser(deviceId);
-            if ((legacy.credits || 0) <= 0) {
-                return res.status(402).json({ error: 'Payment Required', message: 'Insufficient credits', code: 'INSUFFICIENT_CREDITS', credits: legacy.credits || 0 });
-            }
-        } catch {}
+        // Credits check (unified via Supabase; legacy is fallback only)
+        const currentCredits = await creditsService.getCredits(req.user.id, deviceId);
+        if ((currentCredits || 0) <= 0) {
+            return res.status(402).json({ error: 'Payment Required', message: 'Insufficient credits', code: 'INSUFFICIENT_CREDITS', credits: currentCredits || 0 });
+        }
 
         // 画像をBase64 DataURL化
         const imgBuf2 = await getFileBuffer(imageFile);
@@ -798,13 +835,13 @@ app.post('/v1/edit', editLimiter, requireAuthMaybe, rlsAuthMiddleware(), upload.
 
         const { data: inserted } = await req.supabaseAuth.from('memories').insert(memoryRecords).select('id');
 
-        // Save prompt used (user-entered)
+        // Save prompt used (user-entered) - redact prompt text to avoid PII at rest
         try {
             const editedRow = Array.isArray(inserted) ? inserted[1] : null;
             const usedMemoryId = editedRow?.id || null;
             await req.supabaseAuth
                 .from('user_prompts')
-                .insert({ user_id: req.user.id, prompt_text: prompt, source: 'user', example_key: null, used_in_memory: usedMemoryId });
+                .insert({ user_id: req.user.id, prompt_text: '[REDACTED]', source: 'user', example_key: null, used_in_memory: usedMemoryId });
         } catch {}
 
         // Return generated image as PNG to the client
@@ -819,7 +856,7 @@ app.post('/v1/edit', editLimiter, requireAuthMaybe, rlsAuthMiddleware(), upload.
         metrics.inc('edit_success_total', { route: '/v1/edit' });
         metrics.observe('edit_duration_ms', { route: '/v1/edit', profile }, Date.now() - t0);
 
-        console.log(`✅ Edit completed successfully, ${imageDownload.data.length} bytes`);
+        console.log(`✅ Edit completed successfully, ${editedPng.length} bytes`);
 
     } catch (error) {
         console.error('❌ Edit error:', error.message);
@@ -861,7 +898,8 @@ app.post('/v1/edit', editLimiter, requireAuthMaybe, rlsAuthMiddleware(), upload.
 });
 
 // 残高確認エンドポイント（RLS適用 + Vault統合）
-app.get('/v1/balance', rlsAuthMiddleware(), async (req, res) => {
+// Require auth and enforce linkage between Supabase Auth user and device owner
+app.get('/v1/balance', requireAuthMaybe, rlsAuthMiddleware(), enforceAuthLink(), async (req, res) => {
     try {
         const deviceId = req.deviceId;
         // サブスクリプション（system経由、監査ログあり）
@@ -894,7 +932,7 @@ app.get('/v1/balance', rlsAuthMiddleware(), async (req, res) => {
 });
 
 // List user's generated memories (edited images)
-app.get('/v1/memories', requireAuthMaybe, rlsAuthMiddleware(), async (req, res) => {
+app.get('/v1/memories', requireAuthMaybe, rlsAuthMiddleware(), enforceAuthLink(), async (req, res) => {
     try {
         const { supabaseAuth } = req;
         const rawLimit = parseInt(req.query.limit, 10);
@@ -913,18 +951,28 @@ app.get('/v1/memories', requireAuthMaybe, rlsAuthMiddleware(), async (req, res) 
             return res.status(500).json({ error: 'Internal Server Error', message: error.message, code: 'MEMORY_LIST_FAILED' });
         }
         const safePath = (p) => typeof p === 'string' && /^[a-z0-9/_\.-]+$/i.test(p) && !p.includes('..');
-        const items = (data || []).map(m => {
+        const ttl = parseInt(process.env.SIGNED_URL_TTL || '3600', 10); // 1時間既定
+        const items = await Promise.all((data || []).map(async (m) => {
             const path = safePath(m.file_url) ? m.file_url : '';
-            const pub = path ? supabaseAuth.storage.from('vault-storage').getPublicUrl(path) : { data: { publicUrl: '' } };
+            let signedUrl = '';
+            if (path) {
+                try {
+                    const { data: sig, error: sigErr } = await supabaseAuth
+                        .storage
+                        .from('vault-storage')
+                        .createSignedUrl(path, ttl);
+                    if (!sigErr) signedUrl = sig?.signedUrl || '';
+                } catch {}
+            }
             return {
                 id: m.id,
-                url: pub.data.publicUrl || '',
+                url: signedUrl,
                 title: m.title || 'Edited Image',
                 uploadedAt: m.uploaded_at,
                 mimeType: m.mime_type,
                 size: m.file_size_bytes,
             };
-        });
+        }));
         const total = typeof count === 'number' ? count : items.length;
         res.json({
             items,
@@ -941,7 +989,7 @@ app.get('/v1/memories', requireAuthMaybe, rlsAuthMiddleware(), async (req, res) 
 });
 
 // Soft-delete (archive) a memory owned by the user
-app.delete('/v1/memories/:id', requireAuthMaybe, rlsAuthMiddleware(), async (req, res) => {
+app.delete('/v1/memories/:id', requireAuthMaybe, rlsAuthMiddleware(), enforceAuthLink(), async (req, res) => {
     try {
         const { id } = req.params;
         const uuidV4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -985,7 +1033,7 @@ function mimeTypeToExt(mime) {
 }
 
 // Direct upload endpoint (JPEG/PNG only)
-app.post('/v1/memories/upload', vaultUploadLimiter, requireAuthMaybe, rlsAuthMiddleware(), vaultUpload.single('image'), async (req, res) => {
+app.post('/v1/memories/upload', vaultUploadLimiter, requireAuthMaybe, rlsAuthMiddleware(), enforceAuthLink(), vaultUpload.single('image'), async (req, res) => {
     try {
         const imageFile = req.file;
         const deviceId = req.deviceId;
@@ -1054,6 +1102,8 @@ app.post('/v1/memories/upload', vaultUploadLimiter, requireAuthMaybe, rlsAuthMid
         if (uploadResp.error) {
             return res.status(500).json({ error: 'Internal Server Error', message: uploadResp.error.message, code: 'STORAGE_UPLOAD_FAILED' });
         }
+        // Cleanup local temp file if used
+        try { if (imageFile.path) { const { unlink } = await import('fs/promises'); await unlink(imageFile.path).catch(() => {}); } } catch {}
 
         // Insert memory record
         const memoryRow = {
@@ -1078,9 +1128,16 @@ app.post('/v1/memories/upload', vaultUploadLimiter, requireAuthMaybe, rlsAuthMid
             return res.status(500).json({ error: 'Internal Server Error', message: insertError.message, code: 'MEMORY_INSERT_FAILED' });
         }
 
-        // Public URL
-        const pub = req.supabaseAuth.storage.from('vault-storage').getPublicUrl(path);
-        const publicUrl = pub?.data?.publicUrl || null;
+        // Signed URL (非公開バケット前提の短期アクセス)
+        const signedTtl = parseInt(process.env.SIGNED_URL_TTL || '3600', 10);
+        let publicUrl = null;
+        try {
+            const { data: sig, error: sigErr } = await req.supabaseAuth
+                .storage
+                .from('vault-storage')
+                .createSignedUrl(path, signedTtl);
+            if (!sigErr) publicUrl = sig?.signedUrl || null;
+        } catch {}
 
         // include current credits for client convenience
         let creditsRemaining = 0;
@@ -1106,7 +1163,7 @@ app.post('/v1/memories/upload', vaultUploadLimiter, requireAuthMaybe, rlsAuthMid
 });
 
 // 課金処理エンドポイント（Legacy preserved）
-app.post('/v1/purchase', purchaseLimiter, requireAuthMaybe, rlsAuthMiddleware(), async (req, res) => {
+app.post('/v1/purchase', purchaseLimiter, requireAuthMaybe, rlsAuthMiddleware(), enforceAuthLink(), async (req, res) => {
     try {
         const deviceId = req.deviceId;
         const userId = req.user?.id;
@@ -1175,7 +1232,7 @@ app.post('/v1/purchase', purchaseLimiter, requireAuthMaybe, rlsAuthMiddleware(),
 });
 
 // 通報エンドポイント（既存機能を保持）
-app.post('/v1/report', rlsAuthMiddleware(), async (req, res) => {
+app.post('/v1/report', requireAuthMaybe, rlsAuthMiddleware(), enforceAuthLink(), async (req, res) => {
     try {
         const { jobId, reasonId, note } = req.body;
         const deviceId = req.deviceId;
@@ -1239,20 +1296,8 @@ app.use('*', (req, res) => {
     });
 });
 
-// Metrics endpoint (Prometheus exposition format)
-function allowMetrics(req) {
-    const ipList = (process.env.METRICS_IP_ALLOWLIST || '').split(',').map(s => s.trim()).filter(Boolean);
-    const ip = req.ip || req.connection?.remoteAddress || '';
-    if (ipList.length && ipList.includes(ip)) return true;
-    const token = req.headers['x-admin-token'];
-    const expected = process.env.ADMIN_TOKEN;
-    return expected && token === expected;
-}
-
-app.get('/v1/metrics', (req, res) => {
-    if (!allowMetrics(req)) {
-        return res.status(403).json({ error: 'Forbidden', message: 'Metrics access denied' });
-    }
+// Metrics endpoint (Prometheus exposition format) - admin token gated in production
+app.get('/v1/metrics', optionalAdminIpAllowlist, requireAdminToken, (req, res) => {
     res.setHeader('Content-Type', 'text/plain; version=0.0.4');
     res.send(metrics.serialize());
 });
