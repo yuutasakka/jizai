@@ -158,7 +158,7 @@ export default function ResizeResultPage() {
       const resp = await fetch('/v1/upscale', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ src_url: srcParam || img.src, factor: 3, image_key: imageKey })
+        body: JSON.stringify({ src_url: srcParam || img.src, factor: 3 })
       });
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
@@ -170,6 +170,17 @@ export default function ResizeResultPage() {
         return;
       }
       const blob = await resp.blob();
+      // Persist upscaled URL for future downloads from "マイファイル"
+      try {
+        const upUrl = resp.headers.get('X-Upscale-Url');
+        const key = (() => { try { const u = new URL(srcParam || img.src); return `${u.origin}${u.pathname}`; } catch { return srcParam || img.src; } })();
+        if (upUrl) {
+          const raw = localStorage.getItem('jizai_upscaled_map');
+          const map = raw ? JSON.parse(raw) : {};
+          map[key] = { url: upUrl, ts: Date.now() };
+          localStorage.setItem('jizai_upscaled_map', JSON.stringify(map));
+        }
+      } catch {}
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       const base = (titleParam || 'resized').replace(/[^\w\-]+/g, '_').slice(0, 40);
@@ -179,6 +190,12 @@ export default function ResizeResultPage() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      try {
+        const remaining = resp.headers.get('X-Upscale-Remaining');
+        if (remaining !== null) {
+          console.log(`Upscale remaining: ${remaining}`);
+        }
+      } catch {}
     } catch (e) {
       alert('高画質ダウンロードに失敗しました');
     } finally {

@@ -13,6 +13,7 @@ import { ImageWithFallback } from '../figma/ImageWithFallback';
 import api from '../../api/client';
 import { navigate } from '../../router';
 import { ChevronDown, Cloud, Plus, Image as ImageIcon } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 
 interface GeneratedImage {
   id: string;
@@ -183,8 +184,20 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
 
   const handleDownloadServer = async (item: { id: string; url: string; title: string; mimeType?: string; }) => {
     try {
+      let headers: Record<string,string> = {};
+      try {
+        if (supabase) {
+          const { data } = await supabase.auth.getSession();
+          const token = data.session?.access_token;
+          if (token) headers['Authorization'] = `Bearer ${token}`;
+        }
+      } catch {}
+      try { const devId = localStorage.getItem('jizai-device-id'); if (devId) headers['x-device-id'] = devId; } catch {}
+      const resp = await fetch(`/v1/memories/${item.id}/signed-download`, { headers });
+      const data = await resp.json().catch(() => ({}));
+      const url = resp.ok && data?.url ? data.url : item.url;
       const a = document.createElement('a');
-      a.href = item.url;
+      a.href = url;
       const ext = mimeToExt(item.mimeType);
       const safeTitle = (item.title || 'image').replace(/[^\w\-]+/g, '_').slice(0, 40);
       a.download = `${safeTitle}_${item.id}.${ext}`;
@@ -226,10 +239,18 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
 
   const handleDownload = (image: GeneratedImage) => {
     try {
+      // If a high-quality (upscaled) URL exists, prefer it
+      const mapRaw = localStorage.getItem('jizai_upscaled_map');
+      let upUrl: string | null = null;
+      if (mapRaw) {
+        const map = JSON.parse(mapRaw) as Record<string, { url?: string; path?: string; ts?: number }>;
+        const key = (() => { try { const u = new URL(image.generatedImage); return `${u.origin}${u.pathname}`; } catch { return image.generatedImage; } })();
+        if (map[key]?.url) upUrl = map[key].url as string;
+      }
       const a = document.createElement('a');
-      a.href = image.generatedImage;
+      a.href = upUrl || image.generatedImage;
       const safeTitle = (image.title || 'image').replace(/[^\w\-]+/g, '_').slice(0, 40);
-      a.download = `${safeTitle}_${image.id}.png`;
+      a.download = `${safeTitle}_${image.id}${upUrl ? '_hq' : ''}.png`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

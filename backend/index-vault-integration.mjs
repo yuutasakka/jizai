@@ -415,7 +415,7 @@ app.get('/v1/prompts/popular', requireAuthMaybe, rlsAuthMiddleware(), enforceAut
 import { supabaseService, supabaseStorage } from './config/supabase.mjs';
 import { SubscriptionService } from './services/subscription-service.mjs';
 import { monitorServiceClientUsage } from './middleware/rls-auth.mjs';
-import { randomUUID } from 'crypto';
+import { randomUUID, createHash } from 'crypto';
 
 const subscriptionService = new SubscriptionService();
 
@@ -903,20 +903,41 @@ app.post('/v1/edit', editLimiter, requireAuthMaybe, rlsAuthMiddleware(), enforce
 
 // POST /v1/upscale { src_url, factor=3, image_key }
 // Limits: per user+image_key max 3 times
-app.post('/v1/upscale', requireAuthMaybe, rlsAuthMiddleware(), enforceAuthLink(), async (req, res) => {
+// Add route-specific rate limiting
+const upscaleLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: parseInt(process.env.UPSCALE_RATE_LIMIT || '10', 10),
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.user?.id || req.headers['x-device-id'] || req.ip
+});
+
+app.post('/v1/upscale', upscaleLimiter, requireAuth(), rlsAuthMiddleware(), enforceAuthLink(), async (req, res) => {
   const t0 = Date.now();
   try {
-    const { src_url: srcUrl, factor, image_key: imageKey } = req.body || {};
-    const upFactor = Number.isFinite(Number(factor)) ? Number(factor) : 3;
+    const { src_url: srcUrl, factor } = req.body || {};
+    // 固定倍率（仕様に合わせて3倍に固定）
+    const upFactor = 3;
     if (!srcUrl || typeof srcUrl !== 'string' || !/^https?:\/\//i.test(srcUrl)) {
       return res.status(400).json({ error: 'Bad Request', message: 'src_url is required (http/https)', code: 'MISSING_SRC_URL' });
     }
-    const imgKey = typeof imageKey === 'string' && imageKey.length > 0 ? imageKey.slice(0, 128) : 'default';
+    // Server-side stable image key (user-bound + normalized URL without query)
+    let normalized = srcUrl;
+    let host = '';
+    try { const u = new URL(srcUrl); normalized = `${u.origin}${u.pathname}`; host = u.host; } catch {}
 
-    // Usage check (Supabase table: image_upscale_uses)
-    let used = 0;
+    // Optional: allowlist for source domains
+    const allow = (process.env.UPSCALE_SRC_DOMAIN_ALLOWLIST || '')
+      .split(',').map(s => s.trim()).filter(Boolean);
+    if (allow.length > 0 && (!host || !allow.includes(host))) {
+      return res.status(400).json({ error: 'Bad Request', message: 'src_url domain not allowed', code: 'SRC_DOMAIN_DENIED' });
+    }
+    const imgKey = createHash('sha256').update(`${req.user.id}:${normalized}`).digest('hex');
+
+    // Per-image usage limit: 1 time per user per image
+    let usedForThisKey = 0;
     let remaining = 0;
-    const MAX_USES = 3;
+    const MAX_PER_IMAGE = 1;
     try {
       const { data: row } = await req.supabaseAuth
         .from('image_upscale_uses')
@@ -924,10 +945,10 @@ app.post('/v1/upscale', requireAuthMaybe, rlsAuthMiddleware(), enforceAuthLink()
         .eq('user_id', req.user.id)
         .eq('image_key', imgKey)
         .maybeSingle();
-      used = row?.uses || 0;
+      usedForThisKey = row?.uses || 0;
     } catch {}
-    if (used >= MAX_USES) {
-      return res.status(429).json({ error: 'Too Many Requests', message: 'Upscale limit reached (3 per image)', code: 'UPSCALE_LIMIT' });
+    if (usedForThisKey >= MAX_PER_IMAGE) {
+      return res.status(429).json({ error: 'Too Many Requests', message: 'Upscale already used for this image', code: 'UPSCALE_LIMIT' });
     }
 
     // Call Replicate API
@@ -986,18 +1007,46 @@ app.post('/v1/upscale', requireAuthMaybe, rlsAuthMiddleware(), enforceAuthLink()
     }
 
     // Fetch the upscaled image and stream back
-    const fileResp = await axios.get(outputUrl, { responseType: 'arraybuffer', timeout: 60000 });
+    const fileResp = await axios.get(outputUrl, {
+      responseType: 'arraybuffer',
+      timeout: 60000,
+      maxContentLength: 50 * 1024 * 1024,
+      maxBodyLength: 50 * 1024 * 1024
+    });
 
-    // Increment usage (best-effort)
+    // MIME whitelist
+    const ct = (fileResp.headers['content-type'] || '').toLowerCase();
+    if (!ct.startsWith('image/png') && !ct.startsWith('image/jpeg') && !ct.startsWith('image/jpg') && !ct.startsWith('image/webp')) {
+      return res.status(415).json({ error: 'Unsupported Media Type', message: 'Unsupported image type from provider', code: 'UNSUPPORTED_OUTPUT' });
+    }
+
+    // Upload to Supabase Storage and return a signed URL header
+    let storedPath = '';
+    try {
+      const fileBuf = Buffer.from(fileResp.data);
+      const ext = ct.includes('png') ? 'png' : ct.includes('webp') ? 'webp' : 'jpg';
+      const nameHash = createHash('sha256').update(`${req.user.id}:${normalized}:${Date.now()}`).digest('hex');
+      storedPath = `upscaled/${req.user.id}/${nameHash}.${ext}`;
+      const up = await supabaseStorage.from('vault-storage').upload(storedPath, fileBuf, { contentType: ct, upsert: false, cacheControl: '3600' });
+      if (!up.error) {
+        const { data: sig } = await req.supabaseAuth.storage.from('vault-storage').createSignedUrl(storedPath, 7 * 24 * 3600);
+        if (sig?.signedUrl) {
+          res.setHeader('X-Upscale-Url', sig.signedUrl);
+          res.setHeader('X-Upscale-Path', storedPath);
+        }
+      }
+    } catch {}
+
+    // Increment usage (best-effort), compute remaining global
     try {
       const { data: row } = await req.supabaseAuth
         .from('image_upscale_uses')
-        .upsert({ user_id: req.user.id, image_key: imgKey, uses: used + 1 }, { onConflict: 'user_id,image_key' })
+        .upsert({ user_id: req.user.id, image_key: imgKey, uses: usedForThisKey + 1 }, { onConflict: 'user_id,image_key' })
         .select('uses')
         .single();
-      remaining = Math.max(0, MAX_USES - (row?.uses || used + 1));
+      remaining = Math.max(0, MAX_PER_IMAGE - (row?.uses || usedForThisKey + 1));
     } catch {
-      remaining = Math.max(0, MAX_USES - (used + 1));
+      remaining = Math.max(0, MAX_PER_IMAGE - (usedForThisKey + 1));
     }
 
     res.setHeader('Content-Type', fileResp.headers['content-type'] || 'image/png');
@@ -1276,6 +1325,52 @@ app.post('/v1/memories/upload', vaultUploadLimiter, requireAuthMaybe, rlsAuthMid
         console.error('❌ Vault upload error:', error);
         res.status(500).json({ error: 'Internal Server Error', message: 'Upload failed', code: 'UPLOAD_FAILED' });
     }
+});
+
+// ========================================
+// RATE-LIMITED SIGNED DOWNLOAD FOR MEMORIES
+// ========================================
+const downloadLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: parseInt(process.env.DOWNLOAD_RATE_LIMIT || '8', 10),
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.user?.id || req.headers['x-device-id'] || req.ip
+});
+
+// GET /v1/memories/:id/signed-download -> { url }
+app.get('/v1/memories/:id/signed-download', downloadLimiter, requireAuthMaybe, rlsAuthMiddleware(), enforceAuthLink(), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const uuidV4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidV4.test(id)) {
+      return res.status(400).json({ error: 'Bad Request', message: 'Invalid memory id', code: 'INVALID_MEMORY_ID' });
+    }
+    // Read memory path via RLS
+    const { data, error } = await req.supabaseAuth
+      .from('memories')
+      .select('file_url, is_archived')
+      .eq('id', id)
+      .maybeSingle();
+    if (error) {
+      return res.status(500).json({ error: 'Internal Server Error', message: error.message, code: 'MEMORY_FETCH_FAILED' });
+    }
+    if (!data || data.is_archived) {
+      return res.status(404).json({ error: 'Not Found', message: 'Memory not found', code: 'MEMORY_NOT_FOUND' });
+    }
+    const path = data.file_url;
+    if (!path || typeof path !== 'string' || path.includes('..')) {
+      return res.status(400).json({ error: 'Bad Request', message: 'Invalid path', code: 'INVALID_PATH' });
+    }
+    // Short-lived signed URL (60s)
+    const { data: sig, error: sigErr } = await req.supabaseAuth.storage.from('vault-storage').createSignedUrl(path, 60);
+    if (sigErr || !sig?.signedUrl) {
+      return res.status(500).json({ error: 'Internal Server Error', message: sigErr?.message || 'Failed to sign URL', code: 'SIGN_URL_FAILED' });
+    }
+    return res.json({ url: sig.signedUrl });
+  } catch (e) {
+    return res.status(500).json({ error: 'Internal Server Error', message: 'Failed to prepare download', code: 'DOWNLOAD_PREP_FAILED' });
+  }
 });
 
 // 課金処理エンドポイント（Legacy preserved）

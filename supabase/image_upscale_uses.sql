@@ -9,15 +9,28 @@ create table if not exists public.image_upscale_uses (
 
 alter table public.image_upscale_uses enable row level security;
 
+-- Ensure policies are created idempotently (drop then create)
+drop policy if exists iu_select on public.image_upscale_uses;
+drop policy if exists iu_insert on public.image_upscale_uses;
+drop policy if exists iu_update on public.image_upscale_uses;
+
 -- Users can select only their own rows
-create policy if not exists iu_select on public.image_upscale_uses
-  for select using (auth.uid() = user_id);
+create policy iu_select on public.image_upscale_uses
+  for select
+  to authenticated
+  using (auth.uid() = user_id);
 
--- Users can upsert only their own rows
-create policy if not exists iu_upsert on public.image_upscale_uses
-  for insert with check (auth.uid() = user_id);
+-- Users can insert only their own rows
+create policy iu_insert on public.image_upscale_uses
+  for insert
+  to authenticated
+  with check (auth.uid() = user_id);
 
-create policy if not exists iu_update on public.image_upscale_uses
-  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+-- Users can update only their own rows
+create policy iu_update on public.image_upscale_uses
+  for update
+  to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
 
 create index if not exists idx_iu_user on public.image_upscale_uses (user_id);
