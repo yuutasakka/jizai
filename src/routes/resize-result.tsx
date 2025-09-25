@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { navigate } from '../router';
 import { supabase } from '../lib/supabase';
+import api from '../api/client';
 
 function useQuery() {
   const [q, setQ] = useState(() => new URLSearchParams(window.location.search));
@@ -32,6 +33,7 @@ export default function ResizeResultPage() {
   const srcParam = q.get('src') || '';
   const titleParam = q.get('title') || '';
   const presetKey = q.get('preset') || '4cut';
+  const memoryId = q.get('memoryId') || '';
   const dpi = parseInt(q.get('dpi') || '72', 10);
   const effectiveDpi = parseInt(q.get('effectiveDpi') || '0', 10);
   const targetW = parseInt(q.get('targetW') || '0', 10);
@@ -39,6 +41,7 @@ export default function ResizeResultPage() {
 
   const [img, setImg] = useState<HTMLImageElement | null>(null);
   const [downloading, setDownloading] = useState(false);
+  const [tier, setTier] = useState<string>('free');
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const preset = sizePresets.find(p => p.key === presetKey) || sizePresets[0];
@@ -84,6 +87,18 @@ export default function ResizeResultPage() {
     const dy = Math.round((ph - dh) / 2);
     ctx.drawImage(img, 0, 0, img.width, img.height, dx, dy, dw, dh);
   }, [img, targetW, targetH]);
+
+  // Load subscription tier
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const status = await api.getSubscriptionStatus();
+        if (!cancelled) setTier((status?.subscription?.tier as any) || 'free');
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const downloadStandard = async () => {
     if (!img || downloading) return;
@@ -158,7 +173,7 @@ export default function ResizeResultPage() {
       const resp = await fetch('/v1/upscale', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ src_url: srcParam || img.src, factor: 3 })
+        body: JSON.stringify({ src_url: srcParam || img.src, factor: 3, memory_id: memoryId || undefined })
       });
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
@@ -170,17 +185,6 @@ export default function ResizeResultPage() {
         return;
       }
       const blob = await resp.blob();
-      // Persist upscaled URL for future downloads from "マイファイル"
-      try {
-        const upUrl = resp.headers.get('X-Upscale-Url');
-        const key = (() => { try { const u = new URL(srcParam || img.src); return `${u.origin}${u.pathname}`; } catch { return srcParam || img.src; } })();
-        if (upUrl) {
-          const raw = localStorage.getItem('jizai_upscaled_map');
-          const map = raw ? JSON.parse(raw) : {};
-          map[key] = { url: upUrl, ts: Date.now() };
-          localStorage.setItem('jizai_upscaled_map', JSON.stringify(map));
-        }
-      } catch {}
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       const base = (titleParam || 'resized').replace(/[^\w\-]+/g, '_').slice(0, 40);
@@ -198,6 +202,53 @@ export default function ResizeResultPage() {
       } catch {}
     } catch (e) {
       alert('高画質ダウンロードに失敗しました');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const downloadUltraQuality = async () => {
+    if (!img || downloading) return;
+    setDownloading(true);
+    try {
+      let headers: Record<string,string> = { 'Content-Type': 'application/json' };
+      try {
+        if (supabase) {
+          const { data } = await supabase.auth.getSession();
+          const token = data.session?.access_token;
+          if (token) headers['Authorization'] = `Bearer ${token}`;
+        }
+      } catch {}
+      try { const devId = localStorage.getItem('jizai-device-id'); if (devId) headers['x-device-id'] = devId; } catch {}
+
+      const resp = await fetch('/v1/upscale', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ src_url: srcParam || img.src, factor: 4, memory_id: memoryId || undefined })
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        if (resp.status === 429) {
+          alert('最高画質ダウンロードの上限に達しました');
+        } else if (resp.status === 402) {
+          alert('この機能はセミプロ以上のプラン限定です');
+        } else {
+          alert(`最高画質ダウンロードに失敗しました: ${err.message || resp.statusText}`);
+        }
+        return;
+      }
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const base = (titleParam || 'resized').replace(/[^\w\-]+/g, '_').slice(0, 40);
+      a.href = url;
+      a.download = `${base}_${preset.mm}mm_${dpi}dpi_ultra.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert('最高画質ダウンロードに失敗しました');
     } finally {
       setDownloading(false);
     }
@@ -318,6 +369,21 @@ export default function ResizeResultPage() {
                     <div className="text-left">
                       <div className="font-bold">高画質ダウンロード</div>
                       <div className="text-sm text-white/80">PNG形式 - 1.5倍解像度でより鮮明</div>
+                    </div>
+                  </div>
+                </button>
+
+                {/* 最高画質ダウンロード（セミプロ以上） */}
+                <button
+                  onClick={downloadUltraQuality}
+                  disabled={downloading || !(['standard','pro'].includes((tier || '').toLowerCase()))}
+                  className={`p-4 rounded-lg font-medium transition-all duration-300 disabled:opacity-50 ${(['standard','pro'].includes((tier || '').toLowerCase())) ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-white/10 text-white/60 cursor-not-allowed'}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="text-2xl">🏆</div>
+                    <div className="text-left">
+                      <div className="font-bold">最高画質ダウンロード</div>
+                      <div className="text-sm text-white/80">セミプロ以上のプラン限定（最大4倍解像度）</div>
                     </div>
                   </div>
                 </button>

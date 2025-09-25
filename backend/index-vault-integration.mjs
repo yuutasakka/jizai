@@ -915,7 +915,7 @@ const upscaleLimiter = rateLimit({
 app.post('/v1/upscale', upscaleLimiter, requireAuth(), rlsAuthMiddleware(), enforceAuthLink(), async (req, res) => {
   const t0 = Date.now();
   try {
-    const { src_url: srcUrl, factor } = req.body || {};
+    const { src_url: srcUrl, factor, memory_id: memoryIdRaw } = req.body || {};
     // 固定倍率（仕様に合わせて3倍に固定）
     const upFactor = 3;
     if (!srcUrl || typeof srcUrl !== 'string' || !/^https?:\/\//i.test(srcUrl)) {
@@ -1027,7 +1027,8 @@ app.post('/v1/upscale', upscaleLimiter, requireAuth(), rlsAuthMiddleware(), enfo
       const ext = ct.includes('png') ? 'png' : ct.includes('webp') ? 'webp' : 'jpg';
       const nameHash = createHash('sha256').update(`${req.user.id}:${normalized}:${Date.now()}`).digest('hex');
       storedPath = `upscaled/${req.user.id}/${nameHash}.${ext}`;
-      const up = await supabaseStorage.from('vault-storage').upload(storedPath, fileBuf, { contentType: ct, upsert: false, cacheControl: '3600' });
+      // Use service or authenticated client for upload (not anon)
+      const up = await supabaseService.storage.from('vault-storage').upload(storedPath, fileBuf, { contentType: ct, upsert: false, cacheControl: '3600' });
       if (!up.error) {
         const { data: sig } = await req.supabaseAuth.storage.from('vault-storage').createSignedUrl(storedPath, 7 * 24 * 3600);
         if (sig?.signedUrl) {
@@ -1037,7 +1038,24 @@ app.post('/v1/upscale', upscaleLimiter, requireAuth(), rlsAuthMiddleware(), enfo
       }
     } catch {}
 
-    // Increment usage (best-effort), compute remaining global
+    // If memory_id is provided and owned by the user, persist mapping (service role)
+    try {
+      const uuidV4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (storedPath && typeof memoryIdRaw === 'string' && uuidV4.test(memoryIdRaw)) {
+        const { data: owned } = await req.supabaseAuth
+          .from('memories')
+          .select('id')
+          .eq('id', memoryIdRaw)
+          .maybeSingle();
+        if (owned?.id) {
+          await supabaseService
+            .from('image_upscaled_paths')
+            .upsert({ user_id: req.user.id, memory_id: memoryIdRaw, upscaled_path: storedPath }, { onConflict: 'user_id,memory_id' });
+        }
+      }
+    } catch {}
+
+    // Increment usage (best-effort), compute remaining
     try {
       const { data: row } = await req.supabaseAuth
         .from('image_upscale_uses')
@@ -1328,6 +1346,99 @@ app.post('/v1/memories/upload', vaultUploadLimiter, requireAuthMaybe, rlsAuthMid
 });
 
 // ========================================
+// REPLACE MEMORY IMAGE (PATCH)
+// ========================================
+// PATCH /v1/memories/:id/file  (multipart/form-data: image)
+// - Replaces the stored image for a memory the user owns
+// - Optionally deletes the previous file when ?delete_old=true
+const replaceLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: parseInt(process.env.REPLACE_RATE_LIMIT || '10', 10),
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.user?.id || req.headers['x-device-id'] || req.ip
+});
+
+app.patch('/v1/memories/:id/file', replaceLimiter, requireAuth(), rlsAuthMiddleware(), enforceAuthLink(), vaultUpload.single('image'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleteOld = String(req.query.delete_old || 'true') === 'true';
+    const file = req.file;
+    const uuidV4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidV4.test(id)) {
+      return res.status(400).json({ error: 'Bad Request', message: 'Invalid memory id', code: 'INVALID_MEMORY_ID' });
+    }
+    if (!file) {
+      return res.status(400).json({ error: 'Bad Request', message: 'Image file is required', code: 'MISSING_IMAGE' });
+    }
+
+    // Fetch memory (RLS applies)
+    const { data: mem, error: memErr } = await req.supabaseAuth
+      .from('memories')
+      .select('id, file_url')
+      .eq('id', id)
+      .maybeSingle();
+    if (memErr) return res.status(500).json({ error: 'Internal Server Error', message: memErr.message, code: 'MEMORY_FETCH_FAILED' });
+    if (!mem) return res.status(404).json({ error: 'Not Found', message: 'Memory not found', code: 'MEMORY_NOT_FOUND' });
+
+    // Validate/magic-byte check
+    let detectedMime = null;
+    try {
+      const imgBuf = await getFileBuffer(file);
+      const meta = await sharp(imgBuf).metadata();
+      const mimeMap = { jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
+      detectedMime = mimeMap[meta.format] || null;
+      if (!detectedMime) {
+        return res.status(400).json({ error: 'Bad Request', message: 'Only JPEG/PNG/WebP is allowed', code: 'UNSUPPORTED_IMAGE_TYPE' });
+      }
+      if (detectedMime !== file.mimetype) {
+        return res.status(400).json({ error: 'Bad Request', message: 'Invalid image data (mime mismatch)', code: 'INVALID_IMAGE_DATA' });
+      }
+      const w = meta.width || 0;
+      const h = meta.height || 0;
+      const maxSide = parseInt(process.env.MAX_IMAGE_SIDE || '12000', 10);
+      const maxPixels = parseInt(process.env.MAX_IMAGE_PIXELS || String(100 * 1000 * 1000), 10);
+      if (w <= 0 || h <= 0 || w > maxSide || h > maxSide || (w * h) > maxPixels) {
+        return res.status(413).json({ error: 'Payload Too Large', message: 'Image dimensions exceed allowed limits', code: 'IMAGE_TOO_LARGE' });
+      }
+    } catch (e) {
+      return res.status(400).json({ error: 'Bad Request', message: 'Invalid or corrupted image file', code: 'INVALID_IMAGE_FILE' });
+    }
+
+    // Upload new file
+    const ext = detectedMime === 'image/png' ? 'png' : (detectedMime === 'image/webp' ? 'webp' : 'jpg');
+    const newName = `replaced_${randomUUID()}.${ext}`;
+    const newPath = `memories/${req.user.id}/${newName}`;
+    const buf = await getFileBuffer(file);
+    const up = await supabaseService.storage.from('vault-storage').upload(newPath, buf, { contentType: detectedMime, upsert: false, cacheControl: '3600' });
+    if (up.error) {
+      return res.status(500).json({ error: 'Internal Server Error', message: up.error.message, code: 'STORAGE_UPLOAD_FAILED' });
+    }
+
+    // Update memory record
+    const { data: updated, error: updErr } = await req.supabaseAuth
+      .from('memories')
+      .update({ file_url: newPath, filename: newName, mime_type: detectedMime, file_size_bytes: file.size })
+      .eq('id', id)
+      .select('id, file_url, mime_type, file_size_bytes')
+      .single();
+    if (updErr) {
+      return res.status(500).json({ error: 'Internal Server Error', message: updErr.message, code: 'MEMORY_UPDATE_FAILED' });
+    }
+
+    // Optionally delete old file
+    if (deleteOld && mem.file_url && typeof mem.file_url === 'string') {
+      try { await supabaseService.storage.from('vault-storage').remove([mem.file_url]); } catch {}
+    }
+
+    // Return fresh signed URL
+    const { data: sig } = await req.supabaseAuth.storage.from('vault-storage').createSignedUrl(updated.file_url, 60);
+    return res.json({ success: true, id, url: sig?.signedUrl || '', mimeType: updated.mime_type, size: updated.file_size_bytes });
+  } catch (e) {
+    return res.status(500).json({ error: 'Internal Server Error', message: 'Failed to replace image', code: 'MEMORY_REPLACE_FAILED' });
+  }
+});
+// ========================================
 // RATE-LIMITED SIGNED DOWNLOAD FOR MEMORIES
 // ========================================
 const downloadLimiter = rateLimit({
@@ -1339,7 +1450,7 @@ const downloadLimiter = rateLimit({
 });
 
 // GET /v1/memories/:id/signed-download -> { url }
-app.get('/v1/memories/:id/signed-download', downloadLimiter, requireAuthMaybe, rlsAuthMiddleware(), enforceAuthLink(), async (req, res) => {
+app.get('/v1/memories/:id/signed-download', downloadLimiter, requireAuth(), rlsAuthMiddleware(), enforceAuthLink(), async (req, res) => {
   try {
     const { id } = req.params;
     const uuidV4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -1358,10 +1469,20 @@ app.get('/v1/memories/:id/signed-download', downloadLimiter, requireAuthMaybe, r
     if (!data || data.is_archived) {
       return res.status(404).json({ error: 'Not Found', message: 'Memory not found', code: 'MEMORY_NOT_FOUND' });
     }
-    const path = data.file_url;
+    let path = data.file_url;
     if (!path || typeof path !== 'string' || path.includes('..')) {
       return res.status(400).json({ error: 'Bad Request', message: 'Invalid path', code: 'INVALID_PATH' });
     }
+    // Prefer upscaled path if present for this memory
+    try {
+      const { data: up } = await req.supabaseAuth
+        .from('image_upscaled_paths')
+        .select('upscaled_path')
+        .eq('user_id', req.user.id)
+        .eq('memory_id', id)
+        .maybeSingle();
+      if (up?.upscaled_path && typeof up.upscaled_path === 'string') path = up.upscaled_path;
+    } catch {}
     // Short-lived signed URL (60s)
     const { data: sig, error: sigErr } = await req.supabaseAuth.storage.from('vault-storage').createSignedUrl(path, 60);
     if (sigErr || !sig?.signedUrl) {

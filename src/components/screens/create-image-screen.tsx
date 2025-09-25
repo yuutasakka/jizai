@@ -128,9 +128,6 @@ export const CreateImageScreen = ({ onNavigate }: { onNavigate: (screen: string)
             {/* Upload Photo Card */}
             <div className="bg-[color:var(--color-jz-card)] border border-[color:var(--color-jz-border)] rounded-[var(--radius-jz-card)] p-[var(--space-16)] sm:p-[var(--space-24)]">
               <div className="flex flex-col sm:flex-row items-start gap-[var(--space-12)] sm:gap-[var(--space-16)]">
-                <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-[color:var(--color-jz-accent)]/10 rounded-[var(--radius-jz-button)] flex items-center justify-center">
-                  <JZPhotoIcon size={24} className="text-[color:var(--color-jz-accent)]" />
-                </div>
                 <div className="flex-1">
                   <h3 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)] mb-[var(--space-8)]">
                     ①　写真をアップロード
@@ -176,9 +173,6 @@ export const CreateImageScreen = ({ onNavigate }: { onNavigate: (screen: string)
             {/* Text Prompt Card */}
             <div className="bg-[color:var(--color-jz-card)] border border-[color:var(--color-jz-border)] rounded-[var(--radius-jz-card)] p-[var(--space-16)] sm:p-[var(--space-24)]">
               <div className="flex flex-col sm:flex-row items-start gap-[var(--space-12)] sm:gap-[var(--space-16)]">
-                <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-[color:var(--color-jz-accent)]/10 rounded-[var(--radius-jz-button)] flex items-center justify-center">
-                  <JZMagicWandIcon size={24} className="text-[color:var(--color-jz-accent)]" />
-                </div>
                 <div className="flex-1">
                   {!templateOptionId ? (
                     <>

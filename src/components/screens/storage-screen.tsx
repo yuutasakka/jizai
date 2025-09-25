@@ -38,9 +38,9 @@ export const StorageScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
         if (!cancelled) {
           // デフォルトデータを設定
           setData({
-            quota: 100 * 1024 * 1024, // 100MB
+            quota: 1024 * 1024 * 1024, // 1GB
             used: 0,
-            available: 100 * 1024 * 1024,
+            available: 1024 * 1024 * 1024,
             percentage: 0
           });
         }
@@ -59,8 +59,12 @@ export const StorageScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
   }, []);
 
   const formatStorage = (bytes: number) => {
+    const gb = bytes / (1024 * 1024 * 1024);
     const mb = bytes / (1024 * 1024);
-    if (mb >= 1) {
+
+    if (gb >= 1) {
+      return `${gb.toFixed(1)} GB`;
+    } else if (mb >= 1) {
       return `${mb.toFixed(0)} MB`;
     }
     return `${bytes} バイト`;
@@ -92,30 +96,7 @@ export const StorageScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
         ))}
       </div>
 
-      {/* Status Bar - Premium */}
-      <div className="relative z-10 pt-3 px-5 flex items-start justify-between">
-        <div className="text-[17px] font-semibold text-white/95 drop-shadow-lg">
-          {new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
-        </div>
-        <div className="flex items-center gap-1 text-white/95">
-          <div className="flex gap-1">
-            {[...Array(4)].map((_, i) => (
-              <div
-                key={i}
-                className="w-1 h-4 bg-white/90 rounded-full animate-pulse"
-                style={{animationDelay: `${i * 0.1}s`}}
-              />
-            ))}
-          </div>
-          <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M17.778 8.222c-4.296-4.296-11.26-4.296-15.556 0A1 1 0 01.808 6.808c5.076-5.077 13.308-5.077 18.384 0a1 1 0 01-1.414 1.414zM14.95 11.05a7 7 0 00-9.9 0 1 1 0 01-1.414-1.414 9 9 0 0112.728 0 1 1 0 01-1.414 1.414zM12.12 13.88a3 3 0 00-4.24 0 1 1 0 01-1.415-1.414 5 5 0 017.07 0 1 1 0 01-1.415 1.414zM9 16a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" />
-          </svg>
-          <div className="w-6 h-3 border border-white/70 rounded-sm relative ml-1">
-            <div className="absolute right-0 top-0 w-1 h-2 bg-green-400 rounded-r-sm shadow-lg shadow-green-400/60" />
-            <div className="absolute inset-0.5 bg-green-400 rounded-sm shadow-lg shadow-green-400/60" />
-          </div>
-        </div>
-      </div>
+      {/* Status Bar removed on storage screen */}
 
       {/* Header */}
       <div className="relative z-10 pt-8 px-5 flex items-center gap-4">
@@ -252,8 +233,7 @@ export const StorageScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
                 onClick={() => onNavigate('pricing')}
                 className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl sm:rounded-2xl transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 border-2 border-white/30 min-h-[44px]"
               >
-                <div className="flex items-center justify-center gap-2 sm:gap-3">
-                  <Crown className="w-5 h-5 sm:w-6 sm:h-6" />
+                <div className="flex items-center justify-center">
                   <span className="text-sm sm:text-base">アップグレード</span>
                 </div>
               </button>
@@ -261,8 +241,7 @@ export const StorageScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
                 onClick={() => onNavigate('user-gallery')}
                 className="bg-white/20 backdrop-blur-xl hover:bg-white/30 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl sm:rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 border-2 border-white/30 min-h-[44px]"
               >
-                <div className="flex items-center justify-center gap-2 sm:gap-3">
-                  <Trash2 className="w-5 h-5 sm:w-6 sm:h-6" />
+                <div className="flex items-center justify-center">
                   <span className="text-sm sm:text-base">ファイル管理</span>
                 </div>
               </button>
@@ -270,8 +249,7 @@ export const StorageScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
 
             {/* Storage Tips */}
             <div className="bg-white/10 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/20">
-              <h3 className="text-white text-base sm:text-lg font-bold mb-3 sm:mb-4 flex items-center gap-2">
-                <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" />
+              <h3 className="text-white text-base sm:text-lg font-bold mb-3 sm:mb-4">
                 ストレージのコツ
               </h3>
               <div className="space-y-2 sm:space-y-3 text-white/90 text-xs sm:text-sm">

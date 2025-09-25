@@ -14,7 +14,8 @@ create table if not exists public.editing_prompts (
 alter table public.editing_prompts enable row level security;
 
 -- Read-only for anonymous/authenticated clients
-create policy if not exists ep_select_anon on public.editing_prompts
+drop policy if exists ep_select_anon on public.editing_prompts;
+create policy ep_select_anon on public.editing_prompts
   for select
   to anon, authenticated
   using (true);
@@ -38,4 +39,3 @@ create index if not exists idx_ep_popularity on public.editing_prompts (populari
 --   category = excluded.category,
 --   cover_url = excluded.cover_url,
 --   popularity = excluded.popularity;
-

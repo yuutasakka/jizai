@@ -2,7 +2,12 @@ import { supabase } from './supabase';
 
 // Supabase Storage configuration
 const STORAGE_BUCKET = 'images';
-const STORAGE_URL = supabase ? `${supabase.supabaseUrl}/storage/v1/object/public/${STORAGE_BUCKET}` : '';
+const USE_SIGNED_URLS = ((import.meta as any)?.env?.VITE_SUPABASE_STORAGE_SIGNED ?? 'false') === 'true';
+const PUBLIC_BASE_URL = supabase ? `${supabase.supabaseUrl}/storage/v1/object/public/${STORAGE_BUCKET}` : '';
+const SIGNED_BASE_URL = supabase ? `${supabase.supabaseUrl}/storage/v1/object/sign/${STORAGE_BUCKET}` : '';
+
+// simple in-memory cache for signed URLs
+const signedUrlCache = new Map<string, { url: string; expiresAt: number }>();
 
 // Image upload utility
 export class SupabaseImageStorage {
@@ -35,7 +40,7 @@ export class SupabaseImageStorage {
       }
 
       // Return public URL and path
-      const publicUrl = `${STORAGE_URL}/${filePath}`;
+      const publicUrl = `${PUBLIC_BASE_URL}/${filePath}`;
       return {
         url: publicUrl,
         path: filePath
@@ -51,7 +56,28 @@ export class SupabaseImageStorage {
   static getImageUrl(path: string): string {
     if (!path) return '';
     if (path.startsWith('http')) return path; // Already a full URL
-    return `${STORAGE_URL}/${path}`;
+    return `${PUBLIC_BASE_URL}/${path}`;
+  }
+
+  // Get signed URL for private buckets
+  static async getSignedImageUrl(path: string, expiresInSec: number = 60 * 60): Promise<string | null> {
+    if (!supabase || !path) return null;
+    // cache hit and not expired
+    const cached = signedUrlCache.get(path);
+    const now = Date.now();
+    if (cached && cached.expiresAt > now + 10_000) { // 10s safety window
+      return cached.url;
+    }
+    try {
+      const { data, error } = await supabase.storage.from(STORAGE_BUCKET).createSignedUrl(path, expiresInSec);
+      if (error || !data?.signedUrl) return null;
+      // Note: supabase returns a full URL already
+      const url = data.signedUrl;
+      signedUrlCache.set(path, { url, expiresAt: now + expiresInSec * 1000 });
+      return url;
+    } catch {
+      return null;
+    }
   }
 
   // Delete image from storage
@@ -148,3 +174,4 @@ export function getOptimizedImageUrl(path: string, options?: {
 
 // Export singleton instance
 export const imageStorage = SupabaseImageStorage;
+export { STORAGE_BUCKET, USE_SIGNED_URLS };

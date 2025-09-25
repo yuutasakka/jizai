@@ -178,15 +178,6 @@ export const ProfileScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(236,72,153,0.3),transparent_50%)]" />
 
 
-      {/* Settings Icon - Floating */}
-      <div className="absolute top-8 sm:top-12 right-4 sm:right-5 z-30">
-        <button
-          onClick={() => onNavigate('settings')}
-          className="group w-12 h-12 sm:w-16 sm:h-16 bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center shadow-2xl hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] transition-all duration-500 hover:scale-110 hover:bg-white/30 border border-white/40 hover:rotate-180"
-        >
-          <Settings className="w-6 h-6 sm:w-8 sm:h-8 text-white drop-shadow-xl group-hover:drop-shadow-2xl transition-all duration-500" />
-        </button>
-      </div>
 
       {/* Main Content - Centered */}
       <div className="flex-1 flex items-center justify-center min-h-screen relative z-10 py-16 sm:py-20">
@@ -262,11 +253,20 @@ export const ProfileScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
                     </button>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1 sm:gap-2 group cursor-pointer" onClick={handleNameEdit}>
-                    <div className="text-lg sm:text-xl font-bold text-white drop-shadow-2xl break-all">
-                      @{(user?.email || user?.name || user?.id || 'guest').toString()}
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="flex items-center gap-1 sm:gap-2 group cursor-pointer" onClick={handleNameEdit}>
+                      <div className="text-lg sm:text-xl font-bold text-white drop-shadow-2xl break-all">
+                        @{(user?.email || user?.name || user?.id || 'guest').toString()}
+                      </div>
+                      <Edit2 className="w-4 h-4 sm:w-5 sm:h-5 text-white/60 group-hover:text-white transition-colors duration-200 flex-shrink-0" />
                     </div>
-                    <Edit2 className="w-4 h-4 sm:w-5 sm:h-5 text-white/60 group-hover:text-white transition-colors duration-200 flex-shrink-0" />
+                    {/* Settings Icon */}
+                    <button
+                      onClick={() => onNavigate('settings')}
+                      className="group ml-2 w-8 h-8 sm:w-10 sm:h-10 bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 hover:bg-white/30 border border-white/40"
+                    >
+                      <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-white drop-shadow-lg group-hover:drop-shadow-xl transition-all duration-300 group-hover:rotate-90" />
+                    </button>
                   </div>
                 )}
               </div>
@@ -316,12 +316,7 @@ export const ProfileScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
                       onClick={handleUpgrade}
                       className="bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white font-medium py-2 sm:py-3 px-4 sm:px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 border border-white/30 text-sm sm:text-base min-h-[44px]"
                     >
-                      <div className="flex items-center justify-center gap-2">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                        </svg>
-                        <span>アップグレードする</span>
-                      </div>
+                      アップグレードする
                     </button>
                   </div>
 

@@ -233,8 +233,8 @@ function InnerApp() {
                   <button
                     className={`relative h-[48px] w-[48px] flex flex-col items-center justify-center rounded-2xl transition-all duration-300 group ${
                       currentScreen === 'home'
-                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 shadow-lg shadow-blue-500/40 transform scale-110'
-                        : 'hover:bg-white/10 hover:scale-105'
+                        ? 'bg-gradient-to-r from-green-500 to-emerald-600 shadow-lg shadow-green-500/40 transform scale-110'
+                        : 'hover:bg-white/10 hover:scale-105 active:bg-emerald-600/30'
                     }`}
                     onClick={() => setCurrentScreen('home')}
                   >
@@ -256,7 +256,7 @@ function InnerApp() {
                     className={`relative h-[48px] w-[48px] flex flex-col items-center justify-center rounded-2xl transition-all duration-300 group ${
                       currentScreen === 'user-gallery'
                         ? 'bg-gradient-to-r from-green-500 to-emerald-600 shadow-lg shadow-green-500/40 transform scale-110'
-                        : 'hover:bg-white/10 hover:scale-105'
+                        : 'hover:bg-white/10 hover:scale-105 active:bg-emerald-600/30'
                     }`}
                     onClick={() => setCurrentScreen('user-gallery')}
                   >
@@ -289,8 +289,8 @@ function InnerApp() {
                   <button
                     className={`relative h-[48px] w-[48px] flex flex-col items-center justify-center rounded-2xl transition-all duration-300 group ${
                       currentScreen === 'tutorial-examples'
-                        ? 'bg-gradient-to-r from-orange-500 to-red-600 shadow-lg shadow-orange-500/40 transform scale-110'
-                        : 'hover:bg-white/10 hover:scale-105'
+                        ? 'bg-gradient-to-r from-green-500 to-emerald-600 shadow-lg shadow-green-500/40 transform scale-110'
+                        : 'hover:bg-white/10 hover:scale-105 active:bg-emerald-600/30'
                     }`}
                     onClick={() => setCurrentScreen('tutorial-examples')}
                   >
@@ -311,8 +311,8 @@ function InnerApp() {
                   <button
                     className={`relative h-[48px] w-[48px] flex flex-col items-center justify-center rounded-2xl transition-all duration-300 group ${
                       currentScreen === 'profile'
-                        ? 'bg-gradient-to-r from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/40 transform scale-110'
-                        : 'hover:bg-white/10 hover:scale-105'
+                        ? 'bg-gradient-to-r from-green-500 to-emerald-600 shadow-lg shadow-green-500/40 transform scale-110'
+                        : 'hover:bg-white/10 hover:scale-105 active:bg-emerald-600/30'
                     }`}
                     onClick={() => setCurrentScreen('profile')}
                   >

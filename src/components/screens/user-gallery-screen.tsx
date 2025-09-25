@@ -508,7 +508,7 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
                         </button>
                         <button
                           className="underline hover:text-[color:var(--color-jz-text-secondary)]"
-                          onClick={() => navigate(`/tools/resize?src=${encodeURIComponent(item.url)}&title=${encodeURIComponent(item.title || '')}`)}
+                          onClick={() => navigate(`/tools/resize?src=${encodeURIComponent(item.url)}&title=${encodeURIComponent(item.title || '')}&memoryId=${encodeURIComponent(item.id)}`)}
                           title="サイズ変更"
                         >
                           サイズ変更
@@ -587,7 +587,6 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
                             onClick={() => handleDownload(image)}
                             className="flex items-center gap-[var(--space-8)] flex-1"
                           >
-                            <JZDownloadIcon size={16} />
                             保存
                           </JZButton>
                           <JZButton

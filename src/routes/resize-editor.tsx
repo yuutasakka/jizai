@@ -31,6 +31,7 @@ export default function ResizeEditorPage() {
   const q = useQuery();
   const srcParam = q.get('src') || '';
   const titleParam = q.get('title') || '';
+  const memoryId = q.get('memoryId') || '';
 
   const [img, setImg] = useState<HTMLImageElement | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -249,7 +250,6 @@ export default function ResizeEditorPage() {
       <div className="max-w-[1200px] mx-auto rounded-2xl shadow-2xl p-6 sm:p-10 border border-gray-500/60 text-white">
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-2xl font-bold text-white">サイズ変更</h1>
-          <button onClick={() => navigate('/')} className="text-sm text-white/90 underline">戻る</button>
         </div>
         <p className="text-white/80 mb-6">印刷に適したプリセットでサイズ変更し、ダウンロード/印刷ができます。</p>
 
@@ -269,9 +269,9 @@ export default function ResizeEditorPage() {
                   <div className="text-white font-bold mb-2">祭壇用遺影写真</div>
                   <div className="grid sm:grid-cols-2 gap-2">
                     {sizePresets.filter(p => p.group === '祭壇用遺影写真').map(p => (
-                      <button key={p.key} onClick={() => setSelected(p)} className={`text-left p-3 rounded-lg border transition active:scale-95 ${selected.key === p.key ? 'bg-[#2a5298] text-white border-[#2a5298]' : 'bg-transparent border-gray-400 text-white hover:bg-white/10'}`}>
-                        <span className="block font-bold text-white">{p.label}</span>
-                        <span className="text-sm opacity-90">{p.mm} mm</span>
+                      <button key={p.key} onClick={() => setSelected(p)} className={`text-left p-4 rounded-xl border-2 transition-all duration-200 hover:scale-105 active:scale-95 ${selected.key === p.key ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-blue-400 shadow-lg ring-2 ring-blue-300 ring-opacity-50' : 'bg-white/10 border-gray-300 text-white hover:bg-white/20 hover:border-white hover:shadow-md'}`}>
+                        <span className="block font-bold text-white text-base">{p.label}</span>
+                        <span className="text-sm opacity-90 mt-1">{p.mm} mm</span>
                       </button>
                     ))}
                   </div>
@@ -280,9 +280,9 @@ export default function ResizeEditorPage() {
                   <div className="text-white font-bold mb-2">焼香台用遺影写真</div>
                   <div className="grid sm:grid-cols-3 gap-2">
                     {sizePresets.filter(p => p.group === '焼香台用遺影写真').map(p => (
-                      <button key={p.key} onClick={() => setSelected(p)} className={`text-left p-3 rounded-lg border transition active:scale-95 ${selected.key === p.key ? 'bg-[#2a5298] text-white border-[#2a5298]' : 'bg-transparent border-gray-400 text-white hover:bg-white/10'}`}>
-                        <span className="block font-bold text-white">{p.label}</span>
-                        <span className="text-sm opacity-90">{p.mm} mm</span>
+                      <button key={p.key} onClick={() => setSelected(p)} className={`text-left p-4 rounded-xl border-2 transition-all duration-200 hover:scale-105 active:scale-95 ${selected.key === p.key ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-blue-400 shadow-lg ring-2 ring-blue-300 ring-opacity-50' : 'bg-white/10 border-gray-300 text-white hover:bg-white/20 hover:border-white hover:shadow-md'}`}>
+                        <span className="block font-bold text-white text-base">{p.label}</span>
+                        <span className="text-sm opacity-90 mt-1">{p.mm} mm</span>
                       </button>
                     ))}
                   </div>
@@ -292,7 +292,7 @@ export default function ResizeEditorPage() {
                 <div className="text-white font-bold mb-2">ポスター</div>
                 <div className="grid sm:grid-cols-3 gap-2">
                   {sizePresets.filter(p => p.group === 'ポスター').map(p => (
-                    <button key={p.key} onClick={() => setSelected(p)} className={`text-left p-3 rounded-lg border transition active:scale-95 ${selected.key === p.key ? 'bg-[#2a5298] text-white border-[#2a5298]' : 'bg-transparent border-gray-400 text-white hover:bg:white/10'}`}>
+                    <button key={p.key} onClick={() => setSelected(p)} className={`text-left p-4 rounded-xl border-2 transition-all duration-200 hover:scale-105 active:scale-95 ${selected.key === p.key ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-blue-400 shadow-lg ring-2 ring-blue-300 ring-opacity-50' : 'bg-white/10 border-gray-300 text-white hover:bg-white/20 hover:border-white hover:shadow-md'}`}>
                       <span className="block font-bold text-white">{p.label}</span>
                       <span className="text-sm opacity-90">{p.mm} mm</span>
                     </button>
@@ -327,6 +327,7 @@ export default function ResizeEditorPage() {
                   params.set('preset', selected.key);
                   params.set('dpi', String(dpi));
                   params.set('effectiveDpi', String(effectiveDpi || 0));
+                  if (memoryId) params.set('memoryId', memoryId);
                   params.set('targetW', String(targetPx.w));
                   params.set('targetH', String(targetPx.h));
                   navigate(`/tools/resize-result?${params.toString()}`);
