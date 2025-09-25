@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: jizai-app
     ports:
-      - "3002:3001"  # ホストの3002ポートをコンテナの3001ポートにマッピング
+      - "3005:3001"  # ホストの3005ポートをコンテナの3001ポートにマッピング
     volumes:
       - .:/app
       - /app/node_modules
