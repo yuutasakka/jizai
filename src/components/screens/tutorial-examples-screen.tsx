@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Bell, Sparkles, Zap, Crown, Star, Wand2 } from 'lucide-react';
+import { Bell, Sparkles, Zap, Crown, Star } from 'lucide-react';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 
 interface InspirationExample {
@@ -199,7 +199,6 @@ export const TutorialExamplesScreen = ({ onNavigate, onExampleSelected }: Tutori
             className="insp-button insp-use-prompt w-full bg-gradient-to-r from-emerald-600 to-green-700 hover:from-emerald-700 hover:to-green-800 text-white text-sm font-bold py-2.5 px-4 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2"
             data-label=""
           >
-            <Wand2 className="w-4 h-4" />
             <span className="insp-button-text">このプロンプトを使う</span>
           </button>
         </div>

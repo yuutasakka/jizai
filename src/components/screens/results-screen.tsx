@@ -126,6 +126,11 @@ export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
     alert('不適切なコンテンツとして報告しました。');
   };
 
+  const handleRegenerate = () => {
+    // Navigate back to creation screen for regeneration
+    onNavigate('create');
+  };
+
   const handleRetryError = () => {
     setHasError(false);
   };
@@ -278,7 +283,7 @@ export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
                 style={{ left: `${beforeAfterSlider}%`, transform: 'translateX(-50%)' }}
               >
                 <div className="absolute top-1/2 left-1/2 w-[40px] h-[40px] bg-white rounded-full border-2 border-[color:var(--color-jz-accent)] transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center cursor-col-resize hover:ring-2 hover:ring-[color:var(--color-jz-accent)]/60">
-                  <JZSliderIcon size={18} className="text-[color:var(--color-jz-accent)]" />
+                  <div className="w-[6px] h-[6px] bg-[color:var(--color-jz-accent)] rounded-full"></div>
                 </div>
               </div>
 
