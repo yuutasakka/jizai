@@ -98,7 +98,10 @@ create policy images_examples_public_read
 ### 1. SQLエディタでRLSポリシー実行
 
 1. **SQL Editor** にアクセス
-2. `supabase/*.sql`（テーブル定義/ポリシー）と、必要に応じて `supabase/storage_examples_policy.sql` を実行
+2. `supabase/*.sql`（テーブル定義/ポリシー）と、必要に応じて以下を実行
+   - `supabase/storage_examples_policy.sql`（Privateバケットでexamples/*を匿名閲覧する場合）
+   - `supabase/user_credits_hardening.sql`（ユーザー自身によるクレジット改ざん防止のため、書き込みをservice_roleに限定）
+   - `supabase/hardening_functions_search_path.sql`（関数のsearch_pathを固定しLinter 0011を解消）
 3. エラーがないことを確認
 
 ### 2. 必要なテーブルの作成
