@@ -102,23 +102,25 @@ export const JizaiHomeScreen = ({ onNavigate }: JizaiHomeScreenProps) => {
   return (
     <div className="min-h-screen bg-[color:var(--color-jz-surface)]">
       {/* Header */}
-      <div className="bg-[color:var(--color-jz-surface)] border-b border-[color:var(--color-jz-border)] px-4 sm:px-6 py-3 sm:py-4">
-        <div className="flex items-center justify-between">
-          <h1 className="jz-font-display jz-text-display-small sm:jz-text-display-medium text-[color:var(--color-jz-text-primary)]">JIZAI</h1>
-          <div className="flex items-center gap-2 sm:gap-4">
-            <button
-              onClick={() => onNavigate('notifications')}
-              className="p-2 text-[color:var(--color-jz-text-secondary)] hover:text-[color:var(--color-jz-text-primary)] transition-colors min-h-[44px] w-11 h-11 flex items-center justify-center"
-              aria-label="通知を開く"
-            >
-              <JZBellIcon size={20} />
-            </button>
+      <div className="bg-[color:var(--color-jz-surface)] border-b border-[color:var(--color-jz-border)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+          <div className="flex items-center justify-between">
+            <h1 className="jz-font-display jz-text-display-small sm:jz-text-display-medium text-[color:var(--color-jz-text-primary)]">JIZAI</h1>
+            <div className="flex items-center gap-2 sm:gap-4">
+              <button
+                onClick={() => onNavigate('notifications')}
+                className="p-2 text-[color:var(--color-jz-text-secondary)] hover:text-[color:var(--color-jz-text-primary)] transition-colors min-h-[44px] w-11 h-11 flex items-center justify-center"
+                aria-label="通知を開く"
+              >
+                <JZBellIcon size={20} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="px-4 sm:px-6 py-6 sm:py-8">
+      {/* Main Content with responsive container */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Title Section */}
         <div className="text-center mb-8 sm:mb-12">
           {loading ? (
@@ -167,7 +169,7 @@ export const JizaiHomeScreen = ({ onNavigate }: JizaiHomeScreenProps) => {
                 <div className="bg-[color:var(--color-jz-card)] border border-[color:var(--color-jz-border)] rounded-[var(--radius-jz-card)] p-6">
                   <div className="flex flex-col items-center gap-4">
                     <div className="w-64 h-64 rounded-[var(--radius-jz-card)] overflow-hidden shadow">
-                      <img src={previewUrl} alt="アップロードした写真のプレビュー" className="w-full h-full object-cover" />
+                      <img src={previewUrl} alt="アップロードした写真のプレビュー" loading="lazy" className="w-full h-full object-cover" />
                     </div>
                     <p className="jz-text-caption text-[color:var(--color-jz-text-secondary)]">下の「編集の種類」から選択してください</p>
                     <div className="flex gap-3">
@@ -215,7 +217,7 @@ export const JizaiHomeScreen = ({ onNavigate }: JizaiHomeScreenProps) => {
               <h3 className="jz-font-display jz-text-caption sm:jz-text-display-small text-[color:var(--color-jz-text-primary)] mb-4 sm:mb-6 text-center">
                 編集の種類を選択
               </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="home-options-grid">
                 {editingOptions.map((option) => (
                   <div
                     key={option.id}
@@ -245,7 +247,7 @@ export const JizaiHomeScreen = ({ onNavigate }: JizaiHomeScreenProps) => {
                       <div className="bg-[color:var(--color-jz-card)] border border-[color:var(--color-jz-border)] rounded-[var(--radius-jz-card)] p-4 mb-4">
                         <div className="flex items-center gap-4">
                           <div className="w-24 h-24 rounded-[var(--radius-jz-card)] overflow-hidden border border-[color:var(--color-jz-border)]">
-                            <img src={previewUrl} alt="生成前の確認用プレビュー" className="w-full h-full object-cover" />
+                            <img src={previewUrl} alt="生成前の確認用プレビュー" loading="lazy" className="w-full h-full object-cover" />
                           </div>
                           <div className="flex-1">
                             <div className="jz-text-caption text-[color:var(--color-jz-text-tertiary)] mb-1">加える変更</div>
@@ -295,7 +297,7 @@ export const JizaiHomeScreen = ({ onNavigate }: JizaiHomeScreenProps) => {
           {previewUrl && selectedOptionId && (
             <div className="flex items-center gap-4 mb-6">
               <div className="w-20 h-20 rounded-[var(--radius-jz-card)] overflow-hidden border border-[color:var(--color-jz-border)]">
-                <img src={previewUrl} alt="確認プレビュー" className="w-full h-full object-cover" />
+                <img src={previewUrl} alt="確認プレビュー" loading="lazy" className="w-full h-full object-cover" />
               </div>
               <div className="flex-1">
                 {(() => {

@@ -159,7 +159,7 @@ export default function PrintPreparePage() {
     const dy = Math.round((targetPx.h - dh) / 2);
     ctx.drawImage(img, 0, 0, img.width, img.height, dx, dy, dw, dh);
     const dataUrl = cnv.toDataURL('image/jpeg', 0.95);
-    const win = window.open('', '_blank');
+    const win = window.open('', '_blank', 'noopener,noreferrer');
     if (!win) return;
     win.document.write(`<!doctype html><html><head><title>印刷プレビュー</title><style>@media print{@page{size:auto;margin:0}body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh}img{width:${selected.mm.split('×')[0]}mm;height:${selected.mm.split('×')[1]}mm;object-fit:contain}}</style></head><body><img src="${dataUrl}" alt="preview" /></body></html>`);
     win.document.close();
@@ -276,10 +276,29 @@ export default function PrintPreparePage() {
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3 justify-center">
-              <button onClick={downloadPrint} className="px-5 py-3 rounded bg-[#2a5298] text-white font-bold hover:bg-[#1e3c72] active:scale-95 transition">印刷用JPEGをダウンロード</button>
-              <button onClick={openPrintPreview} className="px-5 py-3 rounded bg-green-600 text-white font-bold hover:bg-green-700 active:scale-95 transition">印刷プレビュー</button>
-              <button onClick={() => navigate('/')} className="px-5 py-3 rounded border border-gray-400 text-white font-bold hover:bg-white/10 active:scale-95 transition">戻る</button>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 max-w-lg mx-auto">
+                <button
+                  onClick={downloadPrint}
+                  className="w-full px-6 py-4 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-lg hover:from-blue-600 hover:to-indigo-700 active:scale-95 transition-all duration-200 shadow-lg ring-2 ring-blue-300/30"
+                >
+                  印刷用JPEG
+                </button>
+                <button
+                  onClick={openPrintPreview}
+                  className="w-full px-6 py-4 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-lg hover:from-green-600 hover:to-emerald-700 active:scale-95 transition-all duration-200 shadow-lg ring-2 ring-green-300/30"
+                >
+                  印刷プレビュー
+                </button>
+              </div>
+              <div className="max-w-xs mx-auto">
+                <button
+                  onClick={() => navigate('/')}
+                  className="w-full px-6 py-3 rounded-xl border-2 border-white/30 text-white font-bold hover:bg-white/10 hover:border-white/50 active:scale-95 transition-all duration-200 shadow-lg"
+                >
+                  戻る
+                </button>
+              </div>
             </div>
           </>
         )}
@@ -287,4 +306,3 @@ export default function PrintPreparePage() {
     </div>
   );
 }
-

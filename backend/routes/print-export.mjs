@@ -5,6 +5,8 @@ import { supabase } from '../config/supabase.mjs';
 import { PrintExportService } from '../services/print-export-service.mjs';
 import { StorageQuotaService } from '../services/storage-quota-service.mjs';
 import rateLimit from 'express-rate-limit';
+import { validateBody } from '../middleware/validate.mjs';
+import { cacheMiddleware } from '../middleware/cache.mjs';
 
 const router = express.Router();
 const printExportService = new PrintExportService();
@@ -32,7 +34,15 @@ const exportLimiter = rateLimit({
  * POST /v1/print-export/create
  * Create new print export job
  */
-router.post('/create', exportLimiter, async (req, res) => {
+const createSchema = {
+    deviceId: { type: 'string', min: 1, max: 200 },
+    vaultId: { type: 'string', min: 1, max: 200 },
+    exportType: { type: 'enum', values: ['photo_book', 'calendar', 'poster', 'cards'] },
+    memoryIds: { type: 'array', minItems: 1, maxItems: 100, items: { type: 'string', min: 1, max: 200 } },
+    settings: { type: 'object', optional: true }
+};
+
+router.post('/create', exportLimiter, validateBody(createSchema), async (req, res) => {
     try {
         const {
             deviceId,
@@ -40,7 +50,7 @@ router.post('/create', exportLimiter, async (req, res) => {
             exportType,
             memoryIds,
             settings = {}
-        } = req.body;
+        } = req.validatedBody || req.body;
 
         // Validation
         if (!deviceId || !vaultId || !exportType || !memoryIds?.length) {
@@ -51,15 +61,7 @@ router.post('/create', exportLimiter, async (req, res) => {
             });
         }
 
-        // Validate export type
-        const validExportTypes = ['photo_book', 'calendar', 'poster', 'cards'];
-        if (!validExportTypes.includes(exportType)) {
-            return res.status(400).json({
-                error: 'Bad Request',
-                message: `Invalid export type. Must be one of: ${validExportTypes.join(', ')}`,
-                code: 'INVALID_EXPORT_TYPE'
-            });
-        }
+        // exportTypeはバリデーション済み
 
         // Check subscription permissions
         const hasPermission = await printExportService.checkPrintExportPermission(req.supabaseAuth, deviceId, exportType);
@@ -381,7 +383,8 @@ router.get('/templates', async (req, res) => {
  * GET /v1/print-export/options
  * Get available print options (sizes, DPI, etc.)
  */
-router.get('/options', async (req, res) => {
+// Options are global/static enough to cache briefly
+router.get('/options', cacheMiddleware({ ttlMs: 5 * 60 * 1000 }), async (req, res) => {
     try {
         const printOptions = await printExportService.getPrintOptions(req.supabaseAuth);
 
@@ -469,13 +472,7 @@ router.post('/preview', async (req, res) => {
         } = req.body;
 
         // Validation
-        if (!deviceId || !vaultId || !exportType || !memoryIds?.length) {
-            return res.status(400).json({
-                error: 'Bad Request',
-                message: 'deviceId, vaultId, exportType, and memoryIds are required',
-                code: 'MISSING_REQUIRED_FIELDS'
-            });
-        }
+        // 必須項目はバリデーション済み
 
         // Limit preview to prevent abuse
         if (memoryIds.length > 10) {

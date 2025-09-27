@@ -6,8 +6,10 @@ import { validateAppStoreReceipt } from '../services/appstore-validator.mjs';
 import { SubscriptionService } from '../services/subscription-service.mjs';
 import { StorageQuotaService } from '../services/storage-quota-service.mjs';
 import { auditServiceClientUsage } from '../utils/service-client-audit.mjs';
+import { secureLogger } from '../utils/secure-logger.mjs';
 import { rlsAuthMiddleware } from '../middleware/rls-auth.mjs';
 import rateLimit from 'express-rate-limit';
+import { validateBody } from '../middleware/validate.mjs';
 
 const router = express.Router();
 const subscriptionService = new SubscriptionService();
@@ -43,8 +45,10 @@ const requireAdmin = (req, res, next) => {
     }
 
     if (expected && token === expected) {
+        secureLogger.info('Admin endpoint access granted', { route: req.originalUrl, ip: req.ip });
         return next();
     }
+    secureLogger.warn('Admin endpoint access denied', { route: req.originalUrl, ip: req.ip });
     return res.status(401).json({
         error: 'Unauthorized',
         message: 'Admin token required',
@@ -98,19 +102,17 @@ router.get('/status', rlsAuthMiddleware(), async (req, res) => {
  * POST /v1/subscription/validate
  * Validate App Store receipt and update subscription status
  */
-router.post('/validate', rlsAuthMiddleware(), async (req, res) => {
+const validateReceiptSchema = {
+    receiptData: { type: 'string', min: 10 },
+    originalTransactionId: { type: 'string', min: 5, optional: true }
+};
+
+router.post('/validate', rlsAuthMiddleware(), validateBody(validateReceiptSchema), async (req, res) => {
     try {
-        const { receiptData, originalTransactionId } = req.body;
+        const { receiptData, originalTransactionId } = req.validatedBody || req.body;
         const deviceId = req.deviceId;
 
-        // Validation
-        if (!receiptData) {
-            return res.status(400).json({
-                error: 'Bad Request',
-                message: 'receiptData is required',
-                code: 'MISSING_REQUIRED_FIELDS'
-            });
-        }
+        // 必須項目はバリデーション済み
 
         // Validate with App Store
         const validationResult = await validateAppStoreReceipt(receiptData);
@@ -165,18 +167,16 @@ router.post('/validate', rlsAuthMiddleware(), async (req, res) => {
  * POST /v1/subscription/start-trial
  * Start 14-day trial period
  */
-router.post('/start-trial', rlsAuthMiddleware(), async (req, res) => {
+const startTrialSchema = {
+    productId: { type: 'string', min: 3 }
+};
+
+router.post('/start-trial', rlsAuthMiddleware(), validateBody(startTrialSchema), async (req, res) => {
     try {
-        const { productId } = req.body;
+        const { productId } = req.validatedBody || req.body;
         const deviceId = req.deviceId;
 
-        if (!productId) {
-            return res.status(400).json({
-                error: 'Bad Request',
-                message: 'productId is required',
-                code: 'MISSING_REQUIRED_FIELDS'
-            });
-        }
+        // 必須項目はバリデーション済み
 
         // Check if user already had a trial
         const existingTrial = await subscriptionService.hasHadTrial(deviceId);

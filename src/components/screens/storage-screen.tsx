@@ -99,7 +99,7 @@ export const StorageScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
       {/* Status Bar removed on storage screen */}
 
       {/* Header */}
-      <div className="relative z-10 pt-8 px-5 flex items-center gap-4">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center gap-4">
         <button
           onClick={() => onNavigate('profile')}
           className="w-12 h-12 bg-white/10 backdrop-blur-xl rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all duration-300 border border-white/20"

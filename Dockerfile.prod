@@ -1,0 +1,43 @@
+# 本番ビルド用Dockerfile
+# ビルド時に環境変数を注入してViteアプリをビルド
+
+# ステージ1: ビルド
+FROM node:20-alpine AS builder
+
+# 作業ディレクトリを設定
+WORKDIR /app
+
+# package.jsonとpackage-lock.jsonをコピー
+COPY package*.json ./
+
+# 依存関係をインストール
+RUN npm ci || npm install
+
+# アプリケーションのソースコードをコピー
+COPY . .
+
+# ビルド引数を宣言（docker build時に渡す）
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
+
+# 環境変数として設定（ビルド時にViteが読み込む）
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
+
+# 本番ビルドを実行
+RUN npm run build
+
+# ステージ2: 本番配信用の軽量イメージ
+FROM nginx:alpine
+
+# Nginxの設定をコピー（必要に応じて作成）
+# COPY nginx.conf /etc/nginx/nginx.conf
+
+# ビルド成果物をNginxの公開ディレクトリにコピー
+COPY --from=builder /app/build /usr/share/nginx/html
+
+# ポート80を公開
+EXPOSE 80
+
+# Nginxを起動
+CMD ["nginx", "-g", "daemon off;"]

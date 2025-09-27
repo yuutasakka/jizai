@@ -2,23 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { JZButton } from '../design-system/jizai-button';
 import { JZCard, JZCardContent } from '../design-system/jizai-card';
 import { JZErrorCard } from '../design-system/jizai-error-card';
-import { JZRangeSelector } from '../design-system/jizai-range-selector';
 import { JZChip } from '../design-system/jizai-chip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
-import { 
-  JZDownloadIcon, 
-  JZRefreshIcon, 
-  JZSliderIcon,
-  JZExclamationBubbleIcon,
+import {
   JZChevronDownIcon
 } from '../design-system/jizai-icons';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { cn } from '../ui/utils';
 import { track } from '../../lib/analytics';
+import { FrameCard } from '../commerce/FrameCard';
 
 export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => void }) => {
   const [beforeAfterSlider, setBeforeAfterSlider] = useState(50);
-  const [isRangeSelectMode, setIsRangeSelectMode] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   // 無料やり直し制度を廃止したため、カウンタは撤去
@@ -39,18 +34,25 @@ export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
     glasses_reflection: 'メガネの反射除去・調整',
   };
   
+  const [isDemoResult, setIsDemoResult] = useState(false);
+
   // sessionStorageから画像データを取得
   useEffect(() => {
     const generatedUrl = sessionStorage.getItem('generated-image-url');
     const originalUrl = sessionStorage.getItem('original-image-url');
     const prompt = sessionStorage.getItem('used-prompt') || '';
-    
+    const demoMode = sessionStorage.getItem('demo_mode_result') === 'true';
+
     if (generatedUrl && originalUrl) {
       setGeneratedImage(generatedUrl);
       setOriginalImage(originalUrl);
       setUsedPrompt(prompt);
-      // 通知: 生成完了によりサーバ側のメモリ一覧が更新されている可能性
-      try { window.dispatchEvent(new CustomEvent('jizai:memories:updated')); } catch {}
+      setIsDemoResult(demoMode);
+
+      if (!demoMode) {
+        // 通知: 生成完了によりサーバ側のメモリ一覧が更新されている可能性
+        try { window.dispatchEvent(new CustomEvent('jizai:memories:updated')); } catch {}
+      }
     } else {
       // データがない場合はホーム画面に戻る
       onNavigate('home');
@@ -119,13 +121,6 @@ export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
     }
   };
 
-  const handleRegenerate = () => {
-    onNavigate('progress');
-  };
-
-  const handleRangeRespecify = () => {
-    setIsRangeSelectMode(!isRangeSelectMode);
-  };
 
   const handleReport = () => {
     alert('不適切なコンテンツとして報告しました。');
@@ -135,11 +130,6 @@ export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
     setHasError(false);
   };
 
-  const handleRangeSelection = (selection: any) => {
-    console.log('Range selected:', selection);
-    setIsRangeSelectMode(false);
-    onNavigate('progress');
-  };
 
   if (hasError) {
     return (
@@ -168,7 +158,7 @@ export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
               ← ホーム
             </JZButton>
             <h1 className="jz-font-display jz-text-display-medium text-[color:var(--color-jz-text-primary)]">
-              できました
+              {isDemoResult ? 'デモ完了' : 'できました'}
             </h1>
             <div className="w-[80px]"></div>
           </div>
@@ -177,6 +167,25 @@ export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
 
       {/* Content */}
       <div className="pt-[140px] pb-[var(--space-24)] px-[var(--space-16)] jz-grid-8pt jz-spacing-20">
+        {/* Demo Mode Banner */}
+        {isDemoResult && (
+          <JZCard className="mb-[var(--space-16)] border-[color:var(--color-jz-accent)] bg-[color:var(--color-jz-accent)]/5">
+            <JZCardContent className="p-[var(--space-16)]">
+              <div className="flex items-center gap-[var(--space-12)]">
+                <div className="text-2xl">🎭</div>
+                <div>
+                  <h3 className="jz-font-body font-semibold text-[color:var(--color-jz-accent)] mb-[var(--space-4)]">
+                    デモモード結果
+                  </h3>
+                  <p className="jz-text-caption text-[color:var(--color-jz-text-secondary)]">
+                    これはデモンストレーション用の結果です。実際の画像生成は行われていません。
+                  </p>
+                </div>
+              </div>
+            </JZCardContent>
+          </JZCard>
+        )}
+
         {/* Result Status */}
         <JZCard>
           <JZCardContent className="p-[var(--space-16)]">
@@ -283,40 +292,10 @@ export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
                 className="absolute inset-0 w-full h-full opacity-0 cursor-col-resize"
               />
 
-              {/* Range Selection Overlay */}
-              <JZRangeSelector
-                isActive={isRangeSelectMode}
-                onSelectionChange={handleRangeSelection}
-              />
             </div>
           </JZCardContent>
         </JZCard>
 
-        {/* Action Buttons */}
-        <JZCard>
-          <JZCardContent>
-            <div className="grid grid-cols-2 gap-[var(--space-12)]">
-              <JZButton
-                tone="secondary"
-                onClick={handleRangeRespecify}
-                state={isRangeSelectMode ? 'pressed' : 'default'}
-                className="flex flex-col gap-[var(--space-8)] h-[72px]"
-              >
-                <JZSliderIcon size={20} />
-                <span className="jz-text-caption">範囲再指定</span>
-              </JZButton>
-
-              <JZButton
-                tone="secondary"
-                onClick={handleRegenerate}
-                className="flex flex-col gap-[var(--space-8)] h-[72px]"
-              >
-                <JZRefreshIcon size={20} />
-                <span className="jz-text-caption">強度再調整</span>
-              </JZButton>
-            </div>
-          </JZCardContent>
-        </JZCard>
 
         {/* Additional Actions */}
         <JZCard>
@@ -326,11 +305,11 @@ export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
                 tone="primary"
                 size="lg"
                 fullWidth
-                onClick={handleSave}
+                onClick={isDemoResult ? () => alert('デモモードでは実際の保存はできません。') : handleSave}
                 state={isLoading ? 'loading' : 'default'}
+                disabled={isDemoResult}
               >
-                <JZDownloadIcon size={20} />
-                保存
+                {isDemoResult ? 'デモ保存（無効）' : '保存'}
               </JZButton>
 
               <div className="grid grid-cols-2 gap-[var(--space-12)]">
@@ -346,10 +325,37 @@ export const ResultsScreen = ({ onNavigate }: { onNavigate: (screen: string) => 
                   tone="destructive"
                   onClick={handleReport}
                 >
-                  <JZExclamationBubbleIcon size={16} />
                   通報
                 </JZButton>
               </div>
+            </div>
+          </JZCardContent>
+        </JZCard>
+
+        {/* 額縁も一緒に購入（Amazon/Rakuten） */}
+        <FrameCard
+          sizeKey={''}
+          page="result"
+          amazonUrl={(import.meta as any)?.env?.VITE_FRAME_URL_AMAZON}
+          rakutenUrl={(import.meta as any)?.env?.VITE_FRAME_URL_RAKUTEN}
+        />
+
+        {/* おすすめの額縁 CTA */}
+        <JZCard>
+          <JZCardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="jz-text-title font-bold mb-1">おすすめの額縁</div>
+                <div className="jz-text-caption text-[color:var(--color-jz-text-secondary)]">生成した写真に合う額縁をチェック</div>
+              </div>
+              <a
+                href={(import.meta as any)?.env?.VITE_FRAME_SHOP_URL || 'https://example.com/frames'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 rounded-lg bg-white text-black font-semibold border border-[color:var(--color-jz-border)] hover:bg-white/90"
+              >
+                額縁を見る
+              </a>
             </div>
           </JZCardContent>
         </JZCard>

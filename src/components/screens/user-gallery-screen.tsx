@@ -12,7 +12,7 @@ import {
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import api from '../../api/client';
 import { navigate } from '../../router';
-import { ChevronDown, Cloud, Plus, Image as ImageIcon } from 'lucide-react';
+import { Cloud, Plus, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface GeneratedImage {
@@ -221,7 +221,6 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
   });
 
   const filters = useMemo(() => [
-    { id: 'all', label: 'すべて' },
   ] as const, []);
 
   const formatDate = (date: Date) => {
@@ -336,12 +335,11 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
         {/* Header - content stateと一致 */}
         <div className="fixed top-0 left-0 right-0 z-50">
           <div className="jz-glass-effect border-b border-[color:var(--color-jz-border)]">
-            <div className="pt-[44px] px-[var(--space-16)] pb-[var(--space-16)]">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
               {/* Title row */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <h1 className="jz-font-display jz-text-display-medium text-[color:var(--color-jz-text-primary)]">マイファイル</h1>
-                  <ChevronDown className="h-5 w-5 text-[color:var(--color-jz-text-secondary)]" />
                 </div>
                 <div className="flex items-center gap-4 text-[color:var(--color-jz-text-secondary)]">
                   <button
@@ -410,12 +408,11 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
       {/* Header */}
       <div className="fixed top-0 left-0 right-0 z-50">
         <div className="jz-glass-effect border-b border-[color:var(--color-jz-border)]">
-          <div className="pt-[44px] px-[var(--space-20)] pb-[var(--space-16)]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
             {/* Title row */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-1.5">
-                <h1 className="jz-font-display jz-text-display-medium text-[color:var(--color-jz-text-primary)]">マイファイル</h1>
-                <ChevronDown className="h-5 w-5 text-[color:var(--color-jz-text-secondary)]" />
+                <h1 className="jz-font-display jz-text-display-medium text-[color:var(--color-jz-text-primary)] mb-0">マイファイル</h1>
               </div>
               <div className="flex items-center gap-4 text-[color:var(--color-jz-text-secondary)]">
                 <button
@@ -436,15 +433,15 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
               </div>
             </div>
             {/* Filter chips */}
-            <div className="mt-4 flex items-center gap-3 overflow-x-auto">
+            <div className="mt-6 flex items-center gap-3 overflow-x-auto pb-2">
               {filters.map((f) => (
                 <button
                   key={f.id}
                   onClick={() => setFilter(f.id)}
-                  className={`shrink-0 rounded-full px-4 py-2 text-[15px] ring-1 transition ${
+                  className={`shrink-0 rounded-full px-4 py-2 text-[15px] ring-1 transition font-medium ${
                     filter === f.id
                       ? 'bg-[color:var(--color-jz-text-primary)] text-[color:var(--color-jz-surface)] ring-[color:var(--color-jz-text-primary)]'
-                      : 'bg-[color:var(--color-jz-card)] text-[color:var(--color-jz-text-primary)] ring-[color:var(--color-jz-border)]'
+                      : 'bg-[color:var(--color-jz-card)] text-[color:var(--color-jz-text-primary)] ring-[color:var(--color-jz-border)] hover:bg-[color:var(--color-jz-surface)]'
                   }`}
                 >
                   {f.label}
@@ -477,7 +474,7 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
                 <JZCard key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-200 w-full max-w-[400px]">
                   <JZCardContent className="p-0">
                     <div className="relative h-[240px] bg-[color:var(--color-jz-border)]">
-                      <img src={item.url} alt={item.title} className="w-full h-full object-cover" onLoad={(e) => handleImgLoad(item.id, e)} />
+                      <img src={item.url} alt={item.title} loading="lazy" className="w-full h-full object-cover" onLoad={(e) => handleImgLoad(item.id, e)} />
                     </div>
                     <div className="p-[var(--space-20)]">
                       <h3 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)] mb-[var(--space-8)]">{item.title}</h3>
@@ -624,17 +621,17 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
             </div>
           ) : (
             // Empty State - フィルター結果が空の場合
-            <div className="col-span-full flex items-center justify-center min-h-[400px]">
+            <div className="col-span-full flex items-center justify-center min-h-[400px] px-6">
               <div className="text-center max-w-md mx-auto">
-                <div className="mx-auto mb-[var(--space-24)] grid h-16 w-16 place-items-center rounded-full ring-1 ring-[color:var(--color-jz-border)] bg-[color:var(--color-jz-card)]">
+                <div className="mx-auto mb-8 grid h-16 w-16 place-items-center rounded-full ring-1 ring-[color:var(--color-jz-border)] bg-[color:var(--color-jz-card)]">
                   <ImageIcon className="h-8 w-8 text-[color:var(--color-jz-text-secondary)]" />
                 </div>
-                <h3 className="jz-font-display jz-text-display-medium text-[color:var(--color-jz-text-primary)] mb-[var(--space-16)]">
+                <h3 className="jz-font-display jz-text-display-medium text-[color:var(--color-jz-text-primary)] mb-4 leading-tight">
                   {filter === 'recent' ? '最近の作品がありません' :
                    filter === 'expiring' ? '期限間近の作品がありません' :
                    '最初の一枚を作成しましょう'}
                 </h3>
-                <p className="jz-text-body text-[color:var(--color-jz-text-secondary)] mb-[var(--space-24)] leading-relaxed">
+                <p className="jz-text-body text-[color:var(--color-jz-text-secondary)] mb-8 leading-relaxed px-4">
                   {filter === 'all'
                     ? '編集した写真がこちらに保存されます。はじめての一枚を作成してみましょう。'
                     : '他のフィルターを選択するか、新しい作品を作成してください。'
@@ -645,7 +642,7 @@ export const UserGalleryScreen = ({ onNavigate }: { onNavigate: (screen: string)
                     tone="primary"
                     size="lg"
                     onClick={() => onNavigate('create')}
-                    className="flex items-center justify-center"
+                    className="flex items-center justify-center px-6 py-3"
                   >
                     {filter === 'all' ? '最初の一枚を作成' : '新しい作品を作成'}
                   </JZButton>

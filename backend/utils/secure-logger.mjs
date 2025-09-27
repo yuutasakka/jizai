@@ -114,6 +114,26 @@ function sanitizeLogData(data) {
 /**
  * Secure logger wrapper that automatically sanitizes data
  */
+function output(level, message, data) {
+    const structured = (process.env.STRUCTURED_LOG_JSON || '').toLowerCase() === 'true';
+    const ts = new Date().toISOString();
+    if (structured) {
+        const payload = { level, message, ts, ...(data ? { data } : {}) };
+        // eslint-disable-next-line no-console
+        console.log(JSON.stringify(payload));
+        return;
+    }
+    // Non-structured legacy output with emojis
+    const prefix = level === 'error' ? '❌' : level === 'warn' ? '⚠️' : level === 'debug' ? '🐛' : 'ℹ️';
+    if (data) {
+        // eslint-disable-next-line no-console
+        console[level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log'](`${prefix} ${message}`, data);
+    } else {
+        // eslint-disable-next-line no-console
+        console[level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log'](`${prefix} ${message}`);
+    }
+}
+
 export const secureLogger = {
     /**
      * Log info level with sanitization
@@ -122,11 +142,7 @@ export const secureLogger = {
      */
     info(message, data = null) {
         const sanitizedData = data ? sanitizeLogData(data) : null;
-        if (sanitizedData) {
-            console.log(`ℹ️ ${message}`, sanitizedData);
-        } else {
-            console.log(`ℹ️ ${message}`);
-        }
+        output('info', message, sanitizedData || undefined);
     },
     
     /**
@@ -136,11 +152,7 @@ export const secureLogger = {
      */
     warn(message, data = null) {
         const sanitizedData = data ? sanitizeLogData(data) : null;
-        if (sanitizedData) {
-            console.warn(`⚠️ ${message}`, sanitizedData);
-        } else {
-            console.warn(`⚠️ ${message}`);
-        }
+        output('warn', message, sanitizedData || undefined);
     },
     
     /**
@@ -150,11 +162,7 @@ export const secureLogger = {
      */
     error(message, data = null) {
         const sanitizedData = data ? sanitizeLogData(data) : null;
-        if (sanitizedData) {
-            console.error(`❌ ${message}`, sanitizedData);
-        } else {
-            console.error(`❌ ${message}`);
-        }
+        output('error', message, sanitizedData || undefined);
     },
     
     /**
@@ -165,11 +173,7 @@ export const secureLogger = {
     debug(message, data = null) {
         if (process.env.NODE_ENV === 'development') {
             const sanitizedData = data ? sanitizeLogData(data) : null;
-            if (sanitizedData) {
-                console.log(`🐛 ${message}`, sanitizedData);
-            } else {
-                console.log(`🐛 ${message}`);
-            }
+            output('debug', message, sanitizedData || undefined);
         }
     },
     
@@ -195,7 +199,7 @@ export const secureLogger = {
             logData.jobId = jobId;
         }
         
-        console.log('📝 Edit request received:', logData);
+        output('info', 'edit_request', logData);
     }
 };
 

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { navigate } from '../router';
+import { JZHomeIcon, JZMemorialPhotoIcon, JZPlusIcon, JZSearchIcon, JZUserIcon } from '../components/design-system/jizai-icons';
 
 function useQuery() {
   const [q, setQ] = useState(() => new URLSearchParams(window.location.search));
@@ -172,7 +173,7 @@ export default function ResizeEditorPage() {
 
     // 印刷用の設定で新しいウィンドウを開く
     const dataUrl = cnv.toDataURL('image/jpeg', 0.95);
-    const printWindow = window.open('', '_blank');
+    const printWindow = window.open('', '_blank', 'noopener,noreferrer');
     if (!printWindow) return;
 
     printWindow.document.write(`
@@ -246,9 +247,9 @@ export default function ResizeEditorPage() {
   // trimming UI removed
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1e3c72] to-[#2a5298] p-5">
+    <div className="min-h-screen bg-gradient-to-br from-[#1e3c72] to-[#2a5298] p-5 pb-[120px]">
       <div className="max-w-[1200px] mx-auto rounded-2xl shadow-2xl p-6 sm:p-10 border border-gray-500/60 text-white">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-2 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
           <h1 className="text-2xl font-bold text-white">サイズ変更</h1>
         </div>
         <p className="text-white/80 mb-6">印刷に適したプリセットでサイズ変更し、ダウンロード/印刷ができます。</p>
@@ -318,7 +319,13 @@ export default function ResizeEditorPage() {
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3 justify-center">
+            <div className="grid grid-cols-2 gap-4 max-w-md mx-auto mt-8">
+              <button
+                onClick={() => navigate('/')}
+                className="w-full px-6 py-4 rounded-xl border-2 border-white/30 text-white font-bold text-lg hover:bg-white/10 hover:border-white/50 active:scale-95 transition-all duration-200 shadow-lg"
+              >
+                戻る
+              </button>
               <button
                 onClick={() => {
                   const params = new URLSearchParams();
@@ -332,14 +339,67 @@ export default function ResizeEditorPage() {
                   params.set('targetH', String(targetPx.h));
                   navigate(`/tools/resize-result?${params.toString()}`);
                 }}
-                className="px-8 py-3 rounded bg-[#2a5298] text-white font-bold hover:bg-[#1e3c72] active:scale-95 transition"
+                className="w-full px-6 py-4 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-lg hover:from-blue-600 hover:to-indigo-700 active:scale-95 transition-all duration-200 shadow-lg ring-2 ring-blue-300/30"
               >
                 これで進める
               </button>
-              <button onClick={() => navigate('/')} className="px-5 py-3 rounded border border-gray-400 text-white font-bold hover:bg-white/10 active:scale-95 transition">戻る</button>
             </div>
           </>
         )}
+      </div>
+      {/* Bottom Navigation (same style as home) */}
+      <div className="fixed bottom-0 left-0 right-0 z-50">
+        <div className="bg-black border-t border-white/20 shadow-2xl relative">
+          <div className="absolute inset-0 bg-black"></div>
+          <div className="mx-auto max-w-[720px] px-6 relative z-10">
+            <div className="flex items-center justify-between h-[72px] relative">
+              <button
+                className="relative h-[48px] w-[48px] flex flex-col items-center justify-center rounded-2xl transition-all duration-300 group hover:bg-white/10 hover:scale-105 active:bg-emerald-600/30"
+                onClick={() => navigate('/')}
+                aria-label="ホーム"
+              >
+                <div className="text-white/70 group-hover:text-white">
+                  <JZHomeIcon size={24} />
+                </div>
+              </button>
+              <button
+                className="relative h-[48px] w-[48px] flex flex-col items-center justify-center rounded-2xl transition-all duration-300 group hover:bg白/10 hover:scale-105 active:bg-emerald-600/30"
+                onClick={() => navigate('/')}
+                aria-label="マイファイル"
+              >
+                <div className="text白/70 group-hover:text白">
+                  <JZMemorialPhotoIcon size={24} />
+                </div>
+              </button>
+              <button
+                aria-label="新規作成"
+                className="relative rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 text-white w-14 h-14 flex items-center justify-center shadow-2xl border-2 border-white/30 transition-all duration-300 group hover:scale-110 hover:shadow-purple-500/50"
+                onClick={() => navigate('/')}
+              >
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
+                <JZPlusIcon size={22} />
+              </button>
+              <button
+                className="relative h-[48px] w-[48px] flex flex-col items-center justify-center rounded-2xl transition-all duration-300 group hover:bg-white/10 hover:scale-105 active:bg-emerald-600/30"
+                onClick={() => navigate('/')}
+                aria-label="テンプレート"
+              >
+                <div className="text-white/70 group-hover:text-white">
+                  <JZSearchIcon size={24} />
+                </div>
+              </button>
+              <button
+                className="relative h-[48px] w-[48px] flex flex-col items-center justify-center rounded-2xl transition-all duration-300 group hover:bg-white/10 hover:scale-105 active:bg-emerald-600/30"
+                onClick={() => navigate('/')}
+                aria-label="プロフィール"
+              >
+                <div className="text-white/70 group-hover:text-white">
+                  <JZUserIcon size={24} />
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 // JizaiバックエンドAPIクライアント
-import { supabase } from '../lib/supabase';
+import { apiInterceptor } from './interceptors';
 // Use Vite env var when provided; otherwise derive sensible default for dev
 const API_BASE_URL = (() => {
   const fromEnv = (import.meta as any)?.env?.VITE_API_BASE_URL;
@@ -245,7 +245,7 @@ class JizaiApiClient {
       const error = await response.json() as ApiError;
       throw new Error(`${error.code}: ${error.message}`);
     }
-    
+
     // 画像編集APIの場合はバイナリレスポンス
     if (response.headers.get('content-type')?.startsWith('image/')) {
       const blob = await response.blob();
@@ -255,27 +255,25 @@ class JizaiApiClient {
     return response.json();
   }
 
-  private async authHeaders(): Promise<Record<string, string>> {
-    try {
-      if (!supabase) return {};
-      const { data } = await supabase.auth.getSession();
-      const token = data.session?.access_token;
-      return token ? { Authorization: `Bearer ${token}` } : {};
-    } catch {
-      return {};
-    }
+  private async request(url: string, options: RequestInit = {}): Promise<Response> {
+    // Use interceptor for all requests
+    return apiInterceptor.request({
+      url,
+      method: options.method || 'GET',
+      headers: { 'x-device-id': this.deviceId, ...(options.headers as Record<string, string> || {}) },
+      body: options.body
+    });
   }
 
   // ヘルスチェック
   async healthCheck(): Promise<{ ok: boolean }> {
-    const response = await fetch(`${API_BASE_URL}/v1/health`);
+    const response = await this.request(`${API_BASE_URL}/v1/health`);
     return this.handleResponse(response);
   }
 
   // 残高確認
   async getBalance(): Promise<UserBalance> {
-    const headers = await this.authHeaders();
-    const response = await fetch(`${API_BASE_URL}/v1/balance`, { headers });
+    const response = await this.request(`${API_BASE_URL}/v1/balance`);
     const raw = await this.handleResponse<any>(response);
     // 旧UI互換: サブスクに応じたダミー残回数を付与
     const tier = raw.subscription?.tier || 'free';
@@ -308,10 +306,8 @@ class JizaiApiClient {
       formData.append('engine_profile', 'standard');
     }
 
-    const headers = await this.authHeaders();
-    const response = await fetch(`${API_BASE_URL}/v1/edit`, {
+    const response = await this.request(`${API_BASE_URL}/v1/edit`, {
       method: 'POST',
-      headers,
       body: formData,
     });
 
@@ -329,10 +325,8 @@ class JizaiApiClient {
     formData.append('option_id', optionId);
     formData.append('engine_profile', engineProfile || 'standard');
 
-    const headers = await this.authHeaders();
-    const response = await fetch(`${API_BASE_URL}/v1/edit-by-option`, {
+    const response = await this.request(`${API_BASE_URL}/v1/edit-by-option`, {
       method: 'POST',
-      headers,
       body: formData,
     });
 
@@ -341,10 +335,9 @@ class JizaiApiClient {
 
   // 課金処理
   async purchase(productId: string, transactionId: string): Promise<PurchaseResponse> {
-    const headers = await this.authHeaders();
-    const response = await fetch(`${API_BASE_URL}/v1/purchase`, {
+    const response = await this.request(`${API_BASE_URL}/v1/purchase`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...headers },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         productId,
         transactionId,
@@ -356,9 +349,7 @@ class JizaiApiClient {
 
   // ユーザーの生成物一覧（編集済み画像）
   async listMemories(): Promise<MemoryItem[]> {
-    const response = await fetch(`${API_BASE_URL}/v1/memories`, {
-      headers: { 'x-device-id': this.deviceId },
-    });
+    const response = await this.request(`${API_BASE_URL}/v1/memories`);
     const data = await this.handleResponse<{ items: MemoryItem[] }>(response);
     return data.items || [];
   }
@@ -368,9 +359,7 @@ class JizaiApiClient {
     const url = new URL(`${API_BASE_URL}/v1/memories`);
     url.searchParams.set('limit', String(limit));
     url.searchParams.set('offset', String(offset));
-    const response = await fetch(url.toString(), {
-      headers: { 'x-device-id': this.deviceId },
-    });
+    const response = await this.request(url.toString());
     return this.handleResponse<MemoryPage>(response);
   }
 
@@ -383,8 +372,7 @@ class JizaiApiClient {
     url.searchParams.set('limit', String(limit));
     url.searchParams.set('offset', String(offset));
     if (source) url.searchParams.set('source', source);
-    const headers = await this.authHeaders();
-    const res = await fetch(url.toString(), { headers: { ...headers, 'x-device-id': this.deviceId } });
+    const res = await this.request(url.toString());
     return this.handleResponse<PromptPage>(res);
   }
 
@@ -393,8 +381,7 @@ class JizaiApiClient {
     const url = new URL(`${API_BASE_URL}/v1/prompts/popular`);
     url.searchParams.set('limit', String(limit));
     url.searchParams.set('offset', String(offset));
-    const headers = await this.authHeaders();
-    const res = await fetch(url.toString(), { headers: { ...headers, 'x-device-id': this.deviceId } });
+    const res = await this.request(url.toString());
     return this.handleResponse<PopularPromptPage>(res);
   }
 
@@ -411,10 +398,8 @@ class JizaiApiClient {
     if (options?.title) formData.append('title', options.title);
     if (options?.vaultId) formData.append('vaultId', options.vaultId);
 
-    const headers = await this.authHeaders();
-    const response = await fetch(`${API_BASE_URL}/v1/memories/upload`, {
+    const response = await this.request(`${API_BASE_URL}/v1/memories/upload`, {
       method: 'POST',
-      headers: { 'x-device-id': this.deviceId, ...headers },
       body: formData,
     });
 
@@ -427,10 +412,9 @@ class JizaiApiClient {
 
   // 通報
   async report(jobId: string, reasonId: string, note?: string): Promise<ReportResponse> {
-    const headers = await this.authHeaders();
-    const response = await fetch(`${API_BASE_URL}/v1/report`, {
+    const response = await this.request(`${API_BASE_URL}/v1/report`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...headers },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         jobId,
         reasonId,
@@ -459,14 +443,13 @@ class JizaiApiClient {
 
   // サブスクリプション状況取得
   async getSubscriptionStatus(): Promise<SubscriptionStatus> {
-    const headers = await this.authHeaders();
-    const response = await fetch(`${API_BASE_URL}/v1/subscription/status?deviceId=${this.deviceId}`, { headers });
+    const response = await this.request(`${API_BASE_URL}/v1/subscription/status?deviceId=${this.deviceId}`);
     return this.handleResponse(response);
   }
 
   // サブスクリプションティア一覧取得
   async getSubscriptionTiers(): Promise<{ tiers: SubscriptionTier[] }> {
-    const response = await fetch(`${API_BASE_URL}/v1/subscription/tiers`);
+    const response = await this.request(`${API_BASE_URL}/v1/subscription/tiers`);
     return this.handleResponse(response);
   }
 
@@ -476,11 +459,9 @@ class JizaiApiClient {
     subscription: any;
     message?: string;
   }> {
-    const response = await fetch(`${API_BASE_URL}/v1/subscription/validate`, {
+    const response = await this.request(`${API_BASE_URL}/v1/subscription/validate`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         deviceId: this.deviceId,
         receiptData,
@@ -496,11 +477,9 @@ class JizaiApiClient {
     trial: any;
     message?: string;
   }> {
-    const response = await fetch(`${API_BASE_URL}/v1/subscription/start-trial`, {
+    const response = await this.request(`${API_BASE_URL}/v1/subscription/start-trial`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         deviceId: this.deviceId,
         productId,
@@ -520,8 +499,7 @@ class JizaiApiClient {
       byType: Record<string, number>;
     };
   }> {
-    const headers = await this.authHeaders();
-    const response = await fetch(`${API_BASE_URL}/v1/subscription/storage?deviceId=${this.deviceId}`, { headers });
+    const response = await this.request(`${API_BASE_URL}/v1/subscription/storage?deviceId=${this.deviceId}`);
     return this.handleResponse(response);
   }
 
@@ -536,10 +514,9 @@ class JizaiApiClient {
       requiredSpace: number;
     };
   }> {
-    const headers = await this.authHeaders();
-    const response = await fetch(`${API_BASE_URL}/v1/subscription/storage/check`, {
+    const response = await this.request(`${API_BASE_URL}/v1/subscription/storage/check`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...headers },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         deviceId: this.deviceId,
         fileSize,
@@ -571,11 +548,9 @@ class JizaiApiClient {
     if (!allowedFormats.includes(options.format)) {
       throw new Error('INVALID_OPTION: Unsupported format');
     }
-    const response = await fetch(`${API_BASE_URL}/v1/print-export/generate`, {
+    const response = await this.request(`${API_BASE_URL}/v1/print-export/generate`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         deviceId: this.deviceId,
         memoryId,
@@ -591,7 +566,7 @@ class JizaiApiClient {
     if (!uuidV4.test(exportId)) {
       throw new Error('INVALID_EXPORT_ID: exportId must be a UUID v4');
     }
-    const response = await fetch(`${API_BASE_URL}/v1/print-export/${exportId}/download`, {
+    const response = await this.request(`${API_BASE_URL}/v1/print-export/${exportId}/download`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ deviceId: this.deviceId })
@@ -605,8 +580,7 @@ class JizaiApiClient {
 
   // 印刷出力履歴取得
   async getPrintExportHistory(): Promise<PrintExportHistory[]> {
-    const headers = await this.authHeaders();
-    const response = await fetch(`${API_BASE_URL}/v1/print-export/history?deviceId=${this.deviceId}`, { headers });
+    const response = await this.request(`${API_BASE_URL}/v1/print-export/history?deviceId=${this.deviceId}`);
     const data = await this.handleResponse<{ exports: PrintExportHistory[] }>(response);
     return data.exports;
   }
@@ -620,9 +594,7 @@ class JizaiApiClient {
     maxExportsPerMonth: number;
     currentMonthUsage: number;
   }> {
-    const response = await fetch(
-      `${API_BASE_URL}/v1/print-export/options?deviceId=${this.deviceId}`
-    );
+    const response = await this.request(`${API_BASE_URL}/v1/print-export/options?deviceId=${this.deviceId}`);
     return this.handleResponse(response);
   }
 
@@ -630,10 +602,8 @@ class JizaiApiClient {
   async deleteMemory(id: string): Promise<boolean> {
     const uuidV4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     if (!uuidV4.test(id)) throw new Error('INVALID_MEMORY_ID: memory id must be a UUID v4');
-    const headers = await this.authHeaders();
-    const response = await fetch(`${API_BASE_URL}/v1/memories/${id}`, {
+    const response = await this.request(`${API_BASE_URL}/v1/memories/${id}`, {
       method: 'DELETE',
-      headers: { 'x-device-id': this.deviceId, ...headers },
     });
     const data = await this.handleResponse<{ success: boolean }>(response);
     return !!data?.success;
@@ -644,10 +614,9 @@ class JizaiApiClient {
     if (!receiptData || typeof receiptData !== 'string') {
       throw new Error('MISSING_RECEIPT: receiptData is required');
     }
-    const headers = await this.authHeaders();
-    const res = await fetch(`${API_BASE_URL}/v1/purchase`, {
+    const res = await this.request(`${API_BASE_URL}/v1/purchase`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...headers },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ receiptData, productId }),
     });
     return this.handleResponse(res);

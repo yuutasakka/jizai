@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { navigate } from '../router';
+import { JZHomeIcon, JZMemorialPhotoIcon, JZPlusIcon, JZSearchIcon, JZUserIcon } from '../components/design-system/jizai-icons';
+import { FrameCard } from '../components/commerce/FrameCard';
 import { supabase } from '../lib/supabase';
 import api from '../api/client';
 
@@ -256,11 +258,11 @@ export default function ResizeResultPage() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1e3c72] to-[#2a5298] p-5">
+    <div className="min-h-screen bg-gradient-to-br from-[#1e3c72] to-[#2a5298] p-5 pb-[120px]">
       <div className="max-w-[800px] mx-auto rounded-2xl shadow-2xl p-6 sm:p-10 border border-gray-500/60 text-white">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
           <h1 className="text-2xl font-bold text-white">サイズ変更完了</h1>
-          <button onClick={() => navigate('/tools/resize')} className="text-sm text-white/90 underline">戻る</button>
+          <button onClick={() => navigate('/')} className="text-sm text-white/90 underline">戻る</button>
         </div>
 
         {!img ? (
@@ -390,14 +392,66 @@ export default function ResizeResultPage() {
 
               </div>
 
+              {/* おすすめの額縁 CTA */}
+              <div className="mt-6 rounded-xl border border-white/30 bg-white/10 p-4 flex items-center justify-between">
+                <div>
+                  <div className="font-bold mb-1 text-white">おすすめの額縁</div>
+                  <div className="text-sm text-white/80">仕上げたサイズに合う額縁をチェック</div>
+                </div>
+                <a
+                  href={(import.meta as any)?.env?.VITE_FRAME_SHOP_URL || 'https://example.com/frames'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 rounded-lg bg-white text-black font-semibold border border-white/30 hover:bg-white/90"
+                >
+                  額縁を見る
+                </a>
+              </div>
+
               {downloading && (
                 <div className="text-center text-white/80 text-sm">
                   処理中...
                 </div>
               )}
             </div>
+
+            {/* 額縁も一緒に購入（Amazon/Rakuten） */}
+            <div className="mt-6">
+              <FrameCard
+                sizeKey={preset.key}
+                page="resize-result"
+                amazonUrl={(import.meta as any)?.env?.VITE_FRAME_URL_AMAZON}
+                rakutenUrl={(import.meta as any)?.env?.VITE_FRAME_URL_RAKUTEN}
+              />
+            </div>
           </>
         )}
+      </div>
+      {/* Bottom Navigation (same style as home) */}
+      <div className="fixed bottom-0 left-0 right-0 z-50">
+        <div className="bg-black border-t border-white/20 shadow-2xl relative">
+          <div className="absolute inset-0 bg-black"></div>
+          <div className="mx-auto max-w-[720px] px-6 relative z-10">
+            <div className="flex items-center justify-between h-[72px] relative">
+              <button className="relative h-[48px] w-[48px] flex flex-col items-center justify-center rounded-2xl transition-all duration-300 group hover:bg-white/10 hover:scale-105 active:bg-emerald-600/30" onClick={() => navigate('/')} aria-label="ホーム">
+                <div className="text-white/70 group-hover:text-white"><JZHomeIcon size={24} /></div>
+              </button>
+              <button className="relative h-[48px] w-[48px] flex flex-col items-center justify-center rounded-2xl transition-all duration-300 group hover:bg-white/10 hover:scale-105 active:bg-emerald-600/30" onClick={() => navigate('/')} aria-label="マイファイル">
+                <div className="text-white/70 group-hover:text-white"><JZMemorialPhotoIcon size={24} /></div>
+              </button>
+              <button aria-label="新規作成" className="relative rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 text-white w-14 h-14 flex items-center justify-center shadow-2xl border-2 border-white/30 transition-all duration-300 group hover:scale-110 hover:shadow-purple-500/50" onClick={() => navigate('/') }>
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
+                <JZPlusIcon size={22} />
+              </button>
+              <button className="relative h-[48px] w-[48px] flex flex-col items-center justify-center rounded-2xl transition-all duration-300 group hover:bg-white/10 hover:scale-105 active:bg-emerald-600/30" onClick={() => navigate('/')} aria-label="テンプレート">
+                <div className="text-white/70 group-hover:text-white"><JZSearchIcon size={24} /></div>
+              </button>
+              <button className="relative h-[48px] w-[48px] flex flex-col items-center justify-center rounded-2xl transition-all duration-300 group hover:bg-white/10 hover:scale-105 active:bg-emerald-600/30" onClick={() => navigate('/')} aria-label="プロフィール">
+                <div className="text-white/70 group-hover:text-white"><JZUserIcon size={24} /></div>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

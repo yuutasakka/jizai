@@ -5800,6 +5800,12 @@
     width: calc(var(--spacing) * 5);
   }
 
+  /* Ensure cmdk dropdown items use base text size for readability */
+  [cmdk-item] {
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+  }
+
   .\[\&_p\]\:leading-relaxed p {
     --tw-leading: var(--leading-relaxed);
     line-height: var(--leading-relaxed);

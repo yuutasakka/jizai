@@ -93,6 +93,14 @@ export function securityHeaders(options = {}) {
         ];
         res.setHeader('Permissions-Policy', permissionsPolicies.join(', '));
 
+        // Additional hardening
+        const referrer = process.env.SECURITY_REFERRER || 'strict-origin-when-cross-origin';
+        res.setHeader('Referrer-Policy', referrer);
+        // X-Frame-Options is redundant with frame-ancestors but kept for legacy agents
+        res.setHeader('X-Frame-Options', 'DENY');
+        // Disable legacy XSS filter to avoid breaking content
+        res.setHeader('X-XSS-Protection', '0');
+
         next();
     };
 }

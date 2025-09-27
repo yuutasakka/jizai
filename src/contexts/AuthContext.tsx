@@ -1,265 +1,507 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+// 認証コンテキスト - Supabaseセッション管理と堅牢化
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import type { Session } from '@supabase/supabase-js';
+import { storagePolicy } from '../utils/storage-policy';
 
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  avatar?: string;
-  provider: 'google' | 'apple';
-  createdAt: Date;
-  lastLoginAt: Date;
-}
+// 開発環境判定
+const isDevelopment = () => {
+  if (typeof window === 'undefined') return false;
+  const hostname = window.location.hostname;
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('.local');
+};
 
-interface AuthContextValue {
+export interface AuthState {
   user: User | null;
+  session: Session | null;
+  loading: boolean;
+  initialized: boolean;
   isAuthenticated: boolean;
-  isLoading: boolean;
-  loginWithGoogle: () => Promise<void>;
-  loginWithApple: () => Promise<void>;
-  logout: () => Promise<void>;
-  skipLogin: () => void;
-  isLoginRequired: boolean;
-  // Development-only helper to create a temporary user session
-  devLogin?: () => void;
-  // Whether dev login is available (only non-production or when explicitly enabled)
-  isDevLoginEnabled?: boolean;
+  sessionExpiry: Date | null;
+  reLoginPromptVisible?: boolean;
+  reLoginRedirectPath?: string | null;
 }
+
+export interface AuthActions {
+  signIn: (email: string, password: string) => Promise<{ user: User | null; error: AuthError | null }>;
+  signUp: (email: string, password: string) => Promise<{ user: User | null; error: AuthError | null }>;
+  signOut: () => Promise<{ error: AuthError | null }>;
+  refreshSession: () => Promise<{ session: Session | null; error: AuthError | null }>;
+  checkSessionExpiry: () => boolean;
+  promptReLogin: () => void;
+  confirmReLogin: () => void;
+  cancelReLogin: () => void;
+  // 開発環境専用ログイン機能
+  devLogin: () => Promise<{ user: User | null; error: AuthError | null }>;
+  loginWithGoogle: () => Promise<{ user: User | null; error: AuthError | null }>;
+  loginWithApple: () => Promise<{ user: User | null; error: AuthError | null }>;
+  isDevLoginEnabled: boolean;
+  isLoginRequired: boolean;
+}
+
+export interface AuthContextValue extends AuthState, AuthActions {}
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-export const useAuth = (): AuthContextValue => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
-interface AuthProviderProps {
-  children: ReactNode;
+export interface AuthProviderProps {
+  children: React.ReactNode;
+  onSessionExpired?: () => void;
+  onSessionRefreshed?: (session: Session) => void;
+  onAuthError?: (error: AuthError) => void;
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoginRequired, setIsLoginRequired] = useState(true);
-  // Enable dev login in non-production, or when flag is explicitly set
-  const isDevLoginEnabled =
-    ((import.meta as any)?.env?.MODE !== 'production') ||
-    ((import.meta as any)?.env?.VITE_ENABLE_DEV_LOGIN === 'true');
+export const AuthProvider: React.FC<AuthProviderProps> = ({
+  children,
+  onSessionExpired,
+  onSessionRefreshed,
+  onAuthError
+}) => {
+  const [state, setState] = useState<AuthState>({
+    user: null,
+    session: null,
+    loading: true,
+    initialized: false,
+    isAuthenticated: false,
+    sessionExpiry: null,
+    reLoginPromptVisible: false,
+    reLoginRedirectPath: null
+  });
 
-  // 初期化: Supabase セッションから復元
-  useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        // Allow skipping login for demo flows
-        const loginSkipped = localStorage.getItem('jizai_login_skipped');
-        const devLoginPersisted = localStorage.getItem('jizai_dev_login') === 'true';
+  const [sessionCheckInterval, setSessionCheckInterval] = useState<NodeJS.Timeout | null>(null);
 
-        if (!supabase) {
-          // No Supabase configuration provided — keep previous demo behavior
-          if (loginSkipped === 'true') setIsLoginRequired(false);
-          if (isDevLoginEnabled && devLoginPersisted) {
-            // Restore dev user session if previously set
-            setUser({
-              id: 'dev-user',
-              email: 'dev@example.com',
-              name: '開発ユーザー',
-              provider: 'google',
-              createdAt: new Date(),
-              lastLoginAt: new Date(),
-            });
-            setIsLoginRequired(false);
-          }
-          return;
-        }
+  // セッション状態を更新
+  const updateAuthState = useCallback((session: Session | null, user: User | null) => {
+    const sessionExpiry = session?.expires_at ? new Date(session.expires_at * 1000) : null;
 
-        const { data } = await supabase.auth.getSession();
-        const session = data.session as Session | null;
-        if (session?.user) {
-          const mapped = mapSupabaseUser(session);
-          setUser(mapped);
-          setIsLoginRequired(false);
-        } else if (loginSkipped === 'true') {
-          setIsLoginRequired(false);
-        } else if (isDevLoginEnabled && devLoginPersisted) {
-          setUser({
-            id: 'dev-user',
-            email: 'dev@example.com',
-            name: '開発ユーザー',
-            provider: 'google',
-            createdAt: new Date(),
-            lastLoginAt: new Date(),
-          });
-          setIsLoginRequired(false);
-        }
-      } catch (error) {
-        console.error('認証状態の復元に失敗:', error);
-        localStorage.removeItem('jizai_login_skipped');
-        localStorage.removeItem('jizai_dev_login');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    setState(prev => ({
+      ...prev,
+      user,
+      session,
+      isAuthenticated: !!session && !!user,
+      sessionExpiry,
+      loading: false,
+      initialized: true
+    }));
 
-    initializeAuth();
-
-    if (supabase) {
-      const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-        if (session?.user) {
-          const mapped = mapSupabaseUser(session as Session);
-          setUser(mapped);
-          setIsLoginRequired(false);
-        } else {
-          setUser(null);
-          setIsLoginRequired(true);
-        }
+    // セッション情報をストレージに保存（非個人情報のみ）
+    if (session) {
+      storagePolicy.setByCategory('lastLogin', Date.now(), undefined, {
+        ttl: 'persistent',
+        type: 'localStorage'
       });
-      return () => {
-        sub.subscription.unsubscribe();
-      };
     }
   }, []);
 
-  const loginWithGoogle = async (): Promise<void> => {
-    setIsLoading(true);
+  // セッション有効期限チェック
+  const checkSessionExpiry = useCallback((): boolean => {
+    if (!state.sessionExpiry) return true;
+
+    const now = new Date();
+    const timeUntilExpiry = state.sessionExpiry.getTime() - now.getTime();
+    const fiveMinutes = 5 * 60 * 1000;
+
+    return timeUntilExpiry > fiveMinutes;
+  }, [state.sessionExpiry]);
+
+  // セッション更新
+  const refreshSession = useCallback(async (): Promise<{ session: Session | null; error: AuthError | null }> => {
     try {
       if (!supabase) {
-        // Supabase未設定の場合はデモユーザーとしてログイン
-        console.warn('Supabase未設定 - デモモードでログイン');
-        setUser({
-          id: 'demo-user-google',
-          email: 'demo@example.com',
-          name: 'デモユーザー (Google)',
-          provider: 'google',
-          createdAt: new Date(),
-          lastLoginAt: new Date(),
-        });
-        setIsLoginRequired(false);
-        return;
+        throw new Error('Supabase client not initialized');
       }
-      const redirectTo = `${window.location.origin}/auth/callback`;
-      const { error } = await supabase.auth.signInWithOAuth({
+
+      const { data, error } = await supabase.auth.refreshSession();
+
+      if (error) {
+        console.error('Session refresh failed:', error);
+        onAuthError?.(error);
+        return { session: null, error };
+      }
+
+      if (data.session) {
+        updateAuthState(data.session, data.user);
+        onSessionRefreshed?.(data.session);
+        console.log('Session refreshed successfully');
+      }
+
+      return { session: data.session, error: null };
+    } catch (error) {
+      console.error('Session refresh error:', error);
+      const authError = { message: (error as Error).message } as AuthError;
+      onAuthError?.(authError);
+      return { session: null, error: authError };
+    }
+  }, [updateAuthState, onSessionRefreshed, onAuthError]);
+
+  // 再ログイン誘導
+  const promptReLogin = useCallback(() => {
+    console.log('Session expired or invalid, prompting re-login');
+    // セッション状態をクリア
+    updateAuthState(null, null);
+    // ストレージから認証関連データをクリア
+    storagePolicy.clearAllData(false);
+    // コールバック実行
+    onSessionExpired?.();
+    // モーダル表示 + リダイレクト先を保持
+    if (typeof window !== 'undefined') {
+      const currentPath = window.location.pathname + window.location.search;
+      setState(prev => ({ ...prev, reLoginPromptVisible: true, reLoginRedirectPath: currentPath }));
+    } else {
+      setState(prev => ({ ...prev, reLoginPromptVisible: true, reLoginRedirectPath: '/' }));
+    }
+  }, [updateAuthState, onSessionExpired]);
+
+  const confirmReLogin = useCallback(() => {
+    const redirect = state.reLoginRedirectPath || '/';
+    if (typeof window !== 'undefined') {
+      const loginUrl = `/login?redirect=${encodeURIComponent(redirect)}`;
+      window.location.href = loginUrl;
+    }
+  }, [state.reLoginRedirectPath]);
+
+  const cancelReLogin = useCallback(() => {
+    setState(prev => ({ ...prev, reLoginPromptVisible: false }));
+  }, []);
+
+  // サインイン
+  const signIn = useCallback(async (email: string, password: string) => {
+    if (!supabase) {
+      const error = { message: 'Supabase client not initialized' } as AuthError;
+      return { user: null, error };
+    }
+
+    try {
+      setState(prev => ({ ...prev, loading: true }));
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        onAuthError?.(error);
+        return { user: null, error };
+      }
+
+      updateAuthState(data.session, data.user);
+      return { user: data.user, error: null };
+    } catch (error) {
+      const authError = { message: (error as Error).message } as AuthError;
+      onAuthError?.(authError);
+      return { user: null, error: authError };
+    } finally {
+      setState(prev => ({ ...prev, loading: false }));
+    }
+  }, [updateAuthState, onAuthError]);
+
+  // サインアップ
+  const signUp = useCallback(async (email: string, password: string) => {
+    if (!supabase) {
+      const error = { message: 'Supabase client not initialized' } as AuthError;
+      return { user: null, error };
+    }
+
+    try {
+      setState(prev => ({ ...prev, loading: true }));
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password
+      });
+
+      if (error) {
+        onAuthError?.(error);
+        return { user: null, error };
+      }
+
+      updateAuthState(data.session, data.user);
+      return { user: data.user, error: null };
+    } catch (error) {
+      const authError = { message: (error as Error).message } as AuthError;
+      onAuthError?.(authError);
+      return { user: null, error: authError };
+    } finally {
+      setState(prev => ({ ...prev, loading: false }));
+    }
+  }, [updateAuthState, onAuthError]);
+
+  // サインアウト
+  const signOut = useCallback(async () => {
+    if (!supabase) {
+      const error = { message: 'Supabase client not initialized' } as AuthError;
+      return { error };
+    }
+
+    try {
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        onAuthError?.(error);
+        return { error };
+      }
+
+      updateAuthState(null, null);
+      storagePolicy.clearAllData(false);
+
+      return { error: null };
+    } catch (error) {
+      const authError = { message: (error as Error).message } as AuthError;
+      onAuthError?.(authError);
+      return { error: authError };
+    }
+  }, [updateAuthState, onAuthError]);
+
+  // 開発環境専用ログイン機能
+  const devLogin = useCallback(async () => {
+    if (!isDevelopment()) {
+      const error = { message: 'Development login is only available in development environment' } as AuthError;
+      return { user: null, error };
+    }
+
+    try {
+      setState(prev => ({ ...prev, loading: true }));
+
+      // 開発環境用のダミーユーザーを作成
+      const mockUser: User = {
+        id: 'dev-user-12345',
+        email: 'dev@jizai.local',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        app_metadata: {},
+        user_metadata: { name: 'Development User' },
+        aud: 'authenticated',
+        role: 'authenticated'
+      } as User;
+
+      const mockSession: Session = {
+        access_token: 'dev-access-token',
+        refresh_token: 'dev-refresh-token',
+        expires_in: 3600,
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        token_type: 'bearer',
+        user: mockUser
+      } as Session;
+
+      updateAuthState(mockSession, mockUser);
+      console.log('Development login successful');
+
+      return { user: mockUser, error: null };
+    } catch (error) {
+      const authError = { message: (error as Error).message } as AuthError;
+      onAuthError?.(authError);
+      return { user: null, error: authError };
+    } finally {
+      setState(prev => ({ ...prev, loading: false }));
+    }
+  }, [updateAuthState, onAuthError]);
+
+  // Google OAuth ログイン
+  const loginWithGoogle = useCallback(async () => {
+    if (!supabase) {
+      const error = { message: 'Supabase client not initialized' } as AuthError;
+      return { user: null, error };
+    }
+
+    try {
+      setState(prev => ({ ...prev, loading: true }));
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo,
-          queryParams: { prompt: 'consent', access_type: 'offline' },
-        },
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
       });
-      if (error) throw error;
-    } catch (error) {
-      console.error('Googleログインエラー:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  const loginWithApple = async (): Promise<void> => {
-    setIsLoading(true);
-    try {
-      if (!supabase) {
-        // Supabase未設定の場合はデモユーザーとしてログイン
-        console.warn('Supabase未設定 - デモモードでログイン');
-        setUser({
-          id: 'demo-user-apple',
-          email: 'demo@example.com',
-          name: 'デモユーザー (Apple)',
-          provider: 'apple',
-          createdAt: new Date(),
-          lastLoginAt: new Date(),
-        });
-        setIsLoginRequired(false);
-        return;
+      if (error) {
+        onAuthError?.(error);
+        return { user: null, error };
       }
-      const redirectTo = `${window.location.origin}/auth/callback`;
-      const { error } = await supabase.auth.signInWithOAuth({
+
+      // OAuthの場合、リダイレクトが発生するため即座にユーザー情報は返されない
+      return { user: null, error: null };
+    } catch (error) {
+      const authError = { message: (error as Error).message } as AuthError;
+      onAuthError?.(authError);
+      return { user: null, error: authError };
+    } finally {
+      setState(prev => ({ ...prev, loading: false }));
+    }
+  }, [onAuthError]);
+
+  // Apple OAuth ログイン
+  const loginWithApple = useCallback(async () => {
+    if (!supabase) {
+      const error = { message: 'Supabase client not initialized' } as AuthError;
+      return { user: null, error };
+    }
+
+    try {
+      setState(prev => ({ ...prev, loading: true }));
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',
-        options: { redirectTo },
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
       });
-      if (error) throw error;
-    } catch (error) {
-      console.error('Appleログインエラー:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  const logout = async (): Promise<void> => {
-    setIsLoading(true);
-    try {
-      if (supabase) {
-        await supabase.auth.signOut();
+      if (error) {
+        onAuthError?.(error);
+        return { user: null, error };
       }
-      setUser(null);
-      setIsLoginRequired(true);
-      localStorage.removeItem('jizai_login_skipped');
-      localStorage.removeItem('jizai_dev_login');
+
+      return { user: null, error: null };
     } catch (error) {
-      console.error('ログアウトエラー:', error);
-      throw error;
+      const authError = { message: (error as Error).message } as AuthError;
+      onAuthError?.(authError);
+      return { user: null, error: authError };
     } finally {
-      setIsLoading(false);
+      setState(prev => ({ ...prev, loading: false }));
     }
-  };
+  }, [onAuthError]);
 
-  const skipLogin = (): void => {
-    setIsLoginRequired(false);
-    localStorage.setItem('jizai_login_skipped', 'true');
-  };
+  // セッション監視と自動更新
+  useEffect(() => {
+    if (!supabase) return;
 
-  // Development-only login: creates a temporary local user
-  const devLogin = (): void => {
-    if (!isDevLoginEnabled) return;
-    setUser({
-      id: 'dev-user',
-      email: 'dev@example.com',
-      name: '開発ユーザー',
-      provider: 'google',
-      createdAt: new Date(),
-      lastLoginAt: new Date(),
-    });
-    setIsLoginRequired(false);
-    localStorage.setItem('jizai_dev_login', 'true');
-  };
+    // 初期セッション取得
+    const getInitialSession = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
 
-  const isAuthenticated = user !== null;
+        if (error) {
+          console.error('Failed to get initial session:', error);
+          onAuthError?.(error);
+        }
 
-  const value: AuthContextValue = {
-    user,
-    isAuthenticated,
-    isLoading,
+        updateAuthState(data.session, data.session?.user || null);
+      } catch (error) {
+        console.error('Session initialization error:', error);
+        setState(prev => ({ ...prev, loading: false, initialized: true }));
+      }
+    };
+
+    getInitialSession();
+
+    // 認証状態変更の監視
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event: any, session: any) => {
+        console.log('Auth state changed:', event, session?.user?.id);
+
+        switch (event) {
+          case 'SIGNED_IN':
+            updateAuthState(session, session?.user || null);
+            setState(prev => ({ ...prev, reLoginPromptVisible: false }));
+            break;
+          case 'SIGNED_OUT':
+            // 401等でサインアウトされた場合もここに入る
+            updateAuthState(null, null);
+            storagePolicy.clearAllData(false);
+            // 明示的に再ログインモーダルを促す
+            setState(prev => ({ ...prev, reLoginPromptVisible: true, reLoginRedirectPath: window?.location?.pathname || '/' }));
+            break;
+          case 'TOKEN_REFRESHED':
+            updateAuthState(session, session?.user || null);
+            if (session) {
+              onSessionRefreshed?.(session);
+            }
+            break;
+          case 'USER_UPDATED':
+            updateAuthState(session, session?.user || null);
+            break;
+          default:
+            break;
+        }
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [updateAuthState, onAuthError, onSessionRefreshed]);
+
+  // セッション有効期限の定期チェック
+  useEffect(() => {
+    if (!state.isAuthenticated || !state.sessionExpiry) {
+      if (sessionCheckInterval) {
+        clearInterval(sessionCheckInterval);
+        setSessionCheckInterval(null);
+      }
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const isValid = checkSessionExpiry();
+
+      if (!isValid) {
+        console.log('Session expiring soon, attempting refresh...');
+        refreshSession().catch(error => {
+          console.error('Auto-refresh failed:', error);
+          promptReLogin();
+        });
+      }
+    }, 60000); // Check every minute
+
+    setSessionCheckInterval(interval);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [state.isAuthenticated, state.sessionExpiry, checkSessionExpiry, refreshSession, promptReLogin]);
+
+  const contextValue: AuthContextValue = {
+    // State
+    ...state,
+
+    // Actions
+    signIn,
+    signUp,
+    signOut,
+    refreshSession,
+    checkSessionExpiry,
+    promptReLogin,
+    confirmReLogin,
+    cancelReLogin,
+
+    // 開発環境ログイン機能
+    devLogin,
     loginWithGoogle,
     loginWithApple,
-    logout,
-    skipLogin,
-    isLoginRequired,
-    devLogin: isDevLoginEnabled ? devLogin : undefined,
-    isDevLoginEnabled,
+    isDevLoginEnabled: isDevelopment(),
+    isLoginRequired: !state.isAuthenticated
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Map Supabase session user -> local User model
-function mapSupabaseUser(session: Session) {
-  const u = session.user;
-  const meta = (u as any).user_metadata || {};
-  const app = (u as any).app_metadata || {};
-  return {
-    id: u.id,
-    email: u.email || meta.email || '',
-    name: meta.name || meta.full_name || (u.email || 'User'),
-    avatar: meta.avatar_url,
-    provider: (app.provider as 'google' | 'apple') || 'google',
-    createdAt: new Date(u.created_at),
-    lastLoginAt: new Date(),
-  };
-}
+// カスタムフック
+export const useAuth = (): AuthContextValue => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+// 認証ガード用フック
+export const useAuthGuard = (redirectTo = '/login') => {
+  const { isAuthenticated, loading, initialized } = useAuth();
+
+  useEffect(() => {
+    if (initialized && !loading && !isAuthenticated) {
+      if (typeof window !== 'undefined') {
+        const currentPath = window.location.pathname;
+        const loginUrl = `${redirectTo}?redirect=${encodeURIComponent(currentPath)}`;
+        window.location.href = loginUrl;
+      }
+    }
+  }, [isAuthenticated, loading, initialized, redirectTo]);
+
+  return { isAuthenticated, loading, initialized };
+};
+
+export default AuthContext;

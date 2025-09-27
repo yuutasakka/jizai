@@ -1,4 +1,11 @@
-import { useState, useEffect } from 'react';
+if ((import.meta as any)?.env?.DEV) {
+  console.log('🔍 ENV Debug from App:', {
+    url: import.meta.env.VITE_SUPABASE_URL,
+    key: import.meta.env.VITE_SUPABASE_ANON_KEY,
+    mode: import.meta.env.MODE
+  });
+}
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { track } from './lib/analytics';
 import { setupGlobalErrorHandling, setupPerformanceMonitoring, errorTracker } from './lib/error-tracking';
 import { ZenModeProvider } from './contexts/ZenModeContext';
@@ -8,26 +15,28 @@ import { FamilyBondingProvider } from './contexts/FamilyBondingContext';
 import { PersonalizationProvider } from './contexts/PersonalizationContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { JizaiSplashScreen } from './components/screens/jizai-splash-screen';
+import { SessionExpiryBanner } from './components/auth/SessionExpiryBanner';
+import { ReLoginModal } from './components/auth/ReLoginModal';
 import { JizaiLoginScreen } from './components/screens/jizai-login-screen';
 import { JizaiOnboardingScreen } from './components/screens/jizai-onboarding-screen';
-import { JizaiHomeScreen } from './components/screens/jizai-home-screen';
-import { JizaiProgressScreen } from './components/screens/jizai-progress-screen';
-import { ResultsScreen } from './components/screens/results-screen';
-import { SettingsScreen } from './components/screens/settings-screen';
-import { TutorialExamplesScreen } from './components/screens/tutorial-examples-screen';
-import { UserGalleryScreen } from './components/screens/user-gallery-screen';
-import { MemorialPhotoScreen } from './components/screens/memorial-photo-screen';
-import { LongTermEngagementScreen } from './components/screens/long-term-engagement-screen';
-import { ProfileScreen } from './components/screens/profile-screen';
+const JizaiHomeScreen = lazy(() => import('./components/screens/jizai-home-screen').then(m => ({ default: m.JizaiHomeScreen })));
+const JizaiProgressScreen = lazy(() => import('./components/screens/jizai-progress-screen').then(m => ({ default: m.JizaiProgressScreen })));
+const ResultsScreen = lazy(() => import('./components/screens/results-screen').then(m => ({ default: m.ResultsScreen })));
+const SettingsScreen = lazy(() => import('./components/screens/settings-screen').then(m => ({ default: m.SettingsScreen })));
+const TutorialExamplesScreen = lazy(() => import('./components/screens/tutorial-examples-screen').then(m => ({ default: m.TutorialExamplesScreen })));
+const UserGalleryScreen = lazy(() => import('./components/screens/user-gallery-screen').then(m => ({ default: m.UserGalleryScreen })));
+const MemorialPhotoScreen = lazy(() => import('./components/screens/memorial-photo-screen').then(m => ({ default: m.MemorialPhotoScreen })));
+const LongTermEngagementScreen = lazy(() => import('./components/screens/long-term-engagement-screen').then(m => ({ default: m.LongTermEngagementScreen })));
+const ProfileScreen = lazy(() => import('./components/screens/profile-screen').then(m => ({ default: m.ProfileScreen })));
 import { AppStoreScreenshot } from './components/screenshots/app-store-screenshots';
-import { DesignSystemReference } from './components/design-tokens/design-system-reference';
+const DesignSystemReference = lazy(() => import('./components/design-tokens/design-system-reference').then(m => ({ default: m.DesignSystemReference })));
 import { JZButton } from './components/design-system/jizai-button';
 import { JZHomeIcon, JZMemorialPhotoIcon, JZPlusIcon, JZSearchIcon, JZUserIcon } from './components/design-system/jizai-icons';
-import { CreateImageScreen } from './components/screens/create-image-screen';
-import { PromptHistoryScreen } from './components/screens/prompt-history-screen';
-import { StorageScreen } from './components/screens/storage-screen';
-import { PurchaseScreen } from './components/screens/purchase-screen';
-import { PricingScreen } from './components/screens/pricing-screen';
+const CreateImageScreen = lazy(() => import('./components/screens/create-image-screen').then(m => ({ default: m.CreateImageScreen })));
+const PromptHistoryScreen = lazy(() => import('./components/screens/prompt-history-screen').then(m => ({ default: m.PromptHistoryScreen })));
+const StorageScreen = lazy(() => import('./components/screens/storage-screen').then(m => ({ default: m.StorageScreen })));
+const PurchaseScreen = lazy(() => import('./components/screens/purchase-screen').then(m => ({ default: m.PurchaseScreen })));
+const PricingScreen = lazy(() => import('./components/screens/pricing-screen').then(m => ({ default: m.PricingScreen })));
 
 type Screen = 'splash' | 'login' | 'onboarding' | 'home' | 'progress' | 'results' | 'settings' | 'tutorial-examples' | 'screenshots' | 'design-tokens' | 'user-gallery' | 'memorial-photo' | 'long-term-engagement' | 'profile' | 'create' | 'storage' | 'purchase' | 'pricing' | 'prompt-history';
 
@@ -215,9 +224,20 @@ function InnerApp() {
           <FamilyBondingProvider>
             <ZenModeProvider>
       <div className="min-h-screen bg-[color:var(--color-jz-surface)]">
-        {/* Main Content */}
-        <div className={`${showBottomNavigation ? 'pb-[100px]' : ''} ${isTransitioning ? 'transition-all duration-300 ease-in-out transform scale-95 opacity-90' : 'transition-all duration-300 ease-in-out transform scale-100 opacity-100'}`}>
-          {renderScreen()}
+        {/* Session expiry banner */}
+        <SessionExpiryBanner />
+        {/* Responsive Container */}
+        <div className="mx-auto max-w-screen-2xl">
+          {/* Main Content with responsive padding */}
+          <div className={`
+            ${showBottomNavigation ? 'pb-[100px]' : ''}
+            ${isTransitioning ? 'transition-all duration-300 ease-in-out transform scale-95 opacity-90' : 'transition-all duration-300 ease-in-out transform scale-100 opacity-100'}
+            lg:px-8 xl:px-16 2xl:px-24
+          `}>
+            <Suspense fallback={<div className="text-center text-white py-10">読み込み中...</div>}>
+              {renderScreen()}
+            </Suspense>
+          </div>
         </div>
 
         {/* Premium Bottom Navigation */}
@@ -334,6 +354,8 @@ function InnerApp() {
           </div>
         )}
       </div>
+      {/* Re-login Modal */}
+      <ReLoginModal />
             </ZenModeProvider>
           </FamilyBondingProvider>
         </GrowthAchievementProvider>

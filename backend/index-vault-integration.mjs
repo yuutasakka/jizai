@@ -15,6 +15,9 @@ import { initializeSecurityHeaders, initializeCSPReporting } from './utils/secur
 import { responseSanitizer } from './middleware/response-sanitizer.mjs';
 import { cspReportHandler, cspStatsHandler } from './utils/csp-reporter.mjs';
 import { metrics } from './utils/metrics.mjs';
+import { requestIdMiddleware, httpRequestLogger } from './middleware/request-id.mjs';
+import { httpMetricsMiddleware } from './middleware/http-metrics.mjs';
+import { tracingMiddleware } from './middleware/tracing.mjs';
 
 // Import vault subscription system
 import { initializeDatabase, checkDatabaseHealth } from './config/supabase.mjs';
@@ -34,6 +37,14 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Admin token sanity check (production)
+if (process.env.NODE_ENV === 'production') {
+    const adminToken = process.env.ADMIN_TOKEN || '';
+    if (!adminToken || adminToken.length < 32) {
+        secureLogger.warn('ADMIN_TOKEN missing or too short (>=32 required in production)');
+    }
+}
 
 // Initialize CORS configuration
 initializeCors();
@@ -132,6 +143,12 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Sanitize JSON responses (strip codes, mask 5xx messages)
 app.use(responseSanitizer());
 
+// Observability: request id + per-request access log (structured対応)
+app.use(requestIdMiddleware());
+app.use(tracingMiddleware());
+app.use(httpRequestLogger(secureLogger));
+app.use(httpMetricsMiddleware());
+
 // Tightened CORS for webhooks (no browser credentials required)
 app.use('/v1/webhooks', cors({ origin: true, credentials: false }));
 
@@ -141,8 +158,10 @@ app.use(cors(getCorsConfig()));
 // Apply security headers (including HSTS for production)
 app.use(initializeSecurityHeaders());
 
-// Apply CSP Report-Only mode for violation collection
-app.use(initializeCSPReporting({ reportOnly: true }));
+// Apply CSP with environment-aware mode
+// Set CSP_REPORT_ONLY=false to enforce CSP in environments validated to be safe
+const cspReportOnly = (process.env.CSP_REPORT_ONLY ?? 'true') !== 'false';
+app.use(initializeCSPReporting({ reportOnly: cspReportOnly }));
 
 // CSP report collection endpoint
 app.use(cspReportHandler());
@@ -243,6 +262,75 @@ app.get('/v1/health', async (req, res) => {
     res.status(statusCode).json(health);
     metrics.inc('http_requests_total', { route: '/v1/health', method: 'GET', status: statusCode });
     metrics.observe('http_request_duration_ms', { route: '/v1/health', method: 'GET' }, Date.now() - t0);
+});
+
+// ========================================
+// LINK PREVIEW (OGP) - limited allowlist (Amazon/Rakuten)
+// ========================================
+
+const PREVIEW_CACHE = new Map(); // url -> { data, exp }
+const PREVIEW_TTL_MS = 5 * 60 * 1000; // 5 min
+const PREVIEW_ALLOW_HOSTS = new Set([
+  'www.amazon.co.jp',
+  'amazon.co.jp',
+  'item.rakuten.co.jp',
+  'rakuten.co.jp'
+]);
+
+app.get('/v1/link/preview', async (req, res) => {
+  try {
+    const url = String(req.query.url || '').trim();
+    if (!url) return res.status(400).json({ error: 'Bad Request', message: 'url is required', code: 'MISSING_URL' });
+    let parsed;
+    try { parsed = new URL(url); } catch { return res.status(400).json({ error: 'Bad Request', message: 'invalid url', code: 'INVALID_URL' }); }
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return res.status(400).json({ error: 'Bad Request', message: 'unsupported protocol', code: 'UNSUPPORTED_PROTOCOL' });
+    }
+    if (!PREVIEW_ALLOW_HOSTS.has(parsed.hostname)) {
+      return res.status(403).json({ error: 'Forbidden', message: 'host not allowed', code: 'HOST_NOT_ALLOWED' });
+    }
+
+    const now = Date.now();
+    const cached = PREVIEW_CACHE.get(url);
+    if (cached && cached.exp > now) {
+      return res.json(cached.data);
+    }
+
+    // Fetch with short timeout
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const resp = await fetch(url, { signal: controller.signal, redirect: 'follow' });
+    clearTimeout(timeout);
+    if (!resp.ok) return res.status(502).json({ error: 'Bad Gateway', message: `upstream ${resp.status}`, code: 'UPSTREAM_ERROR' });
+    const html = await resp.text();
+
+    // Very simple OGP parser
+    const pick = (prop) => {
+      const re = new RegExp(`<meta[^>]+property=["']${prop}["'][^>]+content=["']([^"']+)["']`, 'i');
+      const m = html.match(re); return m ? m[1] : null;
+    };
+    const byName = (name) => {
+      const re = new RegExp(`<meta[^>]+name=["']${name}["'][^>]+content=["']([^"']+)["']`, 'i');
+      const m = html.match(re); return m ? m[1] : null;
+    };
+    const ogTitle = pick('og:title') || byName('title');
+    const ogImage = pick('og:image');
+    const ogSite = pick('og:site_name');
+    const titleTag = (() => { const m = html.match(/<title[^>]*>([^<]+)<\/title>/i); return m ? m[1] : null; })();
+
+    const data = {
+      url,
+      host: parsed.hostname,
+      title: ogTitle || titleTag || parsed.hostname,
+      image: ogImage || null,
+      siteName: ogSite || parsed.hostname
+    };
+
+    PREVIEW_CACHE.set(url, { data, exp: now + PREVIEW_TTL_MS });
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: 'Internal Server Error', message: 'preview failed', code: 'PREVIEW_FAILED' });
+  }
 });
 
 // CSP statistics endpoint (for security monitoring)

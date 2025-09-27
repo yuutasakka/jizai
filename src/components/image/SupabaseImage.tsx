@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { SupabaseImageStorage, getOptimizedImageUrl, FALLBACK_IMAGES } from '../../lib/supabase-storage';
+import { SupabaseImageStorage, getOptimizedImageUrl, FALLBACK_IMAGES, USE_SIGNED_URLS } from '../../lib/supabase-storage';
 
 interface SupabaseImageProps {
   path: string;
@@ -36,21 +36,28 @@ export function SupabaseImage({
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    if (!path) {
-      setImageUrl(fallback);
-      setIsLoading(false);
-      return;
+    let cancelled = false;
+    async function resolveUrl() {
+      if (!path) {
+        setImageUrl(fallback);
+        setIsLoading(false);
+        return;
+      }
+      // If already a full URL or data URI, use as-is
+      if (typeof path === 'string' && (path.startsWith('http') || path.startsWith('data:'))) {
+        setImageUrl(path);
+        return;
+      }
+      if (USE_SIGNED_URLS) {
+        const url = await SupabaseImageStorage.getSignedImageUrl(path);
+        if (!cancelled) setImageUrl(url || fallback);
+      } else {
+        const optimizedUrl = getOptimizedImageUrl(path, { width, height, quality, format });
+        if (!cancelled) setImageUrl(optimizedUrl);
+      }
     }
-
-    // Get optimized image URL
-    const optimizedUrl = getOptimizedImageUrl(path, {
-      width,
-      height,
-      quality,
-      format
-    });
-
-    setImageUrl(optimizedUrl);
+    resolveUrl();
+    return () => { cancelled = true; };
   }, [path, width, height, quality, format, fallback]);
 
   const handleLoad = () => {

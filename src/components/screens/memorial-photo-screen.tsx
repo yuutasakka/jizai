@@ -408,7 +408,7 @@ export const MemorialPhotoScreen: React.FC<MemorialPhotoScreenProps> = ({ onNavi
               ) : (
                 <div className="flex flex-col items-center gap-6">
                   <div className="w-60 h-60 rounded-lg overflow-hidden shadow-lg">
-                    <img src={imagePreview} alt="選択された画像" className="w-full h-full object-cover" />
+                    <img src={imagePreview} alt="選択された画像" loading="lazy" className="w-full h-full object-cover" />
                   </div>
                   <div className="flex gap-4">
                     <JZButton

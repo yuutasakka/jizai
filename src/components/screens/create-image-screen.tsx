@@ -12,6 +12,30 @@ export const CreateImageScreen = ({ onNavigate }: { onNavigate: (screen: string)
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [selectedDemoImage, setSelectedDemoImage] = useState<string | null>(null);
+
+  // デモ用のサンプル画像データ
+  const demoImages = [
+    {
+      id: 'portrait1',
+      name: 'ポートレート写真 1',
+      url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDMwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxjaXJjbGUgY3g9IjE1MCIgY3k9IjEyMCIgcj0iNDAiIGZpbGw9IiM5Q0EzQUYiLz4KPHBhdGggZD0iTTEwMCAyMDBIMjAwQzIwMCAxNzUgMTc1IDE1MCAxNTAgMTUwQzEyNSAxNTAgMTAwIDE3NSAxMDAgMjAwWiIgZmlsbD0iIzlDQTNBRiIvPgo8dGV4dCB4PSIxNTAiIHk9IjI1MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzZCNzI4MCIgZm9udC1zaXplPSIxNCIgZm9udC1mYW1pbHk9IkFyaWFsIj7jgrXjg7Pjg5fjg6vjgqbjg47jg7zjg4M8L3RleHQ+Cjwvc3ZnPgo=',
+      description: 'ポートレート写真のサンプル'
+    },
+    {
+      id: 'landscape1',
+      name: '風景写真 1',
+      url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDMwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjQTdGM0Q0Ii8+CjxwYXRoIGQ9Ik0wIDIwMEg3MEM4MCAyMDAgOTAgMTkwIDEwMCAxODBDMTEwIDE3MCAxMzAgMTYwIDE1MCAxNTBDMTcwIDE0MCAyMDAgMTMwIDIzMCAxMDBDMjYwIDcwIDI4MCA4MCAzMDAgOTBWMzAwSDBWMjAwWiIgZmlsbD0iIzZCN0I4NSIvPgo8Y2lyY2xlIGN4PSI2MCIgY3k9IjYwIiByPSIyMCIgZmlsbD0iI0ZCQkYyNCIvPgo8dGV4dCB4PSIxNTAiIHk9IjI1MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzM3NDE0QiIgZm9udC1zaXplPSIxNCIgZm9udC1mYW1pbHk9IkFyaWFsIj7jg4Ljg7Pjg4bjg7Djg7zjgo/jg6njg6k8L3RleHQ+Cjwvc3ZnPgo=',
+      description: '山の風景写真のサンプル'
+    },
+    {
+      id: 'object1',
+      name: '商品写真 1',
+      url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDMwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjRkZGIi8+CjxyZWN0IHg9IjEwMCIgeT0iMTAwIiB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjEwIiBmaWxsPSIjM0I4MkY2Ii8+CjxyZWN0IHg9IjEyMCIgeT0iMTIwIiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHJ4PSI1IiBmaWxsPSIjMTk0M0FBIi8+Cjx0ZXh0IHg9IjE1MCIgeT0iMjUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNkI3MjgwIiBmb250LXNpemU9IjE0IiBmb250LWZhbWlseT0iQXJpYWwiPuWVhOWTgOWGmeecn+OCteODs+ODl+ODqzwvdGV4dD4KPC9zdmc+Cg==',
+      description: '商品写真のサンプル'
+    }
+  ];
 
   // Use template option key if passed from examples/search (no prompt text on client)
   const [templateOptionId, setTemplateOptionId] = useState<string | null>(null);
@@ -29,9 +53,33 @@ export const CreateImageScreen = ({ onNavigate }: { onNavigate: (screen: string)
     try { sessionStorage.removeItem('desired-template-key'); } catch {}
   };
 
+  // デモモード用の関数
+  const handleDemoImageSelect = (demoImage: typeof demoImages[0]) => {
+    setSelectedDemoImage(demoImage.url);
+    setUploadedImage(demoImage.url);
+    setUploadedFileName(demoImage.name);
+    setSelectedFile(null); // デモモードでは実際のファイルはnull
+    try {
+      sessionStorage.setItem('create_image_file', demoImage.url);
+      sessionStorage.setItem('demo_mode', 'true');
+    } catch {}
+  };
+
+  const exitDemoMode = () => {
+    setIsDemoMode(false);
+    setSelectedDemoImage(null);
+    setUploadedImage(null);
+    setUploadedFileName('');
+    setSelectedFile(null);
+    try {
+      sessionStorage.removeItem('create_image_file');
+      sessionStorage.removeItem('demo_mode');
+    } catch {}
+  };
+
   const handleSubmit = () => {
     const v = value.trim();
-    if (!selectedFile) return;
+    if (!selectedFile && !selectedDemoImage) return;
     if (!templateOptionId && !v) return;
     // Do not persist prompt content in storage for privacy
     setShowConfirm(true);
@@ -122,6 +170,80 @@ export const CreateImageScreen = ({ onNavigate }: { onNavigate: (screen: string)
             </p>
           </div>
 
+          {/* Demo Mode Toggle */}
+          <div className="mb-[var(--space-24)]">
+            <div className="bg-[color:var(--color-jz-accent)]/10 border border-[color:var(--color-jz-accent)]/30 rounded-[var(--radius-jz-card)] p-[var(--space-16)]">
+              <div className="flex items-center justify-between mb-[var(--space-12)]">
+                <div>
+                  <h3 className="jz-font-display jz-text-body font-semibold text-[color:var(--color-jz-text-primary)] mb-[var(--space-4)]">
+                    🎭 デモモード
+                  </h3>
+                  <p className="jz-text-caption text-[color:var(--color-jz-text-secondary)]">
+                    サンプル画像で生成を体験できます
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsDemoMode(!isDemoMode)}
+                  className={`px-[var(--space-16)] py-[var(--space-8)] rounded-[var(--radius-jz-button)] text-sm font-medium transition-colors ${
+                    isDemoMode
+                      ? 'bg-[color:var(--color-jz-accent)] text-white'
+                      : 'bg-[color:var(--color-jz-surface)] text-[color:var(--color-jz-text-primary)] border border-[color:var(--color-jz-border)]'
+                  }`}
+                >
+                  {isDemoMode ? 'オン' : 'オフ'}
+                </button>
+              </div>
+              {isDemoMode && (
+                <div className="border-t border-[color:var(--color-jz-accent)]/20 pt-[var(--space-12)]">
+                  <p className="jz-text-caption text-[color:var(--color-jz-accent)] mb-[var(--space-12)]">
+                    サンプル画像を選択してください：
+                  </p>
+                  <div className="grid grid-cols-3 gap-[var(--space-8)]">
+                    {demoImages.map((demo) => (
+                      <button
+                        key={demo.id}
+                        onClick={() => handleDemoImageSelect(demo)}
+                        className={`relative aspect-square rounded-[var(--radius-jz-button)] border-2 overflow-hidden transition-all ${
+                          selectedDemoImage === demo.url
+                            ? 'border-[color:var(--color-jz-accent)] ring-2 ring-[color:var(--color-jz-accent)]/30'
+                            : 'border-[color:var(--color-jz-border)] hover:border-[color:var(--color-jz-accent)]/50'
+                        }`}
+                      >
+                        <img
+                          src={demo.url}
+                          alt={demo.description}
+                          className="w-full h-full object-cover"
+                        />
+                        {selectedDemoImage === demo.url && (
+                          <div className="absolute inset-0 bg-[color:var(--color-jz-accent)]/20 flex items-center justify-center">
+                            <div className="w-6 h-6 bg-[color:var(--color-jz-accent)] rounded-full flex items-center justify-center">
+                              <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                          </div>
+                        )}
+                        <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white p-1">
+                          <p className="text-xs text-center truncate">{demo.name}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  {selectedDemoImage && (
+                    <div className="mt-[var(--space-12)] flex justify-end">
+                      <button
+                        onClick={exitDemoMode}
+                        className="text-[color:var(--color-jz-text-secondary)] hover:text-[color:var(--color-jz-text-primary)] text-sm underline"
+                      >
+                        デモモードを終了
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Main Action Cards */}
           <div className="space-y-[var(--space-16)] mb-[var(--space-32)]">
 
@@ -130,10 +252,13 @@ export const CreateImageScreen = ({ onNavigate }: { onNavigate: (screen: string)
               <div className="flex flex-col sm:flex-row items-start gap-[var(--space-12)] sm:gap-[var(--space-16)]">
                 <div className="flex-1">
                   <h3 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)] mb-[var(--space-8)]">
-                    ①　写真をアップロード
+                    ①　写真を{isDemoMode ? 'サンプルから選択または' : ''}アップロード
                   </h3>
                   <p className="jz-text-body text-[color:var(--color-jz-text-secondary)] mb-[var(--space-16)]">
-                    編集したい写真をギャラリーから選択してください
+                    {isDemoMode
+                      ? 'デモモードでサンプル画像を選択するか、ギャラリーから選択してください'
+                      : '編集したい写真をギャラリーから選択してください'
+                    }
                   </p>
 
                   {/* Image Preview */}
@@ -146,15 +271,20 @@ export const CreateImageScreen = ({ onNavigate }: { onNavigate: (screen: string)
                           className="w-full h-32 sm:h-48 object-cover rounded-[var(--radius-jz-button)] border border-[color:var(--color-jz-border)]"
                         />
                         <button
-                          onClick={handleRemoveImage}
+                          onClick={selectedDemoImage ? exitDemoMode : handleRemoveImage}
                           className="absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors"
                           aria-label="写真を削除"
                         >
                           ×
                         </button>
+                        {selectedDemoImage && (
+                          <div className="absolute top-2 left-2 px-2 py-1 bg-[color:var(--color-jz-accent)] text-white text-xs rounded">
+                            デモ
+                          </div>
+                        )}
                       </div>
                       <p className="jz-text-caption text-[color:var(--color-jz-text-secondary)] mt-[var(--space-8)] truncate">
-                        {uploadedFileName}
+                        {uploadedFileName} {selectedDemoImage && '(デモ画像)'}
                       </p>
                     </div>
                   ) : null}
@@ -223,15 +353,15 @@ export const CreateImageScreen = ({ onNavigate }: { onNavigate: (screen: string)
 
                   <button
                     onClick={handleSubmit}
-                    disabled={(!templateOptionId && !value.trim()) || !uploadedImage}
+                    disabled={(!templateOptionId && !value.trim()) || (!uploadedImage && !selectedDemoImage)}
                     className="w-full bg-[color:var(--color-jz-accent)] hover:bg-[color:var(--color-jz-accent)]/90 disabled:bg-[color:var(--color-jz-text-tertiary)] disabled:cursor-not-allowed text-white rounded-[var(--radius-jz-button)] py-[var(--space-12)] px-[var(--space-16)] flex items-center justify-center gap-[var(--space-8)] transition-colors"
                   >
                     <JZMagicWandIcon size={20} />
-                    生成を開始する
+                    {selectedDemoImage ? 'デモ生成を開始する' : '生成を開始する'}
                   </button>
-                  {(!uploadedImage || (!templateOptionId && !value.trim())) && (
+                  {((!uploadedImage && !selectedDemoImage) || (!templateOptionId && !value.trim())) && (
                     <p className="jz-text-caption text-[color:var(--color-jz-text-secondary)] mt-[var(--space-8)] text-center">
-                      {!uploadedImage ? '写真をアップロードしてください' : 'テンプレート選択またはプロンプトを入力してください'}
+                      {(!uploadedImage && !selectedDemoImage) ? '写真をアップロードまたはデモ画像を選択してください' : 'テンプレート選択またはプロンプトを入力してください'}
                     </p>
                   )}
                 </div>
@@ -250,13 +380,20 @@ export const CreateImageScreen = ({ onNavigate }: { onNavigate: (screen: string)
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <JZCard className="max-w-md w-[92%] p-6">
             <div className="mb-4">
-              <h2 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)] mb-2">生成を開始しますか？</h2>
-              <p className="jz-text-body text-[color:var(--color-jz-text-secondary)]">この操作でクレジットが消費され、画像の生成が開始されます。内容をご確認の上、よろしければ「生成を開始」を押してください。</p>
+              <h2 className="jz-font-display jz-text-display-small text-[color:var(--color-jz-text-primary)] mb-2">
+                {selectedDemoImage ? 'デモ生成を開始しますか？' : '生成を開始しますか？'}
+              </h2>
+              <p className="jz-text-body text-[color:var(--color-jz-text-secondary)]">
+                {selectedDemoImage
+                  ? 'デモモードで画像生成のシミュレーションを実行します。実際のクレジットは消費されません。'
+                  : 'この操作でクレジットが消費され、画像の生成が開始されます。内容をご確認の上、よろしければ「生成を開始」を押してください。'
+                }
+              </p>
             </div>
             {uploadedImage && (
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-20 h-20 rounded-[var(--radius-jz-card)] overflow-hidden border border-[color:var(--color-jz-border)]">
-                  <img src={uploadedImage} alt="確認プレビュー" className="w-full h-full object-cover" />
+                  <img src={uploadedImage} alt="確認プレビュー" loading="lazy" className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1">
                   <div className="jz-text-caption text-[color:var(--color-jz-text-tertiary)] mb-1">実行内容</div>
@@ -272,18 +409,35 @@ export const CreateImageScreen = ({ onNavigate }: { onNavigate: (screen: string)
                 tone="primary"
                 state={isGenerating ? 'loading' : 'enabled'}
                 onClick={async () => {
-                  if (!selectedFile) return;
+                  if (!selectedFile && !selectedDemoImage) return;
                   setIsGenerating(true);
                   try {
-                    const res = templateOptionId
-                      ? await api.editImageByOption(selectedFile, templateOptionId, 'standard')
-                      : await api.editImage(selectedFile, value.trim(), 'standard');
-                    const genUrl = URL.createObjectURL(res.blob);
-                    try {
-                      sessionStorage.setItem('generated-image-url', genUrl);
-                      if (uploadedImage) sessionStorage.setItem('original-image-url', uploadedImage);
-                      // Do not store prompt content on client
-                    } catch {}
+                    if (selectedDemoImage) {
+                      // デモモードの場合：シミュレーション生成
+                      await new Promise(resolve => setTimeout(resolve, 2000)); // 2秒待機
+
+                      // デモ用の結果画像を生成（元画像と同じものを使用）
+                      const demoResultUrl = selectedDemoImage;
+
+                      try {
+                        sessionStorage.setItem('generated-image-url', demoResultUrl);
+                        sessionStorage.setItem('original-image-url', selectedDemoImage);
+                        sessionStorage.setItem('used-prompt', templateOptionId || value.trim());
+                        sessionStorage.setItem('demo_mode_result', 'true');
+                      } catch {}
+                    } else {
+                      // 通常モード：実際のAPI呼び出し
+                      const res = templateOptionId
+                        ? await api.editImageByOption(selectedFile, templateOptionId, 'standard')
+                        : await api.editImage(selectedFile, value.trim(), 'standard');
+                      const genUrl = URL.createObjectURL(res.blob);
+                      try {
+                        sessionStorage.setItem('generated-image-url', genUrl);
+                        if (uploadedImage) sessionStorage.setItem('original-image-url', uploadedImage);
+                        sessionStorage.setItem('used-prompt', templateOptionId || value.trim());
+                        // Do not store prompt content on client
+                      } catch {}
+                    }
                     setShowConfirm(false);
                     onNavigate('results');
                   } catch (e) {
@@ -293,7 +447,7 @@ export const CreateImageScreen = ({ onNavigate }: { onNavigate: (screen: string)
                   }
                 }}
               >
-                生成を開始
+                {selectedDemoImage ? 'デモ生成を開始' : '生成を開始'}
               </JZButton>
             </div>
           </JZCard>

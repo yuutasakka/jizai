@@ -3,6 +3,7 @@
 import express from 'express';
 import { AppStoreWebhookHandler } from '../services/appstore-webhook.mjs';
 import rateLimit from 'express-rate-limit';
+import { secureLogger } from '../utils/secure-logger.mjs';
 
 const router = express.Router();
 const webhookHandler = new AppStoreWebhookHandler();
@@ -71,8 +72,10 @@ const requireAdmin = (req, res, next) => {
     }
 
     if (expected && token === expected) {
+        secureLogger.info('Admin endpoint access granted', { route: req.originalUrl, ip: req.ip });
         return next();
     }
+    secureLogger.warn('Admin endpoint access denied', { route: req.originalUrl, ip: req.ip });
     return res.status(401).json({
         error: 'Unauthorized',
         message: 'Authentication required'
@@ -249,7 +252,7 @@ router.post('/appstore', webhookLimiter, optionalIpAllowlist(), validateWebhookR
  * Check webhook health and recent activity
  * Internal endpoint for monitoring
  */
-router.get('/appstore/status', adminLimiter, requireAdmin, async (req, res) => {
+router.get('/appstore/status', adminLimiter, optionalIpAllowlist(), requireAdmin, async (req, res) => {
     try {
         // Check recent notification activity
         const stats = await webhookHandler.getWebhookStats();
@@ -284,7 +287,7 @@ router.get('/appstore/status', adminLimiter, requireAdmin, async (req, res) => {
  * POST /v1/webhooks/appstore/test
  * Test webhook processing (development only)
  */
-router.post('/appstore/test', adminLimiter, requireAdmin, async (req, res) => {
+router.post('/appstore/test', adminLimiter, optionalIpAllowlist(), requireAdmin, async (req, res) => {
     if (process.env.NODE_ENV === 'production') {
         return res.status(403).json({
             error: 'Forbidden',
@@ -344,7 +347,7 @@ router.post('/appstore/test', adminLimiter, requireAdmin, async (req, res) => {
  * Manually trigger retry of failed notifications
  * Internal/admin endpoint
  */
-router.post('/retry-failed', requireAdmin, async (req, res) => {
+router.post('/retry-failed', optionalIpAllowlist(), requireAdmin, async (req, res) => {
     try {
         // This should be protected by admin authentication in production
         await webhookHandler.retryFailedNotifications();

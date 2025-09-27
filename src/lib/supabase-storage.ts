@@ -19,9 +19,17 @@ export class SupabaseImageStorage {
     }
 
     try {
-      // Generate unique filename with timestamp
+      // Generate unique filename with timestamp + cryptographically strong random hex
       const timestamp = Date.now();
-      const randomString = Math.random().toString(36).substring(2, 15);
+      const randomString = (() => {
+        try {
+          const arr = new Uint8Array(8);
+          (self as any).crypto?.getRandomValues(arr);
+          return Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+        } catch {
+          return Math.random().toString(36).substring(2, 15);
+        }
+      })();
       const fileExtension = file.name.split('.').pop();
       const fileName = `${timestamp}_${randomString}.${fileExtension}`;
       const filePath = `${folder}/${fileName}`;
@@ -39,12 +47,14 @@ export class SupabaseImageStorage {
         return null;
       }
 
-      // Return public URL and path
-      const publicUrl = `${PUBLIC_BASE_URL}/${filePath}`;
-      return {
-        url: publicUrl,
-        path: filePath
-      };
+      // Return URL and path (signed or public depending on config)
+      if (USE_SIGNED_URLS) {
+        const signed = await this.getSignedImageUrl(filePath, 3600);
+        return { url: signed || '', path: filePath };
+      } else {
+        const publicUrl = `${PUBLIC_BASE_URL}/${filePath}`;
+        return { url: publicUrl, path: filePath };
+      }
 
     } catch (error) {
       console.error('Image upload failed:', error);

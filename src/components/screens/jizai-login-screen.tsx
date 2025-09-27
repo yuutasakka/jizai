@@ -34,15 +34,26 @@ export function JizaiLoginScreen({
     }
   };
 
-  const handleDevLogin = () => {
+  const handleDevLogin = async () => {
     if (isDevLoginEnabled && devLogin) {
-      devLogin();
-      onComplete();
+      try {
+        setIsLoading(true);
+        const result = await devLogin();
+        if (result.user && !result.error) {
+          onComplete();
+        } else if (result.error) {
+          console.error('Development login failed:', result.error);
+        }
+      } catch (error) {
+        console.error('Development login error:', error);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
   return (
-    <div className="min-h-screen bg-[color:var(--color-jz-surface)] flex items-center justify-center px-8">
+    <div className="options-form-root-0-1-2963">
       <div 
         className={`w-full max-w-sm transition-all duration-500 ${
           isVisible ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-4'
@@ -124,13 +135,18 @@ export function JizaiLoginScreen({
 
               <button
                 onClick={handleDevLogin}
-                className="w-full bg-[color:var(--color-jz-accent)]/10 border border-[color:var(--color-jz-accent)]/30 rounded-[var(--radius-jz-button)] px-6 py-4 flex items-center justify-center space-x-3 hover:bg-[color:var(--color-jz-accent)]/20 transition-all duration-200"
+                disabled={isLoading}
+                className="w-full bg-[color:var(--color-jz-accent)]/10 border border-[color:var(--color-jz-accent)]/30 rounded-[var(--radius-jz-button)] px-6 py-4 flex items-center justify-center space-x-3 hover:bg-[color:var(--color-jz-accent)]/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <svg className="w-5 h-5 text-[color:var(--color-jz-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                </svg>
+                {isLoading ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[color:var(--color-jz-accent)]"></div>
+                ) : (
+                  <svg className="w-5 h-5 text-[color:var(--color-jz-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                  </svg>
+                )}
                 <span className="jz-text-button text-[color:var(--color-jz-accent)]">
-                  開発用テストユーザーでログイン
+                  {isLoading ? "ログイン中..." : "開発用テストユーザーでログイン"}
                 </span>
               </button>
 

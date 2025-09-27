@@ -53,6 +53,12 @@ if (process.env.NODE_ENV === 'production') {
   if (!process.env.ADMIN_IP_ALLOWLIST) warnings.push('⚠️ ADMIN_IP_ALLOWLIST not set');
 }
 
+// CSP enforcement readiness
+if (process.env.NODE_ENV === 'production') {
+  const reportOnly = (process.env.CSP_REPORT_ONLY ?? 'true') !== 'false';
+  if (reportOnly) warnings.push('⚠️ CSP_REPORT_ONLY is true in production; consider enforcing after staging verification');
+}
+
 // Image limits (optional)
 if (!process.env.MAX_IMAGE_SIDE) infos.push('ℹ️ MAX_IMAGE_SIDE not set (using default 12000)');
 if (!process.env.MAX_IMAGE_PIXELS) infos.push('ℹ️ MAX_IMAGE_PIXELS not set (using default 100000000)');

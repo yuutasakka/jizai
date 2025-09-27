@@ -90,8 +90,8 @@ function Examples({ items }: { items: { before: string; after: string; label?: s
           </JZCardHeader>
           <JZCardContent>
             <div className="grid grid-cols-2 gap-[var(--space-8)]">
-              <img src={ex.before} alt="before" className="rounded-[--radius-jz-card] object-cover aspect-square w-full" />
-              <img src={ex.after} alt="after" className="rounded-[--radius-jz-card] object-cover aspect-square w-full" />
+              <img src={ex.before} alt="before" loading="lazy" className="rounded-[--radius-jz-card] object-cover aspect-square w-full" />
+              <img src={ex.after} alt="after" loading="lazy" className="rounded-[--radius-jz-card] object-cover aspect-square w-full" />
             </div>
           </JZCardContent>
         </JZCard>

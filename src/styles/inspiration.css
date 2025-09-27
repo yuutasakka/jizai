@@ -1,0 +1,27 @@
+/* Inspiration page part-level hooks. Override these classes in theme CSS as needed. */
+
+.insp-root {
+  /* CSS variables for colors, spacing can be defined here */
+}
+
+.insp-header { }
+.insp-toolbar { }
+.insp-toolbar-inner { }
+.insp-categories { }
+.insp-category-list { }
+.insp-category { }
+.insp-sort { }
+.insp-grid { }
+.insp-card { }
+.insp-card-image { }
+.insp-card-overlay { }
+.insp-card-title { }
+.insp-card-action { }
+
+/* Button label override hooks */
+.insp-button[data-label]:not([data-label=""]) .insp-button-text {
+  display: none;
+}
+.insp-button[data-label]:not([data-label=""])::after {
+  content: attr(data-label);
+}
