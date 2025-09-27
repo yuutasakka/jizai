@@ -3,7 +3,7 @@ import { JZButton } from '../design-system/jizai-button';
 import { JZCard, JZCardContent } from '../design-system/jizai-card';
 import { JZErrorCard } from '../design-system/jizai-error-card';
 import { JZChip } from '../design-system/jizai-chip';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../design-system/jizai-collapsible';
 import {
   JZChevronDownIcon
 } from '../design-system/jizai-icons';

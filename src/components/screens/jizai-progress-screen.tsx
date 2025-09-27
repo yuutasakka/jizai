@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { JZButton } from '../design-system/jizai-button';
 import { JZCard, JZCardContent } from '../design-system/jizai-card';
 import { JZXIcon, JZExclamationBubbleIcon } from '../design-system/jizai-icons';
-import { Progress } from '../ui/progress';
+import { Progress } from '../design-system/jizai-progress';
 
 export const JizaiProgressScreen = ({ onNavigate }: { onNavigate: (screen: string) => void }) => {
   const [progress, setProgress] = useState(0);
