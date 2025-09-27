@@ -39,9 +39,11 @@ export const TutorialExamplesScreen = ({ onNavigate, onExampleSelected }: Tutori
   // Inspire categories
   const inspireCategories: Array<{ key: string; label: string }> = [
     { key: 'all', label: 'すべて' },
-    { key: 'people', label: '人物' },
-    { key: 'pet', label: 'ペット' },
-    { key: 'photo', label: '写真' },
+    { key: 'clothing', label: '服装' },
+    { key: 'expression', label: '表情' },
+    { key: 'background', label: '背景' },
+    { key: 'pose', label: '姿勢' },
+    { key: 'convenient', label: '便利' },
   ];
   const [selectedInspireCategory, setSelectedInspireCategory] = useState<string>(inspireCategories[0].key);
   const [selectedCategoryIndex, setSelectedCategoryIndex] = useState<number>(0);
