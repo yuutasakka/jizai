@@ -386,7 +386,7 @@ class JizaiApiClient {
   }
 
   // 画像アップロード（Vaultに直接、JPEG/PNGのみ）
-  async uploadMemory(imageFile: File, options?: { title?: string; vaultId?: string }): Promise<MemoryItem> {
+  async uploadMemory(imageFile: File, options?: { title?: string; vaultId?: string; category?: 'clothing' | 'expression' | 'background' | 'pose' | 'convenient' }): Promise<MemoryItem> {
     // Client-side validation for quicker feedback
     const allowedTypes = ['image/jpeg', 'image/png'];
     if (!allowedTypes.includes(imageFile.type)) {
@@ -397,6 +397,7 @@ class JizaiApiClient {
     formData.append('image', imageFile);
     if (options?.title) formData.append('title', options.title);
     if (options?.vaultId) formData.append('vaultId', options.vaultId);
+    if (options?.category) formData.append('category', options.category);
 
     const response = await this.request(`${API_BASE_URL}/v1/memories/upload`, {
       method: 'POST',

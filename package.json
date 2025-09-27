@@ -56,13 +56,14 @@
             "typescript": "^5.9.2",
             "vite": "^7.1.3"
       },
-      "scripts": {
-            "dev": "vite",
-            "build": "vite build",
-            "preview": "vite preview",
-            "test:e2e": "playwright test",
-            "test:e2e:ui": "playwright test --ui",
-            "test:e2e:debug": "playwright test --debug",
-            "test:e2e:report": "playwright show-report"
-      }
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "storage:init-examples": "node scripts/create-examples-folders.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:report": "playwright show-report"
+  }
 }

@@ -68,12 +68,37 @@ images/
 └── examples/      # サンプル画像
 ```
 
+### 3. examplesフォルダの公開（Privateバケット運用時）
+
+`images` バケットを Private にする場合でも、インスピレーション一覧で使用する `examples/` 配下の画像は匿名閲覧（または署名URL生成）を許可する必要があります。以下いずれかを選択してください。
+
+- Public運用: バケット設定で `Public` を有効にする（追加のRLS不要）
+- Private運用: 署名URL or 直接閲覧を許可するRLSを設定
+
+SQLエディタで以下を実行（リポジトリにも同内容を `supabase/storage_examples_policy.sql` として配置済み）：
+
+```sql
+-- images/examples/* を匿名（anon）/認証済み（authenticated）で select 可能にする
+drop policy if exists images_examples_public_read on storage.objects;
+create policy images_examples_public_read
+  on storage.objects for select
+  to anon, authenticated
+  using (
+    bucket_id = 'images'
+    and (name like 'examples/%')
+  );
+```
+
+補足:
+- 署名URL配信を使う場合は、フロントに `VITE_SUPABASE_STORAGE_SIGNED=true` を設定してください。
+- 署名URLの生成には `storage.objects` の `select` 権限が必要です。上記ポリシーは `examples/` のみ許可します。
+
 ## 🔐 RLS（Row Level Security）設定
 
 ### 1. SQLエディタでRLSポリシー実行
 
 1. **SQL Editor** にアクセス
-2. `supabase/rls-policies.sql` の内容をコピー&実行
+2. `supabase/*.sql`（テーブル定義/ポリシー）と、必要に応じて `supabase/storage_examples_policy.sql` を実行
 3. エラーがないことを確認
 
 ### 2. 必要なテーブルの作成

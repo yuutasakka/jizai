@@ -1309,6 +1309,10 @@ app.post('/v1/memories/upload', vaultUploadLimiter, requireAuthMaybe, rlsAuthMid
         const imageFile = req.file;
         const deviceId = req.deviceId;
         const { vaultId: providedVaultId, title } = req.body || {};
+        // Optional category for folder naming under My Files (memories)
+        const ALLOWED_CATEGORIES = new Set(['clothing','expression','background','pose','convenient']);
+        const rawCategory = typeof req.body?.category === 'string' ? String(req.body.category).trim().toLowerCase() : '';
+        const safeCategory = ALLOWED_CATEGORIES.has(rawCategory) ? rawCategory : '';
 
         if (!imageFile) {
             return res.status(400).json({ error: 'Bad Request', message: 'Image file is required', code: 'MISSING_IMAGE' });
@@ -1367,7 +1371,9 @@ app.post('/v1/memories/upload', vaultUploadLimiter, requireAuthMaybe, rlsAuthMid
         // Store in Supabase Storage
         const ext = detectedMime === 'image/jpeg' ? 'jpg' : 'png';
         const filename = `upload_${randomUUID()}.${ext}`;
-        const path = `memories/${req.user.id}/${filename}`;
+        const path = safeCategory
+          ? `memories/${req.user.id}/${safeCategory}/${filename}`
+          : `memories/${req.user.id}/${filename}`;
         const upBuf = await getFileBuffer(imageFile);
         const uploadResp = await supabaseStorage.from('vault-storage').upload(path, upBuf, { cacheControl: '3600', contentType: detectedMime });
         if (uploadResp.error) {

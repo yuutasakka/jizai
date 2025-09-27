@@ -14,6 +14,7 @@ interface InspirationExample {
   category: 'inspire' | 'search' | 'following' | 'ai-generated';
   // Content category from DB (e.g., people/pet/photo)
   contentCategory?: string;
+  categories?: string[];
   createdAt?: string;
 }
 
@@ -57,10 +58,11 @@ export const TutorialExamplesScreen = ({ onNavigate, onExampleSelected }: Tutori
       try {
         let query = supabase
           .from('inspiration_examples')
-          .select('id, before_path, after_path, before_url, after_url, title, prompt, prompt_key, category, popularity, display_order, created_at');
+          .select('id, before_path, after_path, before_url, after_url, title, prompt, prompt_key, category, categories, popularity, display_order, created_at');
 
         if (selectedInspireCategory !== 'all') {
-          query = query.eq('category', selectedInspireCategory);
+          // Multi-category filter: categories contains selected (backfilled includes primary)
+          query = query.contains('categories', [selectedInspireCategory]);
         }
 
         if (sortBy === 'newest') {
@@ -86,6 +88,7 @@ export const TutorialExamplesScreen = ({ onNavigate, onExampleSelected }: Tutori
             title: r.title || '',
             category: 'inspire' as const,
             contentCategory: r.category || undefined,
+            categories: Array.isArray(r.categories) ? r.categories : undefined,
             createdAt: r.created_at || undefined,
           }));
           setInspireExamples(mapped);
@@ -103,7 +106,7 @@ export const TutorialExamplesScreen = ({ onNavigate, onExampleSelected }: Tutori
     let base = activeTab === 'inspire' ? inspireExamples : [];
     // local filter as safety for fallback data
     if (activeTab === 'inspire' && selectedInspireCategory !== 'all') {
-      base = base.filter(ex => ex.contentCategory === selectedInspireCategory);
+      base = base.filter(ex => ex.contentCategory === selectedInspireCategory || (ex.categories?.includes?.(selectedInspireCategory)));
     }
     const arr = [...base];
     switch (sortBy) {

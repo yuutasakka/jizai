@@ -25,3 +25,45 @@
 .insp-button[data-label]:not([data-label=""])::after {
   content: attr(data-label);
 }
+
+/*
+  Scoped button styles for Inspiration page cards only
+  - Customize with CSS variables under `.insp-root` without affecting other pages.
+  - Works even when Tailwind utility classes are present on the button.
+*/
+.insp-root .insp-card .insp-button {
+  /* Design tokens (override these on .insp-root to customize) */
+  --insp-btn-bg: linear-gradient(90deg, #059669 0%, #047857 100%);
+  --insp-btn-bg-hover: linear-gradient(90deg, #047857 0%, #065f46 100%);
+  --insp-btn-fg: #ffffff;
+  --insp-btn-radius: 0.75rem; /* 12px */
+  --insp-btn-shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.1);
+  --insp-btn-shadow-hover: 0 4px 10px rgba(16, 24, 40, 0.12);
+  --insp-btn-padding: 0.625rem 1rem; /* 10px 16px */
+  --insp-btn-font-weight: 700;
+  --insp-btn-font-size: 0.875rem; /* 14px */
+
+  background: var(--insp-btn-bg);
+  color: var(--insp-btn-fg);
+  border-radius: var(--insp-btn-radius);
+  box-shadow: var(--insp-btn-shadow);
+  padding: var(--insp-btn-padding);
+  font-weight: var(--insp-btn-font-weight);
+  font-size: var(--insp-btn-font-size);
+}
+
+.insp-root .insp-card .insp-button:hover {
+  background: var(--insp-btn-bg-hover);
+  box-shadow: var(--insp-btn-shadow-hover);
+}
+
+.insp-root .insp-card .insp-button:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.8); /* blue focus */
+  outline-offset: 2px;
+}
+
+/* Optional: compact variant hook */
+.insp-root[data-button-density="compact"] .insp-card .insp-button {
+  --insp-btn-padding: 0.5rem 0.75rem;
+  --insp-btn-font-size: 0.8125rem;
+}
