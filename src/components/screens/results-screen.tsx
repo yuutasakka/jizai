@@ -8,7 +8,7 @@ import {
   JZChevronDownIcon
 } from '../design-system/jizai-icons';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
-import { cn } from '../ui/utils';
+import { cn } from '../design-system/utils';
 import { track } from '../../lib/analytics';
 import { FrameCard } from '../commerce/FrameCard';
 

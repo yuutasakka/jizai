@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { cn } from '../ui/utils';
+import { cn } from './utils';
 
 export interface JZSliderProps {
   value: number;

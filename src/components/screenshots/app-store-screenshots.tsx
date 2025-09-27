@@ -12,7 +12,7 @@ import {
   JZCreditCardIcon,
   JZCheckIcon
 } from '../design-system/jizai-icons';
-import { cn } from '../ui/utils';
+import { cn } from '../design-system/utils';
 
 interface ScreenshotProps {
   screenSize: '6.7' | '5.5';

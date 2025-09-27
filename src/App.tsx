@@ -1,7 +1,7 @@
 if ((import.meta as any)?.env?.DEV) {
   console.log('🔍 ENV Debug from App:', {
     url: import.meta.env.VITE_SUPABASE_URL,
-    key: import.meta.env.VITE_SUPABASE_ANON_KEY,
+    keyPrefix: import.meta.env.VITE_SUPABASE_ANON_KEY?.slice(0, 8),
     mode: import.meta.env.MODE
   });
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '../ui/utils';
+import { cn } from './utils';
 
 export interface JZCardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'selected' | 'elevated';

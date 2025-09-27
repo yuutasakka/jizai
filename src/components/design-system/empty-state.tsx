@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '../ui/utils';
+import { cn } from './utils';
 import { DSButton } from './button';
 
 export interface DSEmptyStateProps extends React.HTMLAttributes<HTMLDivElement> {

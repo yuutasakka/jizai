@@ -1,7 +1,7 @@
 import { JZCard, JZCardContent } from './jizai-card';
 import { JZButton } from './jizai-button';
 import { JZExclamationBubbleIcon } from './jizai-icons';
-import { cn } from '../ui/utils';
+import { cn } from './utils';
 
 export interface JZErrorCardProps {
   title?: string;

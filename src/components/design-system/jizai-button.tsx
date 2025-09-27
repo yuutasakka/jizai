@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '../ui/utils';
+import { cn } from './utils';
 
 export interface JZButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   tone?: 'primary' | 'secondary' | 'tertiary' | 'destructive';

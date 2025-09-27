@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { JZButton } from '../design-system/jizai-button';
 import { JZCard, JZCardHeader, JZCardContent } from '../design-system/jizai-card';
 import { JZChevronRightIcon, JZCheckIcon, JZBoltIcon } from '../design-system/jizai-icons';
-import { cn } from '../ui/utils';
+import { cn } from '../design-system/utils';
 import { apiClient } from '../../api/client';
 import { getPlans, percentOff, SALE_ENABLED, formatYen } from '../../config/pricing';
 import { pickBarClass, toPercent } from '../../config/storage';
